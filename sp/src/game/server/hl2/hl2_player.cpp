@@ -71,7 +71,7 @@ extern ConVar autoaim_max_dist;
 #define PLAYER_HULL_REDUCTION	0.70
 
 // This switches between the single primary weapon, and multiple weapons with buckets approach (jdw)
-#define	HL2_SINGLE_PRIMARY_WEAPON_MODE	0
+#define	HL2_SINGLE_PRIMARY_WEAPON_MODE	1
 
 #define TIME_IGNORE_FALL_DAMAGE 10.0
 
@@ -2832,6 +2832,7 @@ int CHL2_Player::GiveAmmo( int nCount, int nAmmoIndex, bool bSuppressSound)
 //-----------------------------------------------------------------------------
 bool CHL2_Player::Weapon_CanUse( CBaseCombatWeapon *pWeapon )
 {
+	/*
 #ifndef HL2MP	
 	if ( pWeapon->ClassMatches( "weapon_stunstick" ) )
 	{
@@ -2840,6 +2841,7 @@ bool CHL2_Player::Weapon_CanUse( CBaseCombatWeapon *pWeapon )
 		return false;
 	}
 #endif
+	*/
 
 	return BaseClass::Weapon_CanUse( pWeapon );
 }

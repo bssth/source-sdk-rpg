@@ -105,7 +105,6 @@ void CNPC_Eli::Spawn()
 		SetMoveType( MOVETYPE_NONE );
 
 		CapabilitiesAdd( bits_CAP_ANIMATEDFACE | bits_CAP_TURN_HEAD );
-		CapabilitiesAdd( bits_CAP_FRIENDLY_DMG_IMMUNE );
 	}
 	else
 	{
@@ -140,7 +139,6 @@ void CNPC_Eli::SetupWithoutParent( void )
 	SetMoveType( MOVETYPE_STEP );
 
 	CapabilitiesAdd( bits_CAP_MOVE_GROUND | bits_CAP_OPEN_DOORS | bits_CAP_ANIMATEDFACE | bits_CAP_TURN_HEAD );
-	CapabilitiesAdd( bits_CAP_FRIENDLY_DMG_IMMUNE );
 }
 
 //-----------------------------------------------------------------------------
