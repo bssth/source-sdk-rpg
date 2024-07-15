@@ -23,7 +23,8 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-#define INIT_BAT	-1
+#define INIT_BAT		-1
+#define NO_HUD_BATTERY	1
 
 //-----------------------------------------------------------------------------
 // Purpose: Displays suit power (armor) on hud
@@ -62,10 +63,12 @@ CHudBattery::CHudBattery( const char *pElementName ) : BaseClass(NULL, "HudSuit"
 //-----------------------------------------------------------------------------
 void CHudBattery::Init( void )
 {
+#ifndef NO_HUD_BATTERY
 	HOOK_HUD_MESSAGE( CHudBattery, Battery);
 	Reset();
 	m_iBat		= INIT_BAT;
 	m_iNewBat   = 0;
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -73,8 +76,10 @@ void CHudBattery::Init( void )
 //-----------------------------------------------------------------------------
 void CHudBattery::Reset( void )
 {
+#ifndef NO_HUD_BATTERY
 	SetLabelText(g_pVGuiLocalize->Find("#Valve_Hud_SUIT"));
 	SetDisplayValue(m_iBat);
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -92,9 +97,12 @@ void CHudBattery::VidInit( void )
 //-----------------------------------------------------------------------------
 bool CHudBattery::ShouldDraw( void )
 {
+#ifndef NO_HUD_BATTERY
 	bool bNeedsDraw = ( m_iBat != m_iNewBat ) || ( GetAlpha() > 0 );
 
-	return ( bNeedsDraw && CHudElement::ShouldDraw() );
+	return (bNeedsDraw && CHudElement::ShouldDraw());
+#endif
+	return false;
 }
 
 //-----------------------------------------------------------------------------
@@ -102,6 +110,7 @@ bool CHudBattery::ShouldDraw( void )
 //-----------------------------------------------------------------------------
 void CHudBattery::OnThink( void )
 {
+#ifndef NO_HUD_BATTERY
 	if ( m_iBat == m_iNewBat )
 		return;
 
@@ -136,6 +145,7 @@ void CHudBattery::OnThink( void )
 	m_iBat = m_iNewBat;
 
 	SetDisplayValue(m_iBat);
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -143,5 +153,7 @@ void CHudBattery::OnThink( void )
 //-----------------------------------------------------------------------------
 void CHudBattery::MsgFunc_Battery( bf_read &msg )
 {
+#ifndef NO_HUD_BATTERY
 	m_iNewBat = msg.ReadShort();
+#endif
 }
