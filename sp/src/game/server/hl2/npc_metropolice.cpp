@@ -337,17 +337,13 @@ public:
 				{
 					if ( info.GetDamage() )
 					{
-						// If gordon's a criminal, do damage now
-						if ( !pEntity->IsPlayer() || GlobalEntity_GetState( "gordon_precriminal" ) == GLOBAL_OFF )
+						if (pEntity->IsPlayer() && ((CBasePlayer*)pEntity)->IsSuitEquipped())
 						{
-							if ( pEntity->IsPlayer() && ((CBasePlayer *)pEntity)->IsSuitEquipped() )
-							{
-								info.ScaleDamage( .25 );
-								info.ScaleDamageForce( .25 );
-							}
-
-							pEntity->TakeDamage( info );
+							info.ScaleDamage(.25);
+							info.ScaleDamageForce(.25);
 						}
+
+						pEntity->TakeDamage(info);
 					}
 					
 					m_pHit = pEntity;
@@ -4867,6 +4863,12 @@ int CNPC_MetroPolice::OnTakeDamage_Alive( const CTakeDamageInfo &inputInfo )
 		// being killed, consider running off and hiding.
 		m_nRecentDamage += info.GetDamage();
 		m_flRecentDamageTime = gpGlobals->curtime;
+	}
+
+	if (info.GetAttacker()->IsPlayer())
+	{
+		// If the player is attacking me, arrest him
+		AdministerJustice();
 	}
 
 	return BaseClass::OnTakeDamage_Alive( info ); 
