@@ -750,6 +750,7 @@ void CNPC_Citizen::SelectExpressionType()
 //-----------------------------------------------------------------------------
 void CNPC_Citizen::FixupMattWeapon()
 {
+#if 0
 	CBaseCombatWeapon *pWeapon = GetActiveWeapon();
 	if ( pWeapon && pWeapon->ClassMatches( "weapon_crowbar" ) && NameMatches( "matt" ) )
 	{
@@ -766,6 +767,7 @@ void CNPC_Citizen::FixupMattWeapon()
 		pWeapon->Activate();
 		Weapon_Equip( pWeapon );
 	}
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -2065,7 +2067,6 @@ void CNPC_Citizen::OnEndMoveAndShoot()
 //-----------------------------------------------------------------------------
 void CNPC_Citizen::LocateEnemySound()
 {
-#if 0
 	if ( !GetEnemy() )
 		return;
 
@@ -2083,7 +2084,6 @@ void CNPC_Citizen::LocateEnemySound()
 	{
 		EmitSound( "NPC_Citizen.OverHere" );
 	}
-#endif
 }
 
 //-----------------------------------------------------------------------------
