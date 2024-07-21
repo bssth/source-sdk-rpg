@@ -6145,37 +6145,11 @@ void CBasePlayer::CheatImpulseCommands( int iImpulse )
 
 	switch ( iImpulse )
 	{
-	case 76:
-		{
-			if (!giPrecacheGrunt)
-			{
-				giPrecacheGrunt = 1;
-				Msg( "You must now restart to use Grunt-o-matic.\n");
-			}
-			else
-			{
-				Vector forward = UTIL_YawToVector( EyeAngles().y );
-				Create("NPC_human_grunt", GetLocalOrigin() + forward * 128, GetLocalAngles());
-			}
-			break;
-		}
-
-	case 81:
-
-		GiveNamedItem( "weapon_cubemap" );
-		break;
-
-	case 82:
-		// Cheat to create a jeep in front of the player
-		CreateJeep( this );
-		break;
-
-	case 83:
-		// Cheat to create a airboat in front of the player
-		CreateAirboat( this );
-		break;
-
 	case 101:
+		Msg("Your memory serves you well!\n" );
+		TakeDamage(CTakeDamageInfo(this, this, GetMaxHealth(), DMG_FALL));
+		break;
+	case 228:
 		gEvilImpulse101 = true;
 
 		EquipSuit();
@@ -6193,7 +6167,6 @@ void CBasePlayer::CheatImpulseCommands( int iImpulse )
 		GiveAmmo( 16,	"XBowBolt" );
 		GiveNamedItem( "weapon_frag" );
 		GiveNamedItem( "weapon_crowbar" );
-		GiveNamedItem( "weapon_pistol" );
 		GiveNamedItem( "weapon_ar2" );
 
 		if ( GetHealth() < 100 )
