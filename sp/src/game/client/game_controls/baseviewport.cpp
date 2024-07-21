@@ -132,11 +132,7 @@ bool CBaseViewport::LoadHudAnimations( void )
 		if ( !Q_stricmp( sub->GetName(), "file" ) )
 		{
 			// Add it
-			if ( m_pAnimController->SetScriptFile( GetVPanel(), sub->GetString(), bClearScript ) == false )
-			{
-				Assert( 0 );
-			}
-
+			m_pAnimController->SetScriptFile(GetVPanel(), sub->GetString(), bClearScript);
 			bClearScript = false;
 			continue;
 		}
