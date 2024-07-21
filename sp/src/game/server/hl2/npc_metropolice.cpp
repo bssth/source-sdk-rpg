@@ -3002,14 +3002,6 @@ bool CNPC_MetroPolice::HandleInteraction(int interactionType, void *data, CBaseC
 			AdministerJustice();
 		}
 
-		// See if the object is the cupcop can. If so, fire the output (for x360 achievement)
-		CBaseProp *pProp = (CBaseProp*)data;
-		if( pProp != NULL )
-		{
-			if( pProp->NameMatches("cupcop_can") )
-				m_OnCupCopped.FireOutput( this, NULL );
-		}
-
 		return true;
 	}
 

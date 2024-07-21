@@ -2089,16 +2089,6 @@ void CBaseCombatCharacter::Weapon_Equip( CBaseCombatWeapon *pWeapon )
 	// If gun doesn't use clips, just give ammo
 	if (pWeapon->GetMaxClip1() == -1)
 	{
-#ifdef HL2_DLL
-		if( FStrEq(STRING(gpGlobals->mapname), "d3_c17_09") && FClassnameIs(pWeapon, "weapon_rpg") && pWeapon->NameMatches("player_spawn_items") )
-		{
-			// !!!HACK - Don't give any ammo with the spawn equipment RPG in d3_c17_09. This is a chapter
-			// start and the map is way to easy if you start with 3 RPG rounds. It's fine if a player conserves
-			// them and uses them here, but it's not OK to start with enough ammo to bypass the snipers completely.
-			GiveAmmo( 0, pWeapon->m_iPrimaryAmmoType); 
-		}
-		else
-#endif // HL2_DLL
 		GiveAmmo(pWeapon->GetDefaultClip1(), pWeapon->m_iPrimaryAmmoType); 
 	}
 	// If default ammo given is greater than clip

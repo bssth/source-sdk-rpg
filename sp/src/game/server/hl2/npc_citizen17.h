@@ -82,7 +82,6 @@ public:
 	void			SelectExpressionType();
 	void			Activate();
 	virtual void	OnGivenWeapon( CBaseCombatWeapon *pNewWeapon );
-	void			FixupMattWeapon();
 
 #ifdef HL2_EPISODIC
 	virtual float	GetJumpGravity() const		{ return 1.8f; }

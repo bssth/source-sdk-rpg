@@ -6191,23 +6191,11 @@ void CBasePlayer::CheatImpulseCommands( int iImpulse )
 		GiveAmmo( 5,	"grenade");
 		GiveAmmo( 32,	"357" );
 		GiveAmmo( 16,	"XBowBolt" );
-#ifdef HL2_EPISODIC
-		GiveAmmo( 5,	"Hopwire" );
-#endif		
-		GiveNamedItem( "weapon_smg1" );
 		GiveNamedItem( "weapon_frag" );
 		GiveNamedItem( "weapon_crowbar" );
 		GiveNamedItem( "weapon_pistol" );
 		GiveNamedItem( "weapon_ar2" );
-		GiveNamedItem( "weapon_shotgun" );
-		GiveNamedItem( "weapon_physcannon" );
-		GiveNamedItem( "weapon_bugbait" );
-		GiveNamedItem( "weapon_rpg" );
-		GiveNamedItem( "weapon_357" );
-		GiveNamedItem( "weapon_crossbow" );
-#ifdef HL2_EPISODIC
-		// GiveNamedItem( "weapon_magnade" );
-#endif
+
 		if ( GetHealth() < 100 )
 		{
 			TakeHealth( 25, DMG_GENERIC );
@@ -6215,47 +6203,6 @@ void CBasePlayer::CheatImpulseCommands( int iImpulse )
 		
 		gEvilImpulse101		= false;
 
-		break;
-
-	case 102:
-		// Gibbage!!!
-		CGib::SpawnRandomGibs( this, 1, GIB_HUMAN );
-		break;
-
-	case 103:
-		// What the hell are you doing?
-		pEntity = FindEntityForward( this, true );
-		if ( pEntity )
-		{
-			CAI_BaseNPC *pNPC = pEntity->MyNPCPointer();
-			if ( pNPC )
-				pNPC->ReportAIState();
-		}
-		break;
-
-	case 106:
-		// Give me the classname and targetname of this entity.
-		pEntity = FindEntityForward( this, true );
-		if ( pEntity )
-		{
-			Msg( "Classname: %s", pEntity->GetClassname() );
-			
-			if ( pEntity->GetEntityName() != NULL_STRING )
-			{
-				Msg( " - Name: %s\n", STRING( pEntity->GetEntityName() ) );
-			}
-			else
-			{
-				Msg( " - Name: No Targetname\n" );
-			}
-
-			if ( pEntity->m_iParent != NULL_STRING )
-				Msg( "Parent: %s\n", STRING(pEntity->m_iParent) );
-
-			Msg( "Model: %s\n", STRING( pEntity->GetModelName() ) );
-			if ( pEntity->m_iGlobalname != NULL_STRING )
-				Msg( "Globalname: %s\n", STRING(pEntity->m_iGlobalname) );
-		}
 		break;
 
 	case 107:
@@ -6310,30 +6257,6 @@ void CBasePlayer::CheatImpulseCommands( int iImpulse )
 	case	197:// show shortest paths for entire level to nearest node
 		{
 			Create("node_viewer_human", GetLocalOrigin(), GetLocalAngles());
-		}
-		break;
-	case	202:// Random blood splatter
-		{
-			Vector forward;
-			EyeVectors( &forward );
-			UTIL_TraceLine ( EyePosition(), 
-				EyePosition() + forward * 128, 
-				MASK_SOLID_BRUSHONLY, this, COLLISION_GROUP_NONE, & tr);
-
-			if ( tr.fraction != 1.0 )
-			{// line hit something, so paint a decal
-				CBloodSplat *pBlood = CREATE_UNSAVED_ENTITY( CBloodSplat, "bloodsplat" );
-				pBlood->Spawn( this );
-			}
-		}
-		break;
-	case	203:// remove creature.
-		pEntity = FindEntityForward( this, true );
-		if ( pEntity )
-		{
-			UTIL_Remove( pEntity );
-//			if ( pEntity->m_takedamage )
-//				pEntity->SetThink(SUB_Remove);
 		}
 		break;
 	}

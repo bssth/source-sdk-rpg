@@ -236,19 +236,6 @@ BEGIN_DATADESC( CCommandPoint )
 
 END_DATADESC()
 
-//-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
-
-class CMattsPipe : public CWeaponCrowbar
-{
-	DECLARE_CLASS( CMattsPipe, CWeaponCrowbar );
-
-	const char *GetWorldModel() const	{ return "models/props_canal/mattpipe.mdl"; }
-	void SetPickupTouch( void )	{	/* do nothing */ }
-};
-
-//-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
 
 //---------------------------------------------------------
 // Citizen models
@@ -748,35 +735,10 @@ void CNPC_Citizen::SelectExpressionType()
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
-void CNPC_Citizen::FixupMattWeapon()
-{
-#if 0
-	CBaseCombatWeapon *pWeapon = GetActiveWeapon();
-	if ( pWeapon && pWeapon->ClassMatches( "weapon_crowbar" ) && NameMatches( "matt" ) )
-	{
-		Weapon_Drop( pWeapon );
-		UTIL_Remove( pWeapon );
-		pWeapon = (CBaseCombatWeapon *)CREATE_UNSAVED_ENTITY( CMattsPipe, "weapon_crowbar" );
-		pWeapon->SetName( AllocPooledString( "matt_weapon" ) );
-		DispatchSpawn( pWeapon );
-
-#ifdef DEBUG
-		extern bool g_bReceivedChainedActivate;
-		g_bReceivedChainedActivate = false;
-#endif
-		pWeapon->Activate();
-		Weapon_Equip( pWeapon );
-	}
-#endif
-}
-
-//-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
 
 void CNPC_Citizen::Activate()
 {
 	BaseClass::Activate();
-	FixupMattWeapon();
 }
 
 //-----------------------------------------------------------------------------
@@ -797,21 +759,7 @@ void CNPC_Citizen::OnRestore()
 //-----------------------------------------------------------------------------
 string_t CNPC_Citizen::GetModelName() const
 {
-	string_t iszModelName = BaseClass::GetModelName();
-
-	//
-	// If the model refers to an obsolete model, pretend it was blank
-	// so that we pick the new default model.
-	//
-	if (!Q_strnicmp(STRING(iszModelName), "models/c17_", 11) ||
-		!Q_strnicmp(STRING(iszModelName), "models/male", 11) ||
-		!Q_strnicmp(STRING(iszModelName), "models/female", 13) ||
-		!Q_strnicmp(STRING(iszModelName), "models/citizen", 14))
-	{
-		return NULL_STRING;
-	}
-
-	return iszModelName;
+	return BaseClass::GetModelName();
 }
 
 //-----------------------------------------------------------------------------
@@ -1211,14 +1159,12 @@ int CNPC_Citizen::SelectSchedulePriorityAction()
 int CNPC_Citizen::SelectScheduleHeal()
 {
 	// episodic medics may toss the healthkits rather than poke you with them
-#if HL2_EPISODIC
-
 	if ( CanHeal() )
 	{
 		CBaseEntity *pEntity = PlayerInRange( GetLocalOrigin(), HEAL_TOSS_TARGET_RANGE );
 		if ( pEntity )
 		{
-			if ( USE_EXPERIMENTAL_MEDIC_CODE() && IsMedic() )
+			if ( IsMedic() )
 			{
 				// use the new heal toss algorithm
 				if ( ShouldHealTossTarget( pEntity, HasCondition( COND_CIT_PLAYERHEALREQUEST ) ) )
@@ -1271,63 +1217,13 @@ int CNPC_Citizen::SelectScheduleHeal()
 	}
 	else
 	{
+		// TODO: "sorry need to recharge" response
 		if ( HasCondition( COND_CIT_PLAYERHEALREQUEST ) )
 			DevMsg( "Would say: sorry, need to recharge\n" );
 	}
 	
 	return SCHED_NONE;
-
-#else
-
-	if ( CanHeal() )
-	{
-		CBaseEntity *pEntity = PlayerInRange( GetLocalOrigin(), HEAL_MOVE_RANGE );
-		if ( pEntity && ShouldHealTarget( pEntity, HasCondition( COND_CIT_PLAYERHEALREQUEST ) ) )
-		{
-			SetTarget( pEntity );
-			return SCHED_CITIZEN_HEAL;
 		}
-
-		if ( m_pSquad )
-		{
-			pEntity = NULL;
-			float distClosestSq = HEAL_MOVE_RANGE*HEAL_MOVE_RANGE;
-			float distCurSq;
-
-			AISquadIter_t iter;
-			CAI_BaseNPC *pSquadmate = m_pSquad->GetFirstMember( &iter );
-			while ( pSquadmate )
-			{
-				if ( pSquadmate != this )
-				{
-					distCurSq = ( GetAbsOrigin() - pSquadmate->GetAbsOrigin() ).LengthSqr();
-					if ( distCurSq < distClosestSq && ShouldHealTarget( pSquadmate ) )
-					{
-						distClosestSq = distCurSq;
-						pEntity = pSquadmate;
-					}
-				}
-
-				pSquadmate = m_pSquad->GetNextMember( &iter );
-			}
-
-			if ( pEntity )
-			{
-				SetTarget( pEntity );
-				return SCHED_CITIZEN_HEAL;
-			}
-		}
-	}
-	else
-	{
-		if ( HasCondition( COND_CIT_PLAYERHEALREQUEST ) )
-			DevMsg( "Would say: sorry, need to recharge\n" );
-	}
-
-	return SCHED_NONE;
-
-#endif
-}
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
@@ -1555,29 +1451,9 @@ void CNPC_Citizen::StartTask( const Task_t *pTask )
 		break;
 
 	case TASK_CIT_SIT_ON_TRAIN:
-		if ( NameMatches("citizen_train_2") )
-		{
-			SetSequenceByName( "d1_t01_TrainRide_Sit_Idle" );
-			SetIdealActivity( ACT_DO_NOT_DISTURB );
-		}
-		else
-		{
-			SetSequenceByName( "d1_t01_TrainRide_Stand" );
-			SetIdealActivity( ACT_DO_NOT_DISTURB );
-		}
 		break;
 
 	case TASK_CIT_LEAVE_TRAIN:
-		if ( NameMatches("citizen_train_2") )
-		{
-			SetSequenceByName( "d1_t01_TrainRide_Sit_Exit" );
-			SetIdealActivity( ACT_DO_NOT_DISTURB );
-		}
-		else
-		{
-			SetSequenceByName( "d1_t01_TrainRide_Stand_Exit" );
-			SetIdealActivity( ACT_DO_NOT_DISTURB );
-		}
 		break;
 		
 	case TASK_CIT_HEAL:
@@ -1880,7 +1756,7 @@ void CNPC_Citizen::HandleAnimEvent( animevent_t *pEvent )
 	{
 		// Heal my target (if within range)
 #if HL2_EPISODIC
-		if ( USE_EXPERIMENTAL_MEDIC_CODE() && IsMedic() )
+		if ( IsMedic() )
 		{
 			CBaseCombatCharacter *pTarget = dynamic_cast<CBaseCombatCharacter *>( GetTarget() );
 			Assert(pTarget);
@@ -3779,7 +3655,7 @@ void CNPC_Citizen::InputStopPatrolling( inputdata_t &inputdata )
 //------------------------------------------------------------------------------
 void CNPC_Citizen::OnGivenWeapon( CBaseCombatWeapon *pNewWeapon )
 {
-	FixupMattWeapon();
+	
 }
 
 //------------------------------------------------------------------------------
