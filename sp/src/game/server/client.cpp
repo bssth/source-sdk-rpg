@@ -1078,6 +1078,12 @@ void CC_Player_NoClip( void )
 	if ( !pPlayer )
 		return;
 
+	if (pPlayer->GetFlags() & FL_FLY)
+	{
+		ClientPrint(pPlayer, HUD_PRINTCONSOLE, "cannot noclip: disable fly first\n");
+		return;
+	}
+
 	CPlayerState *pl = pPlayer->PlayerData();
 	Assert( pl );
 
@@ -1158,6 +1164,38 @@ void CC_God_f (void)
 
 static ConCommand god("god", CC_God_f, "Toggle. Player becomes invulnerable.", FCVAR_CHEAT );
 
+void CC_Fly_f()
+{
+	CBasePlayer* pPlayer = UTIL_GetLocalPlayer();
+
+	if (pPlayer->GetMoveType() == MOVETYPE_NOCLIP)
+	{
+		ClientPrint(pPlayer, HUD_PRINTCONSOLE, "cannot fly: disable noclip first\n");
+		return;
+	}
+
+	if (!sv_cheats->GetBool())
+		return;
+
+	pPlayer->ToggleFlag(FL_FLY);
+
+	if (!(pPlayer->GetFlags() & FL_FLY))
+		ClientPrint(pPlayer, HUD_PRINTCONSOLE, "flying OFF\n");
+	else
+		ClientPrint(pPlayer, HUD_PRINTCONSOLE, "flying ON\n");
+
+
+	if (pPlayer->GetFlags() & FL_FLY)
+	{
+		pPlayer->SetMoveType(MOVETYPE_FLY, MOVECOLLIDE_FLY_BOUNCE);
+	}
+	else
+	{
+		pPlayer->SetMoveType(MOVETYPE_WALK, MOVECOLLIDE_DEFAULT);
+	}
+}
+
+static ConCommand fly("fly", CC_Fly_f, "Toggle. Player is able to fly.", FCVAR_CHEAT);
 
 //------------------------------------------------------------------------------
 // Sets client to godmode
