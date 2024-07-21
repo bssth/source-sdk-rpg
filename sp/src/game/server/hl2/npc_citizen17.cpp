@@ -47,7 +47,7 @@
 extern ConVar sk_healthkit;
 extern ConVar sk_healthvial;
 
-const int MAX_PLAYER_SQUAD = 4;
+const int MAX_PLAYER_SQUAD = 10;
 
 ConVar	sk_citizen_health				( "sk_citizen_health",					"0");
 ConVar	sk_citizen_heal_player			( "sk_citizen_heal_player",				"25");
@@ -84,7 +84,6 @@ ConVar	sk_citizen_heal_toss_player_delay("sk_citizen_heal_toss_player_delay", "2
 
 
 #define MEDIC_THROW_SPEED npc_citizen_medic_throw_speed.GetFloat()
-#define USE_EXPERIMENTAL_MEDIC_CODE() (npc_citizen_heal_chuck_medkit.GetBool() && NameMatches("griggs"))
 #endif
 
 ConVar player_squad_autosummon_time( "player_squad_autosummon_time", "5" );
@@ -284,6 +283,7 @@ int	ACT_CIT_STARTLED;		// Startled by sneaky scanner
 //---------------------------------------------------------
 
 LINK_ENTITY_TO_CLASS( npc_citizen, CNPC_Citizen );
+LINK_ENTITY_TO_CLASS( npc_citizen_bad, CNPC_Citizen );
 
 //---------------------------------------------------------
 
@@ -309,7 +309,9 @@ BEGIN_DATADESC( CNPC_Citizen )
 	DEFINE_FIELD( 		m_bShouldPatrol, 			FIELD_BOOLEAN ),
 	DEFINE_FIELD( 		m_iszOriginalSquad, 		FIELD_STRING ),
 	DEFINE_FIELD( 		m_flTimeJoinedPlayerSquad,	FIELD_TIME ),
-	DEFINE_FIELD( 		m_bWasInPlayerSquad, FIELD_BOOLEAN ),
+	DEFINE_FIELD( 		m_bWasInPlayerSquad,		FIELD_BOOLEAN ),
+	DEFINE_FIELD(		m_isBadCitizen,				FIELD_BOOLEAN ),
+	DEFINE_FIELD(		m_isAngryToPlayer,			FIELD_BOOLEAN ),
 	DEFINE_FIELD( 		m_flTimeLastCloseToPlayer,	FIELD_TIME ),
 	DEFINE_EMBEDDED(	m_AutoSummonTimer ),
 	DEFINE_FIELD(		m_vAutoSummonAnchor, FIELD_POSITION_VECTOR ),
@@ -377,11 +379,6 @@ void CNPC_Citizen::Precache()
 	else
 		PrecacheModel( STRING( GetModelName() ) );
 
-	if ( NameMatches( "matt" ) )
-		PrecacheModel( "models/props_canal/mattpipe.mdl" );
-
-	PrecacheModel( INSIGNIA_MODEL );
-
 	PrecacheScriptSound( "NPC_Citizen.FootstepLeft" );
 	PrecacheScriptSound( "NPC_Citizen.FootstepRight" );
 	PrecacheScriptSound( "NPC_Citizen.Die" );
@@ -444,12 +441,17 @@ void CNPC_Citizen::Spawn()
 {
 	BaseClass::Spawn();
 
+	m_isAngryToPlayer = false;
+
+	// Bad-type citizens are our enemies by default
+	m_isBadCitizen = FClassnameIs( this, "npc_citizen_bad" );
+
 #ifdef _XBOX
 	// Always fade the corpse
 	AddSpawnFlags( SF_NPC_FADE_CORPSE );
 #endif // _XBOX
 
-	if ( ShouldAutosquad() )
+	if ( ShouldAutosquad() && !m_isBadCitizen )
 	{
 		if ( m_SquadName == GetPlayerSquadName() )
 		{
@@ -473,16 +475,6 @@ void CNPC_Citizen::Spawn()
 	{
 		CapabilitiesRemove( bits_CAP_MOVE_GROUND );
 		SetMoveType( MOVETYPE_NONE );
-		if ( NameMatches("citizen_train_2") )
-		{
-			SetSequenceByName( "d1_t01_TrainRide_Sit_Idle" );
-			SetIdealActivity( ACT_DO_NOT_DISTURB );
-		}
-		else
-		{
-			SetSequenceByName( "d1_t01_TrainRide_Stand" );
-			SetIdealActivity( ACT_DO_NOT_DISTURB );
-		}
 	}
 
 	m_flStopManhackFlinch = -1;
@@ -511,10 +503,15 @@ void CNPC_Citizen::Spawn()
 	SetUse( &CNPC_Citizen::CommanderUse );
 	Assert( !ShouldAutosquad() || !IsInPlayerSquad() );
 
-	m_bWasInPlayerSquad = IsInPlayerSquad();
+	m_bWasInPlayerSquad = IsInPlayerSquad() && !m_isBadCitizen;
 
 	// Use render bounds instead of human hull for guys sitting in chairs, etc.
 	m_ActBusyBehavior.SetUseRenderBounds( HasSpawnFlags( SF_CITIZEN_USE_RENDER_BOUNDS ) );
+
+	if(m_isBadCitizen)
+	{
+		AddEntityRelationship(UTIL_GetLocalPlayer(), D_HT, 1);
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -591,6 +588,9 @@ void CNPC_Citizen::SelectModel()
 			{ "prison",			CT_DOWNTRODDEN	},
 			{ "c17",			CT_REBEL		},
 			{ "citadel",		CT_DOWNTRODDEN	},
+			{ "ep1",			CT_REBEL		},
+			{ "ep2",			CT_REBEL		},
+			{ "bb",				CT_DOWNTRODDEN	},
 		};
 
 		char szMapName[256];
@@ -1223,7 +1223,7 @@ int CNPC_Citizen::SelectScheduleHeal()
 	}
 	
 	return SCHED_NONE;
-		}
+}
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
@@ -1836,6 +1836,12 @@ bool CNPC_Citizen::IgnorePlayerPushing( void )
 			return true;
 	}
 
+	// Don't allow non-player squad members to be pushed
+	if (!IsInPlayerSquad())
+	{
+		return true;
+	}
+
 	return false;
 }
 
@@ -1898,6 +1904,12 @@ const char *CNPC_Citizen::SelectRandomExpressionForState( NPC_STATE state )
 //-----------------------------------------------------------------------------
 void CNPC_Citizen::SimpleUse( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value )
 {
+	if (IsAngryToPlayer())
+	{
+		m_OnDenyCommanderUse.FireOutput(this, this);
+		return;
+	}
+
 	// Under these conditions, citizens will refuse to go with the player.
 	// Robin: NPCs should always respond to +USE even if someone else has the semaphore.
 	m_bDontUseSemaphore = true;
@@ -1968,7 +1980,7 @@ bool CNPC_Citizen::IsManhackMeleeCombatant()
 {
 	CBaseCombatWeapon *pWeapon = GetActiveWeapon();
 	CBaseEntity *pEnemy = GetEnemy();
-	return ( pEnemy && pWeapon && pEnemy->Classify() == CLASS_MANHACK && pWeapon->ClassMatches( "weapon_crowbar" ) );
+	return (pEnemy && pWeapon && pEnemy->Classify() == CLASS_MANHACK && (pWeapon->ClassMatches("weapon_crowbar") || pWeapon->ClassMatches("weapon_stunstick")));
 }
 
 //-----------------------------------------------------------------------------
@@ -2131,43 +2143,67 @@ bool CNPC_Citizen::ShouldLookForBetterWeapon()
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
-int CNPC_Citizen::OnTakeDamage_Alive( const CTakeDamageInfo &info )
+int CNPC_Citizen::OnTakeDamage_Alive(const CTakeDamageInfo& info)
 {
-	if( (info.GetDamageType() & DMG_BURN) && (info.GetDamageType() & DMG_DIRECT) )
+	if ((info.GetDamageType() & DMG_BURN) && (info.GetDamageType() & DMG_DIRECT))
 	{
 #define CITIZEN_SCORCH_RATE		6
 #define CITIZEN_SCORCH_FLOOR	75
 
-		Scorch( CITIZEN_SCORCH_RATE, CITIZEN_SCORCH_FLOOR );
+		Scorch(CITIZEN_SCORCH_RATE, CITIZEN_SCORCH_FLOOR);
 	}
 
 	CTakeDamageInfo newInfo = info;
 
-	if( IsInSquad() && (info.GetDamageType() & DMG_BLAST) && info.GetInflictor() )
+	if (IsInSquad() && (info.GetDamageType() & DMG_BLAST) && info.GetInflictor())
 	{
-		if( npc_citizen_explosive_resist.GetBool() )
+		if (npc_citizen_explosive_resist.GetBool())
 		{
 			// Blast damage. If this kills a squad member, give the 
 			// remaining citizens a resistance bonus to this inflictor
 			// to try to avoid having the entire squad wiped out by a
 			// single explosion.
-			if( m_pSquad->IsSquadInflictor( info.GetInflictor() ) )
+			if (m_pSquad->IsSquadInflictor(info.GetInflictor()))
 			{
-				newInfo.ScaleDamage( 0.5 );
+				newInfo.ScaleDamage(0.5);
 			}
 			else
 			{
 				// If this blast is going to kill me, designate the inflictor
 				// so that the rest of the squad can enjoy a damage resist.
-				if( info.GetDamage() >= GetHealth() )
+				if (info.GetDamage() >= GetHealth())
 				{
-					m_pSquad->SetSquadInflictor( info.GetInflictor() );
+					m_pSquad->SetSquadInflictor(info.GetInflictor());
 				}
 			}
 		}
 	}
 
+	if (info.GetDamage() > 0 && !IsInPlayerSquad())
+	{	
+		CBaseEntity* attacker = info.GetAttacker();
+
+		// If we're hit by a player, become angry with them
+		if (attacker && attacker->IsPlayer())
+		{
+			CBasePlayer *pPlayer = ToBasePlayer(attacker);
+			if (pPlayer && IsPlayerAlly(pPlayer))
+			{
+				DevMsg("Citizen %s is now angry with player\n", GetDebugName());
+				m_isAngryToPlayer = true;
+				AddEntityRelationship(attacker, D_HT, 1);
+				SetEnemy(attacker);
+				SetState(NPC_STATE_COMBAT);
+			}
+		}
+	}
+
 	return BaseClass::OnTakeDamage_Alive( newInfo );
+}
+
+bool CNPC_Citizen::IsAngryToPlayer()
+{
+	return m_isAngryToPlayer;
 }
 
 //-----------------------------------------------------------------------------
@@ -2181,6 +2217,11 @@ bool CNPC_Citizen::IsCommandable()
 //-----------------------------------------------------------------------------
 bool CNPC_Citizen::IsPlayerAlly( CBasePlayer *pPlayer )											
 { 
+	if (IsAngryToPlayer())
+	{
+		return false;
+	}
+
 	if ( Classify() == CLASS_CITIZEN_PASSIVE && GlobalEntity_GetState("gordon_precriminal") == GLOBAL_ON )
 	{
 		// Robin: Citizens use friendly speech semaphore in trainstation
@@ -2194,6 +2235,9 @@ bool CNPC_Citizen::IsPlayerAlly( CBasePlayer *pPlayer )
 //-----------------------------------------------------------------------------
 bool CNPC_Citizen::CanJoinPlayerSquad()
 {
+	if(IsAngryToPlayer())
+		return false;
+
 	if ( !AI_IsSinglePlayer() )
 		return false;
 

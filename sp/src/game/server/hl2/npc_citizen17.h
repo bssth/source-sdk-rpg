@@ -165,6 +165,7 @@ public:
 	// Commander mode
 	//---------------------------------
 	bool 			IsCommandable();
+	bool			IsAngryToPlayer();
 	bool			IsPlayerAlly( CBasePlayer *pPlayer = NULL );
 	bool			CanJoinPlayerSquad();
 	bool			WasInPlayerSquad();
@@ -300,6 +301,8 @@ private:
 	string_t		m_iszOriginalSquad;
 	float			m_flTimeJoinedPlayerSquad;
 	bool			m_bWasInPlayerSquad;
+	bool			m_isBadCitizen;
+	bool			m_isAngryToPlayer;
 	float			m_flTimeLastCloseToPlayer;
 	string_t		m_iszDenyCommandConcept;
 
