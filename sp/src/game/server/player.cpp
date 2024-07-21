@@ -80,7 +80,7 @@
 #ifdef HL2_DLL
 #include "combine_mine.h"
 #include "weapon_physcannon.h"
-#include "point_keypad.h"
+#include "prop_keypad.h"
 #endif
 
 ConVar autoaim_max_dist( "autoaim_max_dist", "2160" ); // 2160 = 180 feet
@@ -6490,53 +6490,39 @@ bool CBasePlayer::ClientCommand( const CCommand &args )
 
 		CBaseEntity* pEntity = NULL;
 
-		//while ((pEntity = gEntList.FindEntityByClassnameWithin(pEntity, "player", GetLocalOrigin(), 512)) != NULL)
-		//	CBasePlayer *pPlayer = ToBasePlayer(pEntity);
-
-		while ((pEntity = gEntList.FindEntityInSphere(pEntity, GetLocalOrigin(), 512)) != NULL)//512 
+		while ((pEntity = gEntList.FindEntityInSphere(pEntity, GetLocalOrigin(), 512)) != NULL)
 		{
-			if (FClassnameIs(pEntity, "point_keypad"))
+			if (FClassnameIs(pEntity, "prop_keypad"))
 			{
 				edict_t* pFind;
 				pFind = pEntity->edict();
 
 				CBaseEntity* pEnt = CBaseEntity::Instance(pFind);
-				CPointKeypad* pKeypadSettings = (CPointKeypad*)pEnt;
-
-				//DevMsg("code_match - firing FireTarget\n");
-
+				CPropKeypad* pKeypadSettings = (CPropKeypad*)pEnt;
 				pKeypadSettings->FireTarget();
-
 				return true;
 			}
 		}
-	}
+		}
 	else if (stricmp(cmd, "keypad_codedismatch"))
 	{
 		CBaseEntity* pEntity = NULL;
 
-		//	while ((pEntity = gEntList.FindEntityByClassnameWithin(pEntity, "player", GetLocalOrigin(), 512)) != NULL)
-		//	CBasePlayer *pPlayer = ToBasePlayer(pEntity);
-
-		//same as above, but calls a different function
 		while ((pEntity = gEntList.FindEntityInSphere(pEntity, GetLocalOrigin(), 512)) != NULL)//512
 		{
-			if (FClassnameIs(pEntity, "point_keypad"))
+			if (FClassnameIs(pEntity, "prop_keypad"))
 			{
 				edict_t* pFind;
 				pFind = pEntity->edict();
 
 				CBaseEntity* pEnt = CBaseEntity::Instance(pFind);
-				CPointKeypad* pKeypadSettings = (CPointKeypad*)pEnt;
-
-				//DevMsg("code_dismatch - firing WrongCode\n");
+				CPropKeypad* pKeypadSettings = (CPropKeypad*)pEnt;
 
 				pKeypadSettings->WrongCode();
-
 				return true;
 			}
 		}
-	}
+		}
 
 	return false;
 }

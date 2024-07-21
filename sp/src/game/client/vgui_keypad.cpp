@@ -253,7 +253,6 @@ void CVgui_keypad::CheckPass(int number)
 {
 	char numberN[8];
 	sprintf(numberN, "%i", number);
-	DevMsg("Number pressed is: %s \n", numberN);
 
 	m_pPressedNumbers++;
 
@@ -261,8 +260,6 @@ void CVgui_keypad::CheckPass(int number)
 		strcat(szEnteredNumbers, numberN);
 	else
 		strcpy(szEnteredNumbers, numberN);
-
-	DevMsg("Code entered is: %s \n", szEnteredNumbers);
 
 	m_pLabel->SetVisible(true);
 
