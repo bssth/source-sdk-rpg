@@ -69,7 +69,7 @@ ConVar	npc_citizen_squad_marker( "npc_citizen_squad_marker", "0" );
 ConVar	npc_citizen_explosive_resist( "npc_citizen_explosive_resist", "0" );
 ConVar	npc_citizen_auto_player_squad( "npc_citizen_auto_player_squad", "1" );
 ConVar	npc_citizen_auto_player_squad_allow_use( "npc_citizen_auto_player_squad_allow_use", "0" );
-
+ConVar	npc_citizen_damage_triggering ( "npc_citizen_damage_triggering", "1" );
 
 ConVar	npc_citizen_dont_precache_all( "npc_citizen_dont_precache_all", "0" );
 
@@ -2179,7 +2179,7 @@ int CNPC_Citizen::OnTakeDamage_Alive(const CTakeDamageInfo& info)
 		}
 	}
 
-	if (info.GetDamage() > 0 && !IsInPlayerSquad())
+	if (info.GetDamage() > 0 && !IsInPlayerSquad() && npc_citizen_damage_triggering.GetBool())
 	{	
 		CBaseEntity* attacker = info.GetAttacker();
 
