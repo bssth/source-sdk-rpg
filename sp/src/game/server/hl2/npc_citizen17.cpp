@@ -3335,7 +3335,11 @@ bool CNPC_Citizen::ShouldHealTarget( CBaseEntity *pTarget, bool bActiveUse )
 {
 	Disposition_t disposition;
 	
-	if ( !pTarget && ( ( disposition = IRelationType( pTarget ) ) != D_LI && disposition != D_NU ) )
+	if (!pTarget)
+		return false;
+
+	disposition = IRelationType(pTarget);
+	if (disposition != D_LI && disposition != D_NU)
 		return false;
 
 	// Don't heal if I'm in the middle of talking
