@@ -1,0 +1,62 @@
+"VertexlitGeneric"
+{
+	"$basetexture" "models/hla/Alyx_EP2/alyx_body_d"
+	"$bumpmap" "models/hla/Alyx_EP2/alyx_body_n"
+
+//Specular
+	"$envmap"					"env_cubemap"
+	"$envmaptint"				"[.01 .01 .01]"	
+	"$normalmapalphaenvmapmask"	"1"
+	"$envmapfresnel"			"1"
+
+//Phong
+	"$Phong"					"1"
+	"$PhongExponentTexture"		"models/hla/alyx/alyx_body_e"
+	"$PhongBoost"				".6"
+	"$phongfresnelranges"	"[0.04 0.4 1]"
+	"$PhongDisableHalfLambert"	"1"
+	"$PhongAlbedoTint"			"1"
+
+//Warp
+	"$PhongWarpTexture"			"models\HLA\shared\phongwarp_metal2"
+
+//Other
+	"$Model"					"1"
+	"$HalfLambert"				"1"
+	"$NoDecal"					"1"
+	"$NoCull"					"1"
+	"$SurfaceProp"				"metal"
+	"$BlendTintByBaseAlpha"		"1"
+	"$Color2"					"[0.4 0.4 0.4]"
+
+	// Flesh Interior Pass
+	"$FleshInteriorEnabled"      "1" // Enables effect
+	"$FleshInteriorTexture"      "models/Alyx/alyx_flesh_color" // Mask in alpha
+	"$FleshNormalTexture"		 "models/Alyx/alyx_flesh_normal"
+	"$FleshBorderTexture1D"      "models/Alyx/alyx_flesh_border"
+	"$FleshInteriorNoiseTexture" "Engine/noise-blur-256x256"
+	"$FleshSubsurfaceTexture"	 "models/Alyx/alyx_flesh_subsurface"
+	"$FleshCubeTexture"          "env_cubemap"
+	"$FleshBorderNoiseScale"     "3" // Flesh Noise UV scalar for border
+	"$FleshBorderWidth"			 "0.2" // Width of flesh border
+	"$FleshBorderSoftness"		 "0.5" // Border softness must be greater than 0.0 and up tp 0.5
+	"$FleshBorderTint"			 "[.2 .2 .4]" // Tint / brighten the border 1D texture
+	"$FleshGlossBrightness"		 "1.0" // Change the brightness of the glossy layer
+	"$FleshDebugForceFleshOn"	 "0" // DEBUG: This will force on full flesh for testing
+	"$FleshScrollSpeed"			 "1.0"
+	"$Time" "0.0"
+	"Proxies"
+	{
+		"FleshInterior"
+		{
+		}
+		"MaterialModify"
+		{
+		}
+		"CurrentTime"
+		{
+			"resultVar" "$time"
+		}
+	}
+}
+

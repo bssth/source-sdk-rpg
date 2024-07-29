@@ -1,16 +1,5 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
-//
-// Purpose: SDK 2013 CE game definition file (.fgd) 
-//
-//=============================================================================
-
 @include "base.fgd"
 
-//-------------------------------------------------------------------------
-//
-// NPCs
-//
-//-------------------------------------------------------------------------
 @NPCClass base(BaseHelicopter) studio("models/combine_dropship.mdl" ) = npc_combinedropship : "Combine Dropship"
 [
 	spawnflags(Flags) =
@@ -81,17 +70,12 @@
 
 ]
 
-//-------------------------------------------------------------------------
-//
-// Vehicles.
-//
-//-------------------------------------------------------------------------
 @PointClass base(BaseDriveableVehicle) studioprop() = prop_vehicle_jalopy :
 	"Driveable studiomodel jalopy."
 [
 	input StartRemoveTauCannon(void) : "Start the tau removal sequence."
 	input FinishRemoveTauCannon(void) : "Finish the tau removal sequence."
-	
+
 	// FIXME: These will move into episodic
 	input LockEntrance( void ) : "Stops NPC's from entering the vehicle until unlocked."
 	input UnlockEntrance( void ) : "Allows NPC's to enter the vehicle."
@@ -109,22 +93,39 @@
 	input CreateLinkController(void) : "Automatically builds and attaches a link controller to the car, which cuts the node connections under the car while the car is standing still."
 	input DestroyLinkController(void) : "Destroys the link controller created by CreateLinkController."
 
-	
+
 	CargoVisible(choices): "Hopper Visible" : 0 : "Is the striderbuster cargo hopper visible?" =
 	[
 		0 : "No"
 		1 : "Yes"
 	]
 
-	spawnflags(Flags) = 
+	spawnflags(Flags) =
 	[
 		1 : "HUD Locator Precache" : 0
 	]
 
-	
+
 	// FIXME: These are going to change!
 	output OnCompanionEnteredVehicle(void) : "Companion has entered the vehicle."
 	output OnCompanionExitedVehicle(void) : "Companion has exited the vehicle."
 	output OnHostileEnteredVehicle(void) : "Hostile has entered the vehicle."
 	output OnHostileExitedVehicle(void) : "Hostile has exited the vehicle."
+]
+
+@PointClass base(Targetname) studio("models/props_lab/keypad.mdl") = prop_keypad : "An interactive keypad that fires outputs depending if is correct " +
+"or not the introduced code."
+[
+	code(string) : "Code (MAX 4!)" : "1234"
+	label(string) : "Label" : "Mah keypad"
+	hide_pass(choices) : "Hide password?" : "1" =
+	[
+		"0" : "No"
+		"1": 	"Yes"
+	]
+
+	input Enable(void) : "Enables the keypad."
+
+	output OnCorrectCode(void) : "Fired when the code is correct."
+	output OnIncorrectCode(void) : "Fired when the code is incorrect."
 ]
