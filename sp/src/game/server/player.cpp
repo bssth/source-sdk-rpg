@@ -6495,7 +6495,6 @@ bool CBasePlayer::ClientCommand( const CCommand &args )
 	//Keypad
 	else if (stricmp(cmd, "keypad_codematch"))
 	{
-
 		CBaseEntity* pEntity = NULL;
 
 		while ((pEntity = gEntList.FindEntityInSphere(pEntity, GetLocalOrigin(), 512)) != NULL)
@@ -6512,7 +6511,7 @@ bool CBasePlayer::ClientCommand( const CCommand &args )
 			}
 		}
 		}
-	else if (stricmp(cmd, "keypad_codedismatch"))
+	else if (stricmp(cmd, "keypad_codematch") == 0)
 	{
 		CBaseEntity* pEntity = NULL;
 
