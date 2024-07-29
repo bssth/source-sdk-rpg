@@ -189,6 +189,7 @@ ConVar	sk_player_leg( "sk_player_leg","1" );
 ConVar sv_regeneration("sv_regeneration", "1", FCVAR_REPLICATED);
 ConVar sv_regeneration_wait_time("sv_regeneration_wait_time", "1.0", FCVAR_REPLICATED);
 ConVar sv_regeneration_rate("sv_regeneration_rate", "0.5", FCVAR_REPLICATED);
+ConVar sv_hev_sounds("sv_hev_sounds", "0", FCVAR_REPLICATED);
 
 //ConVar	player_usercommand_timeout( "player_usercommand_timeout", "10", 0, "After this many seconds without a usercommand from a player, the client is kicked." );
 #ifdef _DEBUG
@@ -842,7 +843,7 @@ void CBasePlayer::DeathSound( const CTakeDamageInfo &info )
 	}
 
 	// play one of the suit death alarms
-	if ( IsSuitEquipped() )
+	if ( IsSuitEquipped() && sv_hev_sounds.GetBool())
 	{
 		UTIL_EmitGroupnameSuit(edict(), "HEV_DEAD");
 	}
@@ -4255,7 +4256,9 @@ void CBasePlayer::SetSuitUpdate(const char *name, int fgroup, int iNoRepeatTime)
 	int i;
 	int isentence;
 	int iempty = -1;
-	
+
+	if(!sv_hev_sounds.GetBool())
+		return;
 	
 	// Ignore suit updates if no suit
 	if ( !IsSuitEquipped() )
@@ -6150,6 +6153,11 @@ void CBasePlayer::CheatImpulseCommands( int iImpulse )
 		Msg("Your memory serves you well!\n" );
 		TakeDamage(CTakeDamageInfo(this, this, GetMaxHealth(), DMG_FALL));
 		break;
+	case 227:
+		// Test player speech
+		EmitSound("npc_citizen.abouttime01");
+		break;
+
 	case 228:
 		gEvilImpulse101 = true;
 
