@@ -448,7 +448,7 @@ int CBaseCombatWeapon::GetSlot( void ) const
 //-----------------------------------------------------------------------------
 int CBaseCombatWeapon::GetPosition( void ) const
 {
-	return GetWpnData().iPosition;
+	return 1;
 }
 
 //-----------------------------------------------------------------------------

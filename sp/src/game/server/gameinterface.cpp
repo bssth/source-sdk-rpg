@@ -232,9 +232,6 @@ CGlobalVars *gpGlobals;
 edict_t *g_pDebugEdictBase = 0;
 static int		g_nCommandClientIndex = 0;
 
-// The chapter number of the current
-static int		g_nCurrentChapterIndex = -1;
-
 #ifdef _DEBUG
 static ConVar sv_showhitboxes( "sv_showhitboxes", "-1", FCVAR_CHEAT, "Send server-side hitboxes for specified entity to client (NOTE:  this uses lots of bandwidth, use on listen server only)." );
 #endif
@@ -242,7 +239,6 @@ static ConVar sv_showhitboxes( "sv_showhitboxes", "-1", FCVAR_CHEAT, "Send serve
 void PrecachePointTemplates();
 
 static ClientPutInServerOverrideFn g_pClientPutInServerOverride = NULL;
-static void UpdateChapterRestrictions( const char *mapname );
 
 static void UpdateRichPresence ( void );
 
@@ -962,13 +958,6 @@ bool CServerGameDLL::LevelInit( const char *pMapName, char const *pMapEntities, 
 #endif // USES_ECON_ITEMS
 
 	ResetWindspeed();
-	UpdateChapterRestrictions( pMapName );
-
-	if ( IsX360() && !background && (gpGlobals->maxClients == 1) && (g_nCurrentChapterIndex >= 0) )
-	{
-		// Single player games tell xbox live what game & chapter the user is playing
-		UpdateRichPresence();
-	}
 
 	//Tony; parse custom manifest if exists!
 	ParseParticleEffectsMap( pMapName, false );
@@ -1392,7 +1381,6 @@ void CServerGameDLL::LevelShutdown( void )
 	// In case we quit out during initial load
 	CBaseEntity::SetAllowPrecache( false );
 
-	g_nCurrentChapterIndex = -1;
 
 #ifndef _XBOX
 #ifdef USE_NAV_MESH
@@ -1579,209 +1567,22 @@ void CServerGameDLL::PreSave( CSaveRestoreData *s )
 
 #include "client_textmessage.h"
 
-// This little hack lets me marry BSP names to messages in titles.txt
-typedef struct
-{
-	const char *pBSPName;
-	const char *pTitleName;
-} TITLECOMMENT;
-
-// this list gets searched for the first partial match, so some are out of order
-static TITLECOMMENT gTitleComments[] =
-{
-#ifdef HL1_DLL
-	{ "t0a0", "#T0A0TITLE" },
-	{ "c0a0", "#HL1_Chapter1_Title" },
-	{ "c1a0", "#HL1_Chapter2_Title" },
-	{ "c1a1", "#HL1_Chapter3_Title" },
-	{ "c1a2", "#HL1_Chapter4_Title" },
-	{ "c1a3", "#HL1_Chapter5_Title" },
-	{ "c1a4", "#HL1_Chapter6_Title" },
-	{ "c2a1", "#HL1_Chapter7_Title" },
-	{ "c2a2", "#HL1_Chapter8_Title" },
-	{ "c2a3", "#HL1_Chapter9_Title" },
-	{ "c2a4d", "#HL1_Chapter11_Title" },	// These must appear before "C2A4" so all other map names starting with C2A4 get that title
-	{ "c2a4e", "#HL1_Chapter11_Title" },
-	{ "c2a4f", "#HL1_Chapter11_Title" },
-	{ "c2a4g", "#HL1_Chapter11_Title" },
-	{ "c2a4", "#HL1_Chapter10_Title" },
-	{ "c2a5", "#HL1_Chapter12_Title" },
-	{ "c3a1", "#HL1_Chapter13_Title" },
-	{ "c3a2", "#HL1_Chapter14_Title" },
-	{ "c4a1a", "#HL1_Chapter17_Title"  },	// Order is important, see above
-	{ "c4a1b", "#HL1_Chapter17_Title"  },
-	{ "c4a1c", "#HL1_Chapter17_Title"  },
-	{ "c4a1d", "#HL1_Chapter17_Title"  },
-	{ "c4a1e", "#HL1_Chapter17_Title"  },
-	{ "c4a1", "#HL1_Chapter15_Title" },
-	{ "c4a2", "#HL1_Chapter16_Title"  },
-	{ "c4a3", "#HL1_Chapter18_Title"  },
-	{ "c5a1", "#HL1_Chapter19_Title"  },
-#elif defined PORTAL
-	{ "testchmb_a_00",			"#Portal_Chapter1_Title"  },
-	{ "testchmb_a_01",			"#Portal_Chapter1_Title"  },
-	{ "testchmb_a_02",			"#Portal_Chapter2_Title"  },
-	{ "testchmb_a_03",			"#Portal_Chapter2_Title"  },
-	{ "testchmb_a_04",			"#Portal_Chapter3_Title"  },
-	{ "testchmb_a_05",			"#Portal_Chapter3_Title"  },
-	{ "testchmb_a_06",			"#Portal_Chapter4_Title"  },
-	{ "testchmb_a_07",			"#Portal_Chapter4_Title"  },
-	{ "testchmb_a_08_advanced",	"#Portal_Chapter5_Title"  },
-	{ "testchmb_a_08",			"#Portal_Chapter5_Title"  },
-	{ "testchmb_a_09_advanced",	"#Portal_Chapter6_Title"  },
-	{ "testchmb_a_09",			"#Portal_Chapter6_Title"  },
-	{ "testchmb_a_10_advanced",	"#Portal_Chapter7_Title"  },
-	{ "testchmb_a_10",			"#Portal_Chapter7_Title"  },
-	{ "testchmb_a_11_advanced",	"#Portal_Chapter8_Title"  },
-	{ "testchmb_a_11",			"#Portal_Chapter8_Title"  },
-	{ "testchmb_a_13_advanced",	"#Portal_Chapter9_Title"  },
-	{ "testchmb_a_13",			"#Portal_Chapter9_Title"  },
-	{ "testchmb_a_14_advanced",	"#Portal_Chapter10_Title"  },
-	{ "testchmb_a_14",			"#Portal_Chapter10_Title"  },
-	{ "testchmb_a_15",			"#Portal_Chapter11_Title"  },
-	{ "escape_",				"#Portal_Chapter11_Title"  },
-	{ "background2",			"#Portal_Chapter12_Title"  },
-#else
-	{ "intro", "#HL2_Chapter1_Title" },
-
-	{ "d1_trainstation_05", "#HL2_Chapter2_Title" },
-	{ "d1_trainstation_06", "#HL2_Chapter2_Title" },
-	
-	{ "d1_trainstation_", "#HL2_Chapter1_Title" },
-
-	{ "d1_canals_06", "#HL2_Chapter4_Title" },
-	{ "d1_canals_07", "#HL2_Chapter4_Title" },
-	{ "d1_canals_08", "#HL2_Chapter4_Title" },
-	{ "d1_canals_09", "#HL2_Chapter4_Title" },
-	{ "d1_canals_1", "#HL2_Chapter4_Title" },
-	
-	{ "d1_canals_0", "#HL2_Chapter3_Title" },
-
-	{ "d1_eli_", "#HL2_Chapter5_Title" },
-
-	{ "d1_town_", "#HL2_Chapter6_Title" },
-
-	{ "d2_coast_09", "#HL2_Chapter8_Title" },
-	{ "d2_coast_1", "#HL2_Chapter8_Title" },
-	{ "d2_prison_01", "#HL2_Chapter8_Title" },
-
-	{ "d2_coast_", "#HL2_Chapter7_Title" },
-
-	{ "d2_prison_06", "#HL2_Chapter9a_Title" },
-	{ "d2_prison_07", "#HL2_Chapter9a_Title" },
-	{ "d2_prison_08", "#HL2_Chapter9a_Title" },
-
-	{ "d2_prison_", "#HL2_Chapter9_Title" },
-
-	{ "d3_c17_01", "#HL2_Chapter9a_Title" },
-	{ "d3_c17_09", "#HL2_Chapter11_Title" },
-	{ "d3_c17_1", "#HL2_Chapter11_Title" },
-
-	{ "d3_c17_", "#HL2_Chapter10_Title" },
-
-	{ "d3_citadel_", "#HL2_Chapter12_Title" },
-
-	{ "d3_breen_", "#HL2_Chapter13_Title" },
-	{ "credits", "#HL2_Chapter14_Title" },
-
-	{ "ep1_citadel_00", "#episodic_Chapter1_Title" },
-	{ "ep1_citadel_01", "#episodic_Chapter1_Title" },
-	{ "ep1_citadel_02b", "#episodic_Chapter1_Title" },
-	{ "ep1_citadel_02", "#episodic_Chapter1_Title" },
-	{ "ep1_citadel_03", "#episodic_Chapter2_Title" },
-	{ "ep1_citadel_04", "#episodic_Chapter2_Title" },
-	{ "ep1_c17_00a", "#episodic_Chapter3_Title" },
-	{ "ep1_c17_00", "#episodic_Chapter3_Title" },
-	{ "ep1_c17_01", "#episodic_Chapter4_Title" },
-	{ "ep1_c17_02b", "#episodic_Chapter4_Title" },
-	{ "ep1_c17_02", "#episodic_Chapter4_Title" },
-	{ "ep1_c17_05", "#episodic_Chapter5_Title" },
-	{ "ep1_c17_06", "#episodic_Chapter5_Title" },
-
-	{ "ep2_outland_01a", "#ep2_Chapter1_Title" },
-	{ "ep2_outland_01", "#ep2_Chapter1_Title" },
-	{ "ep2_outland_02", "#ep2_Chapter2_Title" },
-	{ "ep2_outland_03", "#ep2_Chapter2_Title" },
-	{ "ep2_outland_04", "#ep2_Chapter2_Title" },
-	{ "ep2_outland_05", "#ep2_Chapter3_Title" },
-	
-	{ "ep2_outland_06a", "#ep2_Chapter4_Title" },
-	{ "ep2_outland_06", "#ep2_Chapter3_Title" },
-
-	{ "ep2_outland_07", "#ep2_Chapter4_Title" },
-	{ "ep2_outland_08", "#ep2_Chapter4_Title" },
-	{ "ep2_outland_09", "#ep2_Chapter5_Title" },
-	
-	{ "ep2_outland_10a", "#ep2_Chapter5_Title" },
-	{ "ep2_outland_10", "#ep2_Chapter5_Title" },
-
-	{ "ep2_outland_11a", "#ep2_Chapter6_Title" },
-	{ "ep2_outland_11", "#ep2_Chapter6_Title" },
-	
-	{ "ep2_outland_12a", "#ep2_Chapter7_Title" },
-	{ "ep2_outland_12", "#ep2_Chapter6_Title" },
-#endif
-};
 
 #ifdef _XBOX
 void CServerGameDLL::GetTitleName( const char *pMapName, char* pTitleBuff, int titleBuffSize )
 {
-	// Try to find a matching title comment for this mapname
-	for ( int i = 0; i < ARRAYSIZE(gTitleComments); i++ )
-	{
-		if ( !Q_strnicmp( pMapName, gTitleComments[i].pBSPName, strlen(gTitleComments[i].pBSPName) ) )
-		{
-			Q_strncpy( pTitleBuff, gTitleComments[i].pTitleName, titleBuffSize );
-			return;
-		}
-	}
+	// Default to the map name
 	Q_strncpy( pTitleBuff, pMapName, titleBuffSize );
 }
 #endif
 
 void CServerGameDLL::GetSaveComment( char *text, int maxlength, float flMinutes, float flSeconds, bool bNoTime )
 {
-	char comment[64];
-	const char	*pName;
-	int		i;
-
 	char const *mapname = STRING( gpGlobals->mapname );
-
-	pName = NULL;
-
-	// Try to find a matching title comment for this mapname
-	for ( i = 0; i < ARRAYSIZE(gTitleComments) && !pName; i++ )
-	{
-		if ( !Q_strnicmp( mapname, gTitleComments[i].pBSPName, strlen(gTitleComments[i].pBSPName) ) )
-		{
-			// found one
-			int j;
-
-			// Got a message, post-process it to be save name friendly
-			Q_strncpy( comment, gTitleComments[i].pTitleName, sizeof( comment ) );
-			pName = comment;
-			j = 0;
-			// Strip out CRs
-			while ( j < 64 && comment[j] )
-			{
-				if ( comment[j] == '\n' || comment[j] == '\r' )
-					comment[j] = 0;
-				else
-					j++;
-			}
-			break;
-		}
-	}
-	
-	// If we didn't get one, use the designer's map name, or the BSP name itself
-	if ( !pName )
-	{
-		pName = mapname;
-	}
 
 	if ( bNoTime )
 	{
-		Q_snprintf( text, maxlength, "%-64.64s", pName );
+		Q_snprintf( text, maxlength, "%-64.64s", mapname);
 	}
 	else
 	{
@@ -1799,7 +1600,7 @@ void CServerGameDLL::GetSaveComment( char *text, int maxlength, float flMinutes,
 		seconds %= 60;
 
 		// add the elapsed time at the end of the comment, for the ui to parse out
-		Q_snprintf( text, maxlength, "%-64.64s %03d:%02d", pName, (minutes + minutesAdd), seconds );
+		Q_snprintf( text, maxlength, "%-64.64s %03d:%02d", mapname, (minutes + minutesAdd), seconds );
 	}
 }
 
@@ -2037,111 +1838,14 @@ void CServerGameDLL::LoadSpecificMOTDMsg( const ConVar &convar, const char *pszS
 #endif
 }
 
-// keeps track of which chapters the user has unlocked
-ConVar sv_unlockedchapters( "sv_unlockedchapters", "1", FCVAR_ARCHIVE | FCVAR_ARCHIVE_XBOX );
-
-//-----------------------------------------------------------------------------
-// Purpose: Updates which chapters are unlocked
-//-----------------------------------------------------------------------------
-void UpdateChapterRestrictions( const char *mapname )
-{
-	// look at the chapter for this map
-	char chapterTitle[64];
-	chapterTitle[0] = 0;
-	for ( int i = 0; i < ARRAYSIZE(gTitleComments); i++ )
-	{
-		if ( !Q_strnicmp( mapname, gTitleComments[i].pBSPName, strlen(gTitleComments[i].pBSPName) ) )
-		{
-			// found
-			Q_strncpy( chapterTitle, gTitleComments[i].pTitleName, sizeof( chapterTitle ) );
-			int j = 0;
-			while ( j < 64 && chapterTitle[j] )
-			{
-				if ( chapterTitle[j] == '\n' || chapterTitle[j] == '\r' )
-					chapterTitle[j] = 0;
-				else
-					j++;
-			}
-
-			break;
-		}
-	}
-
-	if ( !chapterTitle[0] )
-		return;
-
-	// make sure the specified chapter title is unlocked
-	strlwr( chapterTitle );
-	
-	// Get our active mod directory name
-	char modDir[MAX_PATH];
-	if ( UTIL_GetModDir( modDir, sizeof(modDir) ) == false )
-		return;
-
-	char chapterNumberPrefix[64];
-	Q_snprintf(chapterNumberPrefix, sizeof(chapterNumberPrefix), "#%s_chapter", modDir);
-
-	const char *newChapterNumber = strstr( chapterTitle, chapterNumberPrefix );
-	if ( newChapterNumber )
-	{
-		// cut off the front
-		newChapterNumber += strlen( chapterNumberPrefix );
-		char newChapter[32];
-		Q_strncpy( newChapter, newChapterNumber, sizeof(newChapter) );
-
-		// cut off the end
-		char *end = strstr( newChapter, "_title" );
-		if ( end )
-		{
-			*end = 0;
-		}
-
-		int nNewChapter = atoi( newChapter );
-
-		// HACK: HL2 added a zany chapter "9a" which wreaks
-		//       havoc in this stupid atoi-based chapter code.
-		if ( !Q_stricmp( modDir, "hl2" ) )
-		{
-			if ( !Q_stricmp( newChapter, "9a" ) )
-			{
-				nNewChapter = 10;
-			}
-			else if ( nNewChapter > 9 )
-			{
-				nNewChapter++;
-			}
-		}
-
-		// ok we have the string, see if it's newer
-		const char *unlockedChapter = sv_unlockedchapters.GetString();
-		int nUnlockedChapter = atoi( unlockedChapter );
-
-		if ( nUnlockedChapter < nNewChapter )
-		{
-			// ok we're at a higher chapter, unlock
-			sv_unlockedchapters.SetValue( nNewChapter );
-
-			// HACK: Call up through a better function than this? 7/23/07 - jdw
-			if ( IsX360() )
-			{
-				engine->ServerCommand( "host_writeconfig\n" );
-			}
-		}
-
-		g_nCurrentChapterIndex = nNewChapter;
-	}
-}
-
 //-----------------------------------------------------------------------------
 // Purpose: Update xbox live data for the user's presence
 //-----------------------------------------------------------------------------
 void UpdateRichPresence ( void )
 {
+#if defined( _X360 )
 	// This assumes we're playing a single player game
 	Assert ( gpGlobals->maxClients == 1 );
-
-	// Shouldn't get here unless we're playing a map and we've updated sv_unlockedchapters
-	Assert ( g_nCurrentChapterIndex >= 0 );
 
 	// Get our active mod directory name
 	char modDir[MAX_PATH];
@@ -2150,41 +1854,9 @@ void UpdateRichPresence ( void )
 
 	// Get presence data based on the game we're playing
 	uint iGameID, iChapterIndex, iChapterID, iGamePresenceID;
-	iGameID = iChapterIndex = iChapterID = iGamePresenceID = 0;
-	if ( Q_stristr( modDir, "hl2" ) )
-	{
-		iGameID			= CONTEXT_GAME_GAME_HALF_LIFE_2;
-		iChapterID		= CONTEXT_CHAPTER_HL2;
-		iChapterIndex	= g_nCurrentChapterIndex - 1;
-		iGamePresenceID = CONTEXT_PRESENCE_HL2_INGAME;
-	}
-	else if ( Q_stristr( modDir, "episodic" ) )
-	{
-		iGameID			= CONTEXT_GAME_GAME_EPISODE_ONE;
-		iChapterID		= CONTEXT_CHAPTER_EP1;
-		iChapterIndex	= g_nCurrentChapterIndex - 1;
-		iGamePresenceID = CONTEXT_PRESENCE_EP1_INGAME;
-	}
-	else if ( Q_stristr( modDir, "ep2" ) )
-	{
-		iGameID			= CONTEXT_GAME_GAME_EPISODE_TWO;
-		iChapterID		= CONTEXT_CHAPTER_EP2;
-		iChapterIndex	= g_nCurrentChapterIndex - 1;
-		iGamePresenceID = CONTEXT_PRESENCE_EP2_INGAME;
-	}
-	else if ( Q_stristr( modDir, "portal" ) )
-	{
-		iGameID			= CONTEXT_GAME_GAME_PORTAL;
-		iChapterID		= CONTEXT_CHAPTER_PORTAL;
-		iChapterIndex	= g_nCurrentChapterIndex - 1;
-		iGamePresenceID = CONTEXT_PRESENCE_PORTAL_INGAME;
-	}
-	else
-	{
-		Warning( "UpdateRichPresence failed in GameInterface. Didn't recognize -game parameter." );
-	}
-
-#if defined( _X360 )
+	iGameID = CONTEXT_GAME_GAME_HALF_LIFE_2;
+	iChapterID = CONTEXT_CHAPTER_HL2;
+	iGamePresenceID = CONTEXT_PRESENCE_HL2_INGAME;
 
 	// Set chapter context based on mapname
 	if ( !xboxsystem->UserSetContext( XBX_GetPrimaryUserId(), iChapterID, iChapterIndex, true ) )

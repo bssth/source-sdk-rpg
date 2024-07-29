@@ -274,7 +274,6 @@ ClientModeShared::ClientModeShared()
 {
 	m_pViewport = NULL;
 	m_pChatElement = NULL;
-	m_pWeaponSelection = NULL;
 	m_nRootSize[ 0 ] = m_nRootSize[ 1 ] = -1;
 
 #if defined( REPLAY_ENABLED )
@@ -319,9 +318,6 @@ void ClientModeShared::Init()
 {
 	m_pChatElement = ( CBaseHudChat * )GET_HUDELEMENT( CHudChat );
 	Assert( m_pChatElement );
-
-	m_pWeaponSelection = ( CBaseHudWeaponSelection * )GET_HUDELEMENT( CHudWeaponSelection );
-	Assert( m_pWeaponSelection );
 
 	KeyValuesAD pConditions( "conditions" );
 	ComputeVguiResConditions( pConditions );
@@ -734,6 +730,7 @@ int ClientModeShared::HandleSpectatorKeyInput( int down, ButtonCode_t keynum, co
 //-----------------------------------------------------------------------------
 int ClientModeShared::HudElementKeyInput( int down, ButtonCode_t keynum, const char *pszCurrentBinding )
 {
+#ifdef ENABLE_WEAPON_SELECTION
 	if ( m_pWeaponSelection )
 	{
 		if ( !m_pWeaponSelection->KeyInput( down, keynum, pszCurrentBinding ) )
@@ -741,6 +738,7 @@ int ClientModeShared::HudElementKeyInput( int down, ButtonCode_t keynum, const c
 			return 0;
 		}
 	}
+#endif
 
 #if defined( REPLAY_ENABLED )
 	if ( m_pReplayReminderPanel )

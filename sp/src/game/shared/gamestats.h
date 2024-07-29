@@ -264,7 +264,6 @@ public:
 	void SetCaptionsStatistic( bool bClosedCaptionsEnabled );
 	void SetSkillStatistic( int iSkillSetting );
 	void SetDXLevelStatistic( int iDXLevel );
-	void SetHL2UnlockedChapterStatistic( void );
 #endif // GAMEDLL
 public:
 #ifdef GAME_DLL

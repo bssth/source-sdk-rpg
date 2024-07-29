@@ -154,6 +154,8 @@ public:
 	};
 
 	void CommanderUpdate();
+	void CheckThrowGrenade();
+	void ThrowGrenade();
 	void CommanderExecute( CommanderCommand_t command = CC_TOGGLE );
 	bool CommanderFindGoal( commandgoal_t *pGoal );
 	void NotifyFriendsOfDamage( CBaseEntity *pAttackerEntity );

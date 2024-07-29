@@ -19,7 +19,7 @@
 #define FRAG_GRENADE_BLIP_FAST_FREQUENCY	0.3f
 
 #define FRAG_GRENADE_GRACE_TIME_AFTER_PICKUP 1.5f
-#define FRAG_GRENADE_WARN_TIME 1.5f
+#define FRAG_GRENADE_WARN_TIME 0.5f
 
 const float GRENADE_COEFFICIENT_OF_RESTITUTION = 0.2f;
 
@@ -313,10 +313,6 @@ void CGrenadeFrag::OnPhysGunPickup( CBasePlayer *pPhysGunUser, PhysGunPickup_t r
 		BlipSound();
 		m_flNextBlipTime = gpGlobals->curtime + FRAG_GRENADE_BLIP_FAST_FREQUENCY;
 	}
-#endif
-
-#ifdef HL2_EPISODIC
-	SetPunted( true );
 #endif
 
 	BaseClass::OnPhysGunPickup( pPhysGunUser, reason );

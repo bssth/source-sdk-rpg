@@ -4,7 +4,7 @@
 //
 // $NoKeywords: $
 //=============================================================================//
-#if !defined( WEAPON_SELECTION_H )
+#if !defined(WEAPON_SELECTION_H) && defined(ENABLE_WEAPON_SELECTION) 
 #define WEAPON_SELECTION_H
 #ifdef _WIN32
 #pragma once

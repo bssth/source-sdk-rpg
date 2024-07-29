@@ -5912,7 +5912,6 @@ void CBasePlayer::ImpulseCommands( )
 	switch (iImpulse)
 	{
 	case 100:
-        // temporary flashlight for level designers
         if ( FlashlightIsOn() )
 		{
 			FlashlightTurnOff();
@@ -6175,7 +6174,6 @@ void CBasePlayer::CheatImpulseCommands( int iImpulse )
 		GiveAmmo( 32,	"357" );
 		GiveAmmo( 16,	"XBowBolt" );
 		GiveNamedItem( "weapon_frag" );
-		GiveNamedItem( "weapon_crowbar" );
 		GiveNamedItem( "weapon_ar2" );
 
 		if ( GetHealth() < 100 )
@@ -6493,7 +6491,7 @@ bool CBasePlayer::ClientCommand( const CCommand &args )
 		return true;
 	}
 	//Keypad
-	else if (stricmp(cmd, "keypad_codematch"))
+	else if (stricmp(cmd, "keypad_codedismatch") == 0)
 	{
 		CBaseEntity* pEntity = NULL;
 
@@ -6529,7 +6527,12 @@ bool CBasePlayer::ClientCommand( const CCommand &args )
 				return true;
 			}
 		}
-		}
+	}
+	else if (stricmp(cmd, "invnext") == 0 || stricmp(cmd, "invprev") == 0)
+	{
+		DevMsg("invnext/invprev are deprecated in this mod.\n");
+		return true;
+	}
 
 	return false;
 }

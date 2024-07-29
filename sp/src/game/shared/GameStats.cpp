@@ -236,7 +236,6 @@ const char *CBaseGameStats::GetUserPseudoUniqueID( void )
 void CBaseGameStats::Event_Init( void )
 {
 #ifdef GAME_DLL
-	SetHL2UnlockedChapterStatistic();
 	SetSteamStatistic( filesystem->IsSteam() );
 	SetCyberCafeStatistic( gamestatsuploader->IsCyberCafeUser() );
 	ConVarRef pDXLevel( "mat_dxlevel" );
@@ -1379,49 +1378,6 @@ void CBaseGameStats::SetSkillStatistic( int iSkillSetting )
 void CBaseGameStats::SetDXLevelStatistic( int iDXLevel )
 {
 	m_BasicStats.m_nDXLevel = iDXLevel;
-}
-
-void CBaseGameStats::SetHL2UnlockedChapterStatistic( void )
-{
-	// Now grab the hl2/cfg/config.cfg and suss out the sv_unlockedchapters cvar to estimate how far they got in HL2
-	char const *relative = "cfg/config.cfg";
-	char fullpath[ 512 ];
-	char gamedir[256];
-	engine->GetGameDir( gamedir, 256 );
-	Q_snprintf( fullpath, sizeof( fullpath ), "%s/../hl2/%s", gamedir, relative );
-
-	if ( filesystem->FileExists( fullpath ) )
-	{
-		FileHandle_t fh = filesystem->Open( fullpath, "rb" );
-		if ( FILESYSTEM_INVALID_HANDLE != fh )
-		{
-			// read file into memory
-			int size = filesystem->Size(fh);
-			char *configBuffer = new char[ size + 1 ];
-			filesystem->Read( configBuffer, size, fh );
-			configBuffer[size] = 0;
-			filesystem->Close( fh );
-
-			// loop through looking for all the cvars to apply
-			const char *search = Q_stristr(configBuffer, "sv_unlockedchapters" );
-			if ( search )
-			{
-				// read over the token
-				search = strtok( (char *)search, " \n" );
-				search = strtok( NULL, " \n" );
-
-				if ( search[0]== '\"' )
-					++search;
-
-				// read the value
-				int iChapter = Q_atoi( search );
-				m_BasicStats.m_nHL2ChaptureUnlocked = iChapter;
-			}
-
-			// free
-			delete [] configBuffer;
-		}
-	}	
 }
 
 static void CC_ResetGameStats( const CCommand &args )

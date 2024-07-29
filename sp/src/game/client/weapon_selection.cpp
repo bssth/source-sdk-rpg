@@ -14,6 +14,8 @@
 #include "filesystem.h"
 #include "iinput.h"
 
+#ifdef ENABLE_WEAPON_SELECTION
+
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -630,3 +632,5 @@ C_BaseCombatWeapon *CBaseHudWeaponSelection::GetNextActivePos( int iSlot, int iS
 
 	return pNextWeapon;
 }
+
+#endif

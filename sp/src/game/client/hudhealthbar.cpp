@@ -109,7 +109,5 @@ void CHudHealthbar::Paint()
 	surface()->DrawSetTextColor(m_HullColor);
 	surface()->DrawSetTextPos(text_xpos, text_ypos);
 
-	//wchar_t *tempString = vgui::localize()->Find("#Valve_Hud_AUX_POWER");
-
 	surface()->DrawPrintText(L"HULL", wcslen(L"HULL"));
 }

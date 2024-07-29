@@ -15,7 +15,7 @@ $Configuration
 	$Compiler
 	{
 		$AdditionalIncludeDirectories	"$BASE;..\..\public;$SRCDIR\game\shared\hl2;$SRCDIR\game\shared\episodic;$SRCDIR\game\shared\sdk2013ce;.\hl2;.\hl2\elements;.\episodic;.\sdk2013ce"
-		$PreprocessorDefinitions		"$BASE;HL2_CLIENT_DLL;HL2_EPISODIC;SDK2013CE"
+		$PreprocessorDefinitions		"$BASE;HL2_CLIENT_DLL;HL2_EPISODIC;SDK2013CE;HL2_BB"
 	}
 }
 
@@ -116,11 +116,15 @@ $Project "Client"
 			$File	"hl2\hud_flashlight.cpp"
 			$File	"hl2\hud_locator.cpp"
 			$File	"hl2\hud_health.cpp"
-			$File	"hl2\hud_poisondamageindicator.cpp"			
+			$File	"hl2\hud_poisondamageindicator.cpp"
 			$File	"hud_posture.cpp"
 			$File	"hl2\hud_quickinfo.cpp"
 			$File	"hl2\hud_radar.cpp"
 			$File	"hl2\hud_radar.h"
+			$File	"hudhealthbar.cpp"
+			$File	"hudhealthbar.h"
+			$File	"hudsuitbar.cpp"
+			$File	"hudsuitbar.h"
 			$File	"hud_squadstatus.cpp"
 			$File	"hl2\hud_suitpower.cpp"
 			$File	"hl2\hud_suitpower.h"
@@ -130,7 +134,9 @@ $Project "Client"
 			$File	"$SRCDIR\game\shared\hl2\survival_gamerules.cpp"
 			$File	"hl2\vgui_rootpanel_hl2.cpp"
 			$File	"episodic\c_npc_puppet.cpp"
+			$File "vgui_keypad.cpp"
+			$File "vgui_keypad.h"
 		}
 	}
-	
+
 }

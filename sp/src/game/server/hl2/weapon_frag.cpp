@@ -38,7 +38,6 @@ public:
 
 public:
 	CWeaponFrag();
-
 	void	Precache( void );
 	void	Operator_HandleAnimEvent( animevent_t *pEvent, CBaseCombatCharacter *pOperator );
 	void	PrimaryAttack( void );
@@ -165,18 +164,21 @@ void CWeaponFrag::Operator_HandleAnimEvent( animevent_t *pEvent, CBaseCombatChar
 			ThrowGrenade( pOwner );
 			DecrementAmmo( pOwner );
 			fThrewGrenade = true;
+			pOwner->SwitchToNextBestWeapon(this);
 			break;
 
 		case EVENT_WEAPON_THROW2:
 			RollGrenade( pOwner );
 			DecrementAmmo( pOwner );
 			fThrewGrenade = true;
+			pOwner->SwitchToNextBestWeapon(this);
 			break;
 
 		case EVENT_WEAPON_THROW3:
 			LobGrenade( pOwner );
 			DecrementAmmo( pOwner );
 			fThrewGrenade = true;
+			pOwner->SwitchToNextBestWeapon(this);
 			break;
 
 		default:
@@ -300,12 +302,6 @@ void CWeaponFrag::PrimaryAttack( void )
 	// the player will hold the grenade.
 	m_flTimeWeaponIdle = FLT_MAX;
 	m_flNextPrimaryAttack = FLT_MAX;
-
-	// If I'm now out of ammo, switch away
-	if ( !HasPrimaryAmmo() )
-	{
-		pPlayer->SwitchToNextBestWeapon( this );
-	}
 }
 
 //-----------------------------------------------------------------------------
@@ -331,7 +327,7 @@ void CWeaponFrag::ItemPostFrame( void )
 			switch( m_AttackPaused )
 			{
 			case GRENADE_PAUSED_PRIMARY:
-				if( !(pOwner->m_nButtons & IN_ATTACK) )
+				if( !(pOwner->m_nButtons & IN_ATTACK) && !(pOwner->m_nButtons & IN_GRENADE1))
 				{
 					SendWeaponAnim( ACT_VM_THROW );
 					m_fDrawbackFinished = false;
@@ -339,7 +335,7 @@ void CWeaponFrag::ItemPostFrame( void )
 				break;
 
 			case GRENADE_PAUSED_SECONDARY:
-				if( !(pOwner->m_nButtons & IN_ATTACK2) )
+				if( !(pOwner->m_nButtons & IN_ATTACK2) && !(pOwner->m_nButtons & IN_GRENADE2))
 				{
 					//See if we're ducking
 					if ( pOwner->m_nButtons & IN_DUCK )
@@ -411,9 +407,6 @@ void CWeaponFrag::ThrowGrenade( CBasePlayer *pPlayer )
 	m_bRedraw = true;
 
 	WeaponSound( SINGLE );
-	
-	// Send the player 'attack' animation.
-    pPlayer->SetAnimation(PLAYER_ATTACK1);
 
 	m_iPrimaryAttacks++;
 	gamestats->Event_WeaponFired( pPlayer, true, GetClassname() );
@@ -494,4 +487,3 @@ void CWeaponFrag::RollGrenade( CBasePlayer *pPlayer )
 	m_iPrimaryAttacks++;
 	gamestats->Event_WeaponFired( pPlayer, true, GetClassname() );
 }
-

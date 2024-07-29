@@ -1142,17 +1142,21 @@ void CPlayerPickupController::Use( CBaseEntity *pActivator, CBaseEntity *pCaller
 		// +ATTACK will throw phys objects
 		if ( m_pPlayer->m_nButtons & IN_ATTACK )
 		{
+			Assert(pPhys); // Known bug - phys object is being removed after impulse 228 and player can't throw it
 			Shutdown( true );
-			Vector vecLaunch;
-			m_pPlayer->EyeVectors( &vecLaunch );
-			// JAY: Scale this with mass because some small objects really go flying
-			float massFactor = clamp( pPhys->GetMass(), 0.5, 15 );
-			massFactor = RemapVal( massFactor, 0.5, 15, 0.5, 4 );
-			vecLaunch *= player_throwforce.GetFloat() * massFactor;
+			if (pPhys != NULL)
+			{
+				Vector vecLaunch;
+				m_pPlayer->EyeVectors(&vecLaunch);
+				// JAY: Scale this with mass because some small objects really go flying
+				float massFactor = clamp(pPhys->GetMass(), 0.5, 15);
+				massFactor = RemapVal(massFactor, 0.5, 15, 0.5, 4);
+				vecLaunch *= player_throwforce.GetFloat() * massFactor;
 
-			pPhys->ApplyForceCenter( vecLaunch );
-			AngularImpulse aVel = RandomAngularImpulse( -10, 10 ) * massFactor;
-			pPhys->ApplyTorqueCenter( aVel );
+				pPhys->ApplyForceCenter(vecLaunch);
+				AngularImpulse aVel = RandomAngularImpulse(-10, 10) * massFactor;
+				pPhys->ApplyTorqueCenter(aVel);
+			}
 			return;
 		}
 

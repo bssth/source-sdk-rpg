@@ -6294,9 +6294,6 @@ void CBaseEntity::RemoveAllDecals( void )
 //-----------------------------------------------------------------------------
 void CBaseEntity::ModifyOrAppendCriteria( AI_CriteriaSet& set )
 {
-	// TODO
-	// Append chapter/day?
-
 	set.AppendCriteria( "randomnum", UTIL_VarArgs("%d", RandomInt(0,100)) );
 	// Append map name
 	set.AppendCriteria( "map", gpGlobals->mapname.ToCStr() );

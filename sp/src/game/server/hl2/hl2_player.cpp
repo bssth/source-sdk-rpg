@@ -84,6 +84,7 @@ ConVar hl2_normspeed( "hl2_normspeed", "190" );
 ConVar hl2_sprintspeed( "hl2_sprintspeed", "320" );
 
 ConVar hl2_darkness_flashlight_factor ( "hl2_darkness_flashlight_factor", "1" );
+ConVar hl2_battery_stunstick ( "hl2_battery_stunstick", "0" );
 
 #ifdef HL2MP
 	#define	HL2_WALK_SPEED 150
@@ -106,6 +107,8 @@ ConVar sv_infinite_aux_power( "sv_infinite_aux_power", "0", FCVAR_CHEAT );
 ConVar autoaim_unlock_target( "autoaim_unlock_target", "0.8666" );
 
 ConVar sv_stickysprint("sv_stickysprint", "0", FCVAR_ARCHIVE | FCVAR_ARCHIVE_XBOX);
+
+ConVar weapon_frag_tutorial("weapon_frag_tutorial", "1", FCVAR_REPLICATED, "Enable/Disable the weapon tutorial for the frag grenade");
 
 #define	FLASH_DRAIN_TIME	 1.1111	// 100 units / 90 secs
 #define	FLASH_CHARGE_TIME	 50.0f	// 100 units / 2 secs
@@ -465,6 +468,24 @@ void CHL2_Player::CheckSuitZoom( void )
 //#endif//_XBOX
 }
 
+void CHL2_Player::CheckThrowGrenade(void)
+{
+	if (m_afButtonPressed & IN_GRENADE1)
+	{
+		ThrowGrenade();
+	}
+}
+
+void CHL2_Player::ThrowGrenade( void )
+{
+	CBaseCombatWeapon* pWeapon = Weapon_GetSlot(WEAPON_EXPLOSIVE_SLOT);
+	if(pWeapon && pWeapon->HasPrimaryAmmo())
+	{
+		Weapon_Switch(pWeapon);
+		pWeapon->PrimaryAttack();
+	}
+}
+
 void CHL2_Player::EquipSuit( bool bPlayEffects )
 {
 	MDLCACHE_CRITICAL_SECTION();
@@ -727,6 +748,10 @@ void CHL2_Player::PreThink(void)
 	CheckSuitUpdate();
 	VPROF_SCOPE_END();
 
+	VPROF_SCOPE_BEGIN( "CHL2_Player::PreThink-CheckThrowGrenade" );
+	CheckThrowGrenade();
+	VPROF_SCOPE_END();
+
 	VPROF_SCOPE_BEGIN( "CHL2_Player::PreThink-CheckSuitZoom" );
 	CheckSuitZoom();
 	VPROF_SCOPE_END();
@@ -968,29 +993,6 @@ void CHL2_Player::Activate( void )
 {
 	BaseClass::Activate();
 	InitSprinting();
-
-#ifdef HL2_EPISODIC
-
-	// Delay attacks by 1 second after loading a game.
-	if ( GetActiveWeapon() )
-	{
-		float flRemaining = GetActiveWeapon()->m_flNextPrimaryAttack - gpGlobals->curtime;
-
-		if ( flRemaining < HL2PLAYER_RELOADGAME_ATTACK_DELAY )
-		{
-			GetActiveWeapon()->m_flNextPrimaryAttack = gpGlobals->curtime + HL2PLAYER_RELOADGAME_ATTACK_DELAY;
-		}
-
-		flRemaining = GetActiveWeapon()->m_flNextSecondaryAttack - gpGlobals->curtime;
-
-		if ( flRemaining < HL2PLAYER_RELOADGAME_ATTACK_DELAY )
-		{
-			GetActiveWeapon()->m_flNextSecondaryAttack = gpGlobals->curtime + HL2PLAYER_RELOADGAME_ATTACK_DELAY;
-		}
-	}
-
-#endif
-
 	GetPlayerProxy();
 }
 
@@ -2832,16 +2834,20 @@ int CHL2_Player::GiveAmmo( int nCount, int nAmmoIndex, bool bSuppressSound)
 //-----------------------------------------------------------------------------
 bool CHL2_Player::Weapon_CanUse( CBaseCombatWeapon *pWeapon )
 {
-	/*
-#ifndef HL2MP	
-	if ( pWeapon->ClassMatches( "weapon_stunstick" ) )
+#ifndef HL2MP
+	if (hl2_battery_stunstick.GetBool() && pWeapon->ClassMatches( "weapon_stunstick" ))
 	{
 		if ( ApplyBattery( 0.5 ) )
 			UTIL_Remove( pWeapon );
 		return false;
 	}
 #endif
-	*/
+
+	if (pWeapon->ClassMatches("weapon_frag") && weapon_frag_tutorial.GetBool())
+	{
+		UTIL_HudHintText(this, "#Valve_Hint_Grenade");
+		weapon_frag_tutorial.SetValue(false);
+	}
 
 	return BaseClass::Weapon_CanUse( pWeapon );
 }
@@ -3306,6 +3312,7 @@ bool CHL2_Player::Weapon_CanSwitchTo( CBaseCombatWeapon *pWeapon )
 	if ( !pWeapon->CanDeploy() )
 		return false;
 
+	/*
 	if ( GetActiveWeapon() )
 	{
 		if ( PhysCannonGetHeldEntity( GetActiveWeapon() ) == pWeapon && 
@@ -3316,9 +3323,14 @@ bool CHL2_Player::Weapon_CanSwitchTo( CBaseCombatWeapon *pWeapon )
 
 		if ( !GetActiveWeapon()->CanHolster() )
 			return false;
-	}
+	}*/
 
-	return true;
+	// Only primary weapons are allowed to be switched to. Grenades use the secondary slot and are thrown in a different way.
+
+	if (pWeapon->GetSlot() == WEAPON_EXPLOSIVE_SLOT && m_afButtonPressed & IN_GRENADE1)
+		return true;
+
+	return pWeapon->GetSlot() == WEAPON_PRIMARY_SLOT;
 }
 
 void CHL2_Player::PickupObject( CBaseEntity *pObject, bool bLimitMassAndSize )
@@ -3370,17 +3382,6 @@ void CHL2_Player::ForceDropOfCarriedPhysObjects( CBaseEntity *pOnlyIfHoldingThis
 		g_EventQueue.AddEvent( this, "ForceDropPhysObjects", value, 0.01f, pOnlyIfHoldingThis, this );
 		return;
 	}
-
-#ifdef HL2_EPISODIC
-	if ( hl2_episodic.GetBool() )
-	{
-		CBaseEntity *pHeldEntity = PhysCannonGetHeldEntity( GetActiveWeapon() );
-		if( pHeldEntity && pHeldEntity->ClassMatches( "grenade_helicopter" ) )
-		{
-			return;
-		}
-	}
-#endif
 
 	// Drop any objects being handheld.
 	ClearUseEntity();

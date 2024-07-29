@@ -18,7 +18,7 @@
 
 using namespace vgui;
 
-extern ConVar hud_drawhistory_time;
+#define HUD_DRAWHISTORY 5.0f
 
 DECLARE_HUDELEMENT( CHudHistoryResource );
 DECLARE_HUD_MESSAGE( CHudHistoryResource, ItemPickup );
@@ -199,11 +199,11 @@ void CHudHistoryResource::AddIconToHistory( int iType, int iId, C_BaseCombatWeap
 
 	if (iType == HISTSLOT_AMMODENIED)
 	{
-		freeslot->DisplayTime = gpGlobals->curtime + (hud_drawhistory_time.GetFloat() / 2.0f);
+		freeslot->DisplayTime = gpGlobals->curtime + (HUD_DRAWHISTORY / 2.0f);
 	}
 	else
 	{
-		freeslot->DisplayTime = gpGlobals->curtime + hud_drawhistory_time.GetFloat();
+		freeslot->DisplayTime = gpGlobals->curtime + HUD_DRAWHISTORY;
 	}
 
 	++m_iCurrentHistorySlot;
@@ -246,7 +246,7 @@ void CHudHistoryResource::MsgFunc_AmmoDenied( bf_read &msg )
 		if ( m_PickupHistory[i].type == HISTSLOT_AMMODENIED && m_PickupHistory[i].iId == iAmmo )
 		{
 			// it's already in the list, refresh
-			m_PickupHistory[i].DisplayTime = gpGlobals->curtime + (hud_drawhistory_time.GetFloat() / 2.0f);
+			m_PickupHistory[i].DisplayTime = gpGlobals->curtime + (HUD_DRAWHISTORY / 2.0f);
 			m_bNeedsDraw = true;
 			return;
 		}
@@ -310,7 +310,7 @@ void CHudHistoryResource::Paint( void )
 	{
 		if ( m_PickupHistory[i].type )
 		{
-			m_PickupHistory[i].DisplayTime = MIN( m_PickupHistory[i].DisplayTime, gpGlobals->curtime + hud_drawhistory_time.GetFloat() );
+			m_PickupHistory[i].DisplayTime = MIN( m_PickupHistory[i].DisplayTime, gpGlobals->curtime + HUD_DRAWHISTORY);
 			if ( m_PickupHistory[i].DisplayTime <= gpGlobals->curtime )
 			{  
 				// pic drawing time has expired

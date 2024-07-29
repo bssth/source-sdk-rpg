@@ -144,12 +144,13 @@ void C_BaseCombatWeapon::OnDataChanged( DataUpdateType_t updateType )
 			// Tell the HUD this weapon's been picked up
 			if ( ShouldDrawPickup() )
 			{
+#ifdef ENABLE_WEAPON_SELECTION
 				CBaseHudWeaponSelection *pHudSelection = GetHudWeaponSelection();
 				if ( pHudSelection )
 				{
 					pHudSelection->OnWeaponPickup( this );
 				}
-
+#endif
 				pPlayer->EmitSound( "Player.PickupWeapon" );
 			}
 		}
