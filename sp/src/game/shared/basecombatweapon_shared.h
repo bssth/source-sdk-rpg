@@ -247,6 +247,8 @@ public:
 	virtual void			HandleFireOnEmpty();					// Called when they have the attack button down
 																	// but they are out of ammo. The default implementation
 																	// either reloads, switches weapons, or plays an empty sound.
+	virtual void            ProcessAnimationEvents(void);
+	bool                    m_bWeaponIsLowered;
 
 	virtual bool			ShouldBlockPrimaryFire() { return false; }
 
