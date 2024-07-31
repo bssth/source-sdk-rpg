@@ -15,11 +15,9 @@
 //-----------------------------------------------------------------------------
 // Do we have the super-phys gun?
 //-----------------------------------------------------------------------------
-bool PlayerHasMegaPhysCannon();
 
 // force the physcannon to drop an object (if carried)
 void PhysCannonForceDrop( CBaseCombatWeapon *pActiveWeapon, CBaseEntity *pOnlyIfHoldingThis );
-void PhysCannonBeginUpgrade( CBaseAnimating *pAnim );
 
 bool PlayerPickupControllerIsHoldingEntity( CBaseEntity *pPickupController, CBaseEntity *pHeldEntity );
 float PlayerPickupGetHeldObjectMass( CBaseEntity *pPickupControllerEntity, IPhysicsObject *pHeldObject );

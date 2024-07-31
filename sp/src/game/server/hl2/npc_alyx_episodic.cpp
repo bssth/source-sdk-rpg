@@ -27,7 +27,7 @@
 #include "weapon_physcannon.h"
 #include "info_darknessmode_lightsource.h"
 #include "sceneentity.h"
-#include "hl2_gamerules.h"
+#include "bb_gamerules.h"
 #include "scripted.h"
 #include "hl2_player.h"
 #include "env_alyxemp_shared.h"
@@ -331,7 +331,7 @@ void CNPC_Alyx::Spawn()
 		CreateEmpTool( );
 	}
 
-	AddEFlags( EFL_NO_DISSOLVE | EFL_NO_MEGAPHYSCANNON_RAGDOLL | EFL_NO_PHYSCANNON_INTERACTION );
+	AddEFlags( EFL_NO_DISSOLVE | EFL_NO_PHYSCANNON_INTERACTION );
 
 	m_iHealth			= 80;
 	m_bloodColor		= DONT_BLEED;
@@ -912,11 +912,8 @@ void CNPC_Alyx::AnalyzeGunfireSound( CSound *pSound )
 //-----------------------------------------------------------------------------
 bool CNPC_Alyx::IsValidEnemy( CBaseEntity *pEnemy )
 {
-	if ( HL2GameRules()->IsAlyxInDarknessMode() )
-	{
-		if ( !CanSeeEntityInDarkness( pEnemy ) )
-			return false;
-	}
+	if (!CanSeeEntityInDarkness(pEnemy))
+		return false;
 
 	// Alyx can only take a stalker as her enemy which is angry at the player or her.
 	if ( pEnemy->Classify() == CLASS_STALKER )
@@ -1204,180 +1201,154 @@ void CNPC_Alyx::DoCustomSpeechAI( void )
 
 	// Darkness mode speech
 	ClearCondition( COND_ALYX_IN_DARK );
- 	if ( HL2GameRules()->IsAlyxInDarknessMode() )
+	// Even though the darkness light system will take flares into account when Alyx
+	// says she's lost the player in the darkness, players still think she's silly
+	// when they're too far from the flare to be seen. 
+	// So, check for lit flares or other dynamic lights, and don't do
+	// a bunch of the darkness speech if there's a lit flare nearby.
+	bool bNearbyFlare = DarknessLightSourceWithinRadius(this, 500);
+	if (!bNearbyFlare)
 	{
-		// Even though the darkness light system will take flares into account when Alyx
-		// says she's lost the player in the darkness, players still think she's silly
-		// when they're too far from the flare to be seen. 
-		// So, check for lit flares or other dynamic lights, and don't do
-		// a bunch of the darkness speech if there's a lit flare nearby.
-  		bool bNearbyFlare = DarknessLightSourceWithinRadius( this, 500 );
-		if ( !bNearbyFlare )
+		SetCondition(COND_ALYX_IN_DARK);
+		if (HasCondition(COND_ALYX_PLAYER_TURNED_OFF_FLASHLIGHT) || HasCondition(COND_ALYX_PLAYER_FLASHLIGHT_EXPIRED))
 		{
-			SetCondition( COND_ALYX_IN_DARK );
-			if ( HasCondition( COND_ALYX_PLAYER_TURNED_OFF_FLASHLIGHT ) || HasCondition( COND_ALYX_PLAYER_FLASHLIGHT_EXPIRED ) )
+			// Player just turned off the flashlight. Start ramping up Alyx's breathing.
+			if (!m_sndDarknessBreathing)
 			{
-				// Player just turned off the flashlight. Start ramping up Alyx's breathing.
-				if ( !m_sndDarknessBreathing )
-				{
-					CPASAttenuationFilter filter( this );
-					m_sndDarknessBreathing = CSoundEnvelopeController::GetController().SoundCreate( filter, entindex(), CHAN_STATIC, 
-						"ep_01.al_dark_breathing01", SNDLVL_TALKING );
-					CSoundEnvelopeController::GetController().Play( m_sndDarknessBreathing, 0.0f, PITCH_NORM );
-				}
-				
-				if ( m_sndDarknessBreathing )
-				{
- 					CSoundEnvelopeController::GetController().SoundChangeVolume( m_sndDarknessBreathing, ALYX_BREATHING_VOLUME_MAX, RandomFloat(10,20) );
-					m_SpeechWatch_BreathingRamp.Stop();
-				}
-			}
-		}
-
-		// If we lose an enemy due to the flashlight, comment about it
-		if ( !HasCondition( COND_SEE_ENEMY ) && m_bHadCondSeeEnemy && !HasCondition( COND_TALKER_PLAYER_DEAD ) )
-		{
-			if ( m_bDarknessSpeechAllowed && HasCondition( COND_ALYX_PLAYER_TURNED_OFF_FLASHLIGHT ) && 
-				GetEnemy() && ( GetEnemy()->Classify() != CLASS_BULLSEYE ) )
-			{
-				SpeakIfAllowed( "TLK_DARKNESS_LOSTENEMY_BY_FLASHLIGHT" );
-			}
-			else if ( m_bDarknessSpeechAllowed && HasCondition( COND_ALYX_PLAYER_FLASHLIGHT_EXPIRED ) &&
-				GetEnemy() && ( GetEnemy()->Classify() != CLASS_BULLSEYE ) )
-			{
-				SpeakIfAllowed( "TLK_DARKNESS_LOSTENEMY_BY_FLASHLIGHT_EXPIRED" );
-			}
-			else if ( m_bDarknessSpeechAllowed && GetEnemy() && ( GetEnemy()->Classify() != CLASS_BULLSEYE ) && 
-				pPlayer && pPlayer->FlashlightIsOn() && !pPlayer->IsIlluminatedByFlashlight(GetEnemy(), NULL ) && 
-				FVisible( GetEnemy() ) )
-			{
-				SpeakIfAllowed( TLK_DARKNESS_ENEMY_IN_DARKNESS );
-			}
-			m_bHadCondSeeEnemy = false;
-		}
-		else if ( HasCondition( COND_SEE_ENEMY ) )
-		{
-			m_bHadCondSeeEnemy = true;
-		}
-		else if ( ( !GetEnemy() || ( GetEnemy()->Classify() == CLASS_BULLSEYE ) ) && m_bDarknessSpeechAllowed )
-		{
-			if ( HasCondition( COND_ALYX_PLAYER_FLASHLIGHT_EXPIRED ) )
-			{
-				SpeakIfAllowed( TLK_DARKNESS_FLASHLIGHT_EXPIRED );
-			}
-			else if ( HasCondition( COND_ALYX_PLAYER_TURNED_OFF_FLASHLIGHT ) )
-			{
-				SpeakIfAllowed( TLK_FLASHLIGHT_OFF );
-			}
-			else if ( HasCondition( COND_ALYX_PLAYER_TURNED_ON_FLASHLIGHT ) )
-			{
-				SpeakIfAllowed( TLK_FLASHLIGHT_ON );
-			}
-		}
-
-		// If we've just seen a new enemy, and it's illuminated by the flashlight, 
-		// tell the player to keep the flashlight on 'em.
-		if ( HasCondition(COND_NEW_ENEMY) && !HasCondition( COND_TALKER_PLAYER_DEAD ) )
-		{
-			// First time we've seen this guy?
-			if ( gpGlobals->curtime - GetEnemies()->FirstTimeSeen(GetEnemy()) < 0.5 )
-			{
-				if ( pPlayer && pPlayer->IsIlluminatedByFlashlight(GetEnemy(), NULL ) && m_bDarknessSpeechAllowed && 
-					!LookerCouldSeeTargetInDarkness( this, GetEnemy() ) )
-				{
-					SpeakIfAllowed( "TLK_DARKNESS_FOUNDENEMY_BY_FLASHLIGHT" );
-				}
-			}
-		}
-
-		// When we lose the player, start lost-player talker after some time
- 		if ( !bNearbyFlare && m_bDarknessSpeechAllowed )
-		{
-			if ( !HasCondition(COND_SEE_PLAYER) && !m_SpeechWatch_LostPlayer.IsRunning() )
-			{
-				m_SpeechWatch_LostPlayer.Set( 5,8 );
-				m_SpeechWatch_LostPlayer.Start();
-				m_MoveMonitor.SetMark( AI_GetSinglePlayer(), 48 );
-			}
-			else if ( m_SpeechWatch_LostPlayer.Expired() )
-			{
-				// Can't see the player?
-				if ( !HasCondition(COND_SEE_PLAYER) && !HasCondition( COND_TALKER_PLAYER_DEAD ) && !HasCondition( COND_SEE_ENEMY ) &&
-					( !pPlayer || pPlayer->GetAbsOrigin().DistToSqr(GetAbsOrigin()) > ALYX_DARKNESS_LOST_PLAYER_DIST ) )
-				{
-					// only speak if player hasn't moved.
-					if ( m_MoveMonitor.TargetMoved( AI_GetSinglePlayer() ) )
-					{
-						SpeakIfAllowed( "TLK_DARKNESS_LOSTPLAYER" );
-						m_SpeechWatch_LostPlayer.Set(10);
-						m_SpeechWatch_LostPlayer.Start();
-						m_bSpokeLostPlayerInDarkness = true;
-					}
-				}
+				CPASAttenuationFilter filter(this);
+				m_sndDarknessBreathing = CSoundEnvelopeController::GetController().SoundCreate(filter, entindex(), CHAN_STATIC,
+					"ep_01.al_dark_breathing01", SNDLVL_TALKING);
+				CSoundEnvelopeController::GetController().Play(m_sndDarknessBreathing, 0.0f, PITCH_NORM);
 			}
 
-			// Speech concepts that only occur when the player's flashlight is off
-			if ( pPlayer && !HasCondition( COND_TALKER_PLAYER_DEAD ) && !pPlayer->FlashlightIsOn() )
- 			{
-				// When the player first turns off the light, don't talk about sounds for a bit
-				if ( HasCondition( COND_ALYX_PLAYER_TURNED_OFF_FLASHLIGHT ) || HasCondition( COND_ALYX_PLAYER_FLASHLIGHT_EXPIRED ) )
-				{
-					m_SpeechTimer_HeardSound.Set(4);
-				}
-				else if ( m_SpeechWatch_SoundDelay.Expired() )
-				{
-					// We've waited for a bit after the sound, now talk about it
-					SpeakIfAllowed( "TLK_DARKNESS_HEARDSOUND" );
-					m_SpeechWatch_SoundDelay.Stop();
-				}
-				else if ( HasCondition( COND_HEAR_SPOOKY ) )
-				{
-					// If we hear anything while the player's flashlight is off, randomly mention it
-					if ( m_SpeechTimer_HeardSound.Expired() )
-					{
-						m_SpeechTimer_HeardSound.Set(10);
-
-						// Wait for the sound to play for a bit before speaking about it
-						m_SpeechWatch_SoundDelay.Set( 1.0,3.0 );
-						m_SpeechWatch_SoundDelay.Start();
-					}
-				}
-			}
-		}
-
-		// Stop the heard sound response if the player turns the flashlight on
-		if ( bNearbyFlare || HasCondition( COND_ALYX_PLAYER_TURNED_ON_FLASHLIGHT ) )
-		{
-			m_SpeechWatch_SoundDelay.Stop();
-
-			if ( m_sndDarknessBreathing )
+			if (m_sndDarknessBreathing)
 			{
-				CSoundEnvelopeController::GetController().SoundChangeVolume( m_sndDarknessBreathing, 0.0f, 0.5 );
+				CSoundEnvelopeController::GetController().SoundChangeVolume(m_sndDarknessBreathing, ALYX_BREATHING_VOLUME_MAX, RandomFloat(10, 20));
 				m_SpeechWatch_BreathingRamp.Stop();
 			}
 		}
 	}
-	else
+
+	// If we lose an enemy due to the flashlight, comment about it
+	if (!HasCondition(COND_SEE_ENEMY) && m_bHadCondSeeEnemy && !HasCondition(COND_TALKER_PLAYER_DEAD))
 	{
-		if ( m_sndDarknessBreathing )
+		if (m_bDarknessSpeechAllowed && HasCondition(COND_ALYX_PLAYER_TURNED_OFF_FLASHLIGHT) &&
+			GetEnemy() && (GetEnemy()->Classify() != CLASS_BULLSEYE))
 		{
-			CSoundEnvelopeController::GetController().SoundChangeVolume( m_sndDarknessBreathing, 0.0f, 0.5 );
-			m_SpeechWatch_BreathingRamp.Stop();
+			SpeakIfAllowed("TLK_DARKNESS_LOSTENEMY_BY_FLASHLIGHT");
+		}
+		else if (m_bDarknessSpeechAllowed && HasCondition(COND_ALYX_PLAYER_FLASHLIGHT_EXPIRED) &&
+			GetEnemy() && (GetEnemy()->Classify() != CLASS_BULLSEYE))
+		{
+			SpeakIfAllowed("TLK_DARKNESS_LOSTENEMY_BY_FLASHLIGHT_EXPIRED");
+		}
+		else if (m_bDarknessSpeechAllowed && GetEnemy() && (GetEnemy()->Classify() != CLASS_BULLSEYE) &&
+			pPlayer && pPlayer->FlashlightIsOn() && !pPlayer->IsIlluminatedByFlashlight(GetEnemy(), NULL) &&
+			FVisible(GetEnemy()))
+		{
+			SpeakIfAllowed(TLK_DARKNESS_ENEMY_IN_DARKNESS);
+		}
+		m_bHadCondSeeEnemy = false;
+	}
+	else if (HasCondition(COND_SEE_ENEMY))
+	{
+		m_bHadCondSeeEnemy = true;
+	}
+	else if ((!GetEnemy() || (GetEnemy()->Classify() == CLASS_BULLSEYE)) && m_bDarknessSpeechAllowed)
+	{
+		if (HasCondition(COND_ALYX_PLAYER_FLASHLIGHT_EXPIRED))
+		{
+			SpeakIfAllowed(TLK_DARKNESS_FLASHLIGHT_EXPIRED);
+		}
+		else if (HasCondition(COND_ALYX_PLAYER_TURNED_OFF_FLASHLIGHT))
+		{
+			SpeakIfAllowed(TLK_FLASHLIGHT_OFF);
+		}
+		else if (HasCondition(COND_ALYX_PLAYER_TURNED_ON_FLASHLIGHT))
+		{
+			SpeakIfAllowed(TLK_FLASHLIGHT_ON);
+		}
+	}
+
+	// If we've just seen a new enemy, and it's illuminated by the flashlight, 
+	// tell the player to keep the flashlight on 'em.
+	if (HasCondition(COND_NEW_ENEMY) && !HasCondition(COND_TALKER_PLAYER_DEAD))
+	{
+		// First time we've seen this guy?
+		if (gpGlobals->curtime - GetEnemies()->FirstTimeSeen(GetEnemy()) < 0.5)
+		{
+			if (pPlayer && pPlayer->IsIlluminatedByFlashlight(GetEnemy(), NULL) && m_bDarknessSpeechAllowed &&
+				!LookerCouldSeeTargetInDarkness(this, GetEnemy()))
+			{
+				SpeakIfAllowed("TLK_DARKNESS_FOUNDENEMY_BY_FLASHLIGHT");
+			}
+		}
+	}
+
+	// When we lose the player, start lost-player talker after some time
+	if (!bNearbyFlare && m_bDarknessSpeechAllowed)
+	{
+		if (!HasCondition(COND_SEE_PLAYER) && !m_SpeechWatch_LostPlayer.IsRunning())
+		{
+			m_SpeechWatch_LostPlayer.Set(5, 8);
+			m_SpeechWatch_LostPlayer.Start();
+			m_MoveMonitor.SetMark(AI_GetSinglePlayer(), 48);
+		}
+		else if (m_SpeechWatch_LostPlayer.Expired())
+		{
+			// Can't see the player?
+			if (!HasCondition(COND_SEE_PLAYER) && !HasCondition(COND_TALKER_PLAYER_DEAD) && !HasCondition(COND_SEE_ENEMY) &&
+				(!pPlayer || pPlayer->GetAbsOrigin().DistToSqr(GetAbsOrigin()) > ALYX_DARKNESS_LOST_PLAYER_DIST))
+			{
+				// only speak if player hasn't moved.
+				if (m_MoveMonitor.TargetMoved(AI_GetSinglePlayer()))
+				{
+					SpeakIfAllowed("TLK_DARKNESS_LOSTPLAYER");
+					m_SpeechWatch_LostPlayer.Set(10);
+					m_SpeechWatch_LostPlayer.Start();
+					m_bSpokeLostPlayerInDarkness = true;
+				}
+			}
 		}
 
-		if ( !HasCondition(COND_SEE_PLAYER) && !m_SpeechWatch_FoundPlayer.IsRunning() )
+		// Speech concepts that only occur when the player's flashlight is off
+		if (pPlayer && !HasCondition(COND_TALKER_PLAYER_DEAD) && !pPlayer->FlashlightIsOn())
 		{
-			// wait a minute before saying something when alyx sees him again
-			m_SpeechWatch_FoundPlayer.Set( 60, 75 );
-			m_SpeechWatch_FoundPlayer.Start();
-		}
-		else if ( HasCondition(COND_SEE_PLAYER) )
-		{
-			if ( m_SpeechWatch_FoundPlayer.Expired() && m_bDarknessSpeechAllowed )
+			// When the player first turns off the light, don't talk about sounds for a bit
+			if (HasCondition(COND_ALYX_PLAYER_TURNED_OFF_FLASHLIGHT) || HasCondition(COND_ALYX_PLAYER_FLASHLIGHT_EXPIRED))
 			{
-				SpeakIfAllowed( "TLK_FOUNDPLAYER" );
+				m_SpeechTimer_HeardSound.Set(4);
 			}
-			m_SpeechWatch_FoundPlayer.Stop();
+			else if (m_SpeechWatch_SoundDelay.Expired())
+			{
+				// We've waited for a bit after the sound, now talk about it
+				SpeakIfAllowed("TLK_DARKNESS_HEARDSOUND");
+				m_SpeechWatch_SoundDelay.Stop();
+			}
+			else if (HasCondition(COND_HEAR_SPOOKY))
+			{
+				// If we hear anything while the player's flashlight is off, randomly mention it
+				if (m_SpeechTimer_HeardSound.Expired())
+				{
+					m_SpeechTimer_HeardSound.Set(10);
+
+					// Wait for the sound to play for a bit before speaking about it
+					m_SpeechWatch_SoundDelay.Set(1.0, 3.0);
+					m_SpeechWatch_SoundDelay.Start();
+				}
+			}
+		}
+	}
+
+	// Stop the heard sound response if the player turns the flashlight on
+	if (bNearbyFlare || HasCondition(COND_ALYX_PLAYER_TURNED_ON_FLASHLIGHT))
+	{
+		m_SpeechWatch_SoundDelay.Stop();
+
+		if (m_sndDarknessBreathing)
+		{
+			CSoundEnvelopeController::GetController().SoundChangeVolume(m_sndDarknessBreathing, 0.0f, 0.5);
+			m_SpeechWatch_BreathingRamp.Stop();
 		}
 	}
 
@@ -1386,7 +1357,7 @@ void CNPC_Alyx::DoCustomSpeechAI( void )
 	{
 		// If we've left darkness mode, or if the player has blinded me with 
 		// the flashlight, don't bother speaking the found player line.
-		if ( !m_bIsFlashlightBlind && HL2GameRules()->IsAlyxInDarknessMode() && m_bDarknessSpeechAllowed )
+		if ( !m_bIsFlashlightBlind && m_bDarknessSpeechAllowed )
 		{
 			if ( HasCondition(COND_SEE_PLAYER) && !HasCondition( COND_TALKER_PLAYER_DEAD ) )
 			{
@@ -1535,11 +1506,8 @@ bool CNPC_Alyx::FInViewCone( CBaseEntity *pEntity )
 	}
 
 	// Else, fall through...
- 	if ( HL2GameRules()->IsAlyxInDarknessMode() )
-	{
-		if ( CanSeeEntityInDarkness( pEntity ) )
-			return true;
-	}
+	if (CanSeeEntityInDarkness(pEntity))
+		return true;
 
 	return BaseClass::FInViewCone( pEntity );
 }
@@ -1574,11 +1542,8 @@ bool CNPC_Alyx::CanSeeEntityInDarkness( CBaseEntity *pEntity )
 //-----------------------------------------------------------------------------
 bool CNPC_Alyx::QuerySeeEntity( CBaseEntity *pEntity, bool bOnlyHateOrFearIfNPC)
 {
-	if ( HL2GameRules()->IsAlyxInDarknessMode() )
-	{
-		if ( !CanSeeEntityInDarkness( pEntity ) )
-			return false;
-	}
+	if (!CanSeeEntityInDarkness(pEntity))
+		return false;
 
 	return BaseClass::QuerySeeEntity(pEntity, bOnlyHateOrFearIfNPC);
 }
@@ -1696,9 +1661,9 @@ bool CNPC_Alyx::ShouldBehaviorSelectSchedule( CAI_BehaviorBase *pBehavior )
 //-----------------------------------------------------------------------------
 int CNPC_Alyx::SelectSchedule( void )
 {
-    // If we're in darkness mode, and the player has the flashlight off, and we hear a zombie footstep,
+    // If the player has the flashlight off, and we hear a zombie footstep,
 	// and the player isn't nearby, deliberately turn away from the zombie to let the zombie grab me.
-	if ( HL2GameRules()->IsAlyxInDarknessMode() && m_NPCState == NPC_STATE_ALERT )
+	if ( m_NPCState == NPC_STATE_ALERT )
 	{
 		if ( HasCondition ( COND_HEAR_COMBAT ) && !HasCondition(COND_SEE_PLAYER) )
 		{
@@ -1855,9 +1820,6 @@ int CNPC_Alyx::TranslateSchedule( int scheduleType )
 
 	case SCHED_HIDE_AND_RELOAD:
 		{
-			if ( HL2GameRules()->IsAlyxInDarknessMode() )
-				return SCHED_RELOAD;
-
 			// If I don't have a ranged attacker as an enemy, don't try to hide
 			AIEnemiesIter_t iter;
 			for ( AI_EnemyInfo_t *pEMemory = GetEnemies()->GetFirst(&iter); pEMemory != NULL; pEMemory = GetEnemies()->GetNext(&iter) )
@@ -2261,7 +2223,7 @@ int CNPC_Alyx::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 
 	int taken = BaseClass::OnTakeDamage_Alive(info);
 
-	if ( taken && HL2GameRules()->IsAlyxInDarknessMode() && !HasCondition( COND_TALKER_PLAYER_DEAD ) )
+	if ( taken && !HasCondition( COND_TALKER_PLAYER_DEAD ) )
 	{
 		if ( !HasCondition(COND_SEE_ENEMY) && (info.GetDamageType() & (DMG_SLASH | DMG_CLUB) ) )
 		{
@@ -2630,12 +2592,6 @@ void CNPC_Alyx::CheckBlindedByFlare( void )
 //-----------------------------------------------------------------------------
 bool CNPC_Alyx::CanBeBlindedByFlashlight( bool bCheckLightSources )
 {
-	// Can't be blinded if we're not in alyx darkness mode
- 	/*
-	if ( !HL2GameRules()->IsAlyxInDarknessMode() )
-		return false;
-	*/
-
 	// Can't be blinded if I'm in a script, or in combat
 	if ( IsInAScript() || GetState() == NPC_STATE_COMBAT || GetState() == NPC_STATE_SCRIPT )
 		return false;
@@ -2685,11 +2641,11 @@ bool CNPC_Alyx::PlayerFlashlightOnMyEyes( CBasePlayer *pPlayer )
 	float flDist = VectorNormalize( vecToEyes ); 
 
 	// We can be blinded in daylight, but only at close range
-	if ( HL2GameRules()->IsAlyxInDarknessMode() == false )
-	{
+	//if ( BBGameRules()->IsAlyxInDarknessMode() == false )
+	//{
 		if ( flDist > (8*12.0f) )
 			return false;
-	}
+	//}
 
 	float flDot = DotProduct( vecPlayerForward, vecToEyes );
 	if ( flDot < 0.98 )

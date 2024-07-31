@@ -4,8 +4,8 @@
 //
 //=============================================================================//
 
-#ifndef HL2_GAMERULES_H
-#define HL2_GAMERULES_H
+#ifndef BB_GAMERULES_H
+#define BB_GAMERULES_H
 #ifdef _WIN32
 #pragma once
 #endif
@@ -15,23 +15,23 @@
 #include "hl2_shareddefs.h"
 
 #ifdef CLIENT_DLL
-	#define CHalfLife2 C_HalfLife2
-	#define CHalfLife2Proxy C_HalfLife2Proxy
+	#define CBBRules C_BBRules
+	#define CBBRulesProxy C_BBRulesProxy
 #endif
 
 
-class CHalfLife2Proxy : public CGameRulesProxy
+class CBBRulesProxy : public CGameRulesProxy
 {
 public:
-	DECLARE_CLASS( CHalfLife2Proxy, CGameRulesProxy );
+	DECLARE_CLASS( CBBRulesProxy, CGameRulesProxy );
 	DECLARE_NETWORKCLASS();
 };
 
 
-class CHalfLife2 : public CSingleplayRules
+class CBBRules : public CSingleplayRules
 {
 public:
-	DECLARE_CLASS( CHalfLife2, CSingleplayRules );
+	DECLARE_CLASS( CBBRules, CSingleplayRules );
 
 	// Damage Query Overrides.
 	virtual bool			Damage_IsTimeBased( int iDmgType );
@@ -41,15 +41,9 @@ public:
 	virtual bool			ShouldCollide( int collisionGroup0, int collisionGroup1 );
 	virtual bool			ShouldUseRobustRadiusDamage(CBaseEntity *pEntity);
 #ifndef CLIENT_DLL
-	virtual bool			ShouldAutoAim( CBasePlayer *pPlayer, edict_t *target );
 	virtual float			GetAutoAimScale( CBasePlayer *pPlayer );
 	virtual float			GetAmmoQuantityScale( int iAmmoIndex );
-	virtual void			LevelInitPreEntity();
 #endif
-
-private:
-	// Rules change for the mega physgun
-	CNetworkVar( bool, m_bMegaPhysgun );
 
 #ifdef CLIENT_DLL
 
@@ -59,8 +53,8 @@ private:
 
 	DECLARE_SERVERCLASS_NOBASE(); // This makes datatables able to access our private vars.
 
-	CHalfLife2();
-	virtual ~CHalfLife2() {}
+	CBBRules();
+	virtual ~CBBRules() {}
 
 	virtual void			Think( void );
 
@@ -77,16 +71,7 @@ private:
 
 	virtual bool			ShouldBurningPropsEmitLight();
 public:
-
 	bool AllowDamage( CBaseEntity *pVictim, const CTakeDamageInfo &info );
-
-	bool	NPC_ShouldDropGrenade( CBasePlayer *pRecipient );
-	bool	NPC_ShouldDropHealth( CBasePlayer *pRecipient );
-	void	NPC_DroppedHealth( void );
-	void	NPC_DroppedGrenade( void );
-	bool	MegaPhyscannonActive( void ) { return m_bMegaPhysgun;	}
-	
-	virtual bool IsAlyxInDarknessMode();
 
 private:
 
@@ -96,7 +81,7 @@ private:
 	void AdjustPlayerDamageTaken( CTakeDamageInfo *pInfo );
 	float AdjustPlayerDamageInflicted( float damage );
 
-	int						DefaultFOV( void ) { return 75; }
+	int	DefaultFOV( void ) { return 75; }
 #endif
 };
 
@@ -104,15 +89,11 @@ private:
 //-----------------------------------------------------------------------------
 // Gets us at the Half-Life 2 game rules
 //-----------------------------------------------------------------------------
-inline CHalfLife2* HL2GameRules()
+inline CBBRules* BBGameRules()
 {
 #if ( !defined( HL2_DLL ) && !defined( HL2_CLIENT_DLL ) ) || defined( HL2MP )
-	Assert( 0 );	// g_pGameRules is NOT an instance of CHalfLife2 and bad things happen
+	Assert( 0 );	// g_pGameRules is NOT an instance of CBBRules and bad things happen
 #endif
-
-	return static_cast<CHalfLife2*>(g_pGameRules);
+	return static_cast<CBBRules*>(g_pGameRules);
 }
-
-
-
-#endif // HL2_GAMERULES_H
+#endif

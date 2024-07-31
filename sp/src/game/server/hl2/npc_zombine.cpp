@@ -27,7 +27,7 @@
 #include "props.h"
 #include "physics_npc_solver.h"
 #include "hl2_player.h"
-#include "hl2_gamerules.h"
+#include "bb_gamerules.h"
 
 #include "basecombatweapon.h"
 #include "basegrenade_shared.h"
@@ -68,8 +68,6 @@ int ACT_ZOMBINE_GRENADE_FLINCH_WEST;
 int ACT_ZOMBINE_GRENADE_FLINCH_EAST;
 
 int AE_ZOMBINE_PULLPIN;
-
-extern bool IsAlyxInDarknessMode();
 
 ConVar	sk_zombie_soldier_health( "sk_zombie_soldier_health","0");
 
@@ -614,7 +612,7 @@ bool CNPC_Zombine::AllowedToSprint( void )
 
 	if ( pPlayer )
 	{
-		if ( HL2GameRules()->IsAlyxInDarknessMode() && pPlayer->FlashlightIsOn() == false )
+		if ( pPlayer->FlashlightIsOn() == false )
 		{
 			iChance = SPRINT_CHANCE_VALUE_DARKNESS;
 		}

@@ -618,7 +618,7 @@ enum
 	EFL_DONTBLOCKLOS =			(1<<25),		// I shouldn't block NPC line-of-sight
 	EFL_DONTWALKON =			(1<<26),		// NPC;s should not walk on this entity
 	EFL_NO_DISSOLVE =			(1<<27),		// These guys shouldn't dissolve
-	EFL_NO_MEGAPHYSCANNON_RAGDOLL = (1<<28),	// Mega physcannon can't ragdoll these guys.
+	EFL_NO_MEGAPHYSCANNON_RAGDOLL = (1<<28),	// Mega physcannon can't ragdoll these guys. FIXME: deleted!
 	EFL_NO_WATER_VELOCITY_CHANGE  =	(1<<29),	// Don't adjust this entity's velocity when transitioning into water
 	EFL_NO_PHYSCANNON_INTERACTION =	(1<<30),	// Physcannon can't pick these up or punt them
 	EFL_NO_DAMAGE_FORCES =		(1<<31),	// Doesn't accept forces from physics damage

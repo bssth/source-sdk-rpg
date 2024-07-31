@@ -36,6 +36,7 @@ public:
 	void	Precache( void );
 	void	AddViewKick( void );
 	void	SecondaryAttack( void );
+	void	ProcessAnimationEvents(void);
 
 	int		GetMinBurst() { return 2; }
 	int		GetMaxBurst() { return 5; }
@@ -393,6 +394,10 @@ void CWeaponSMG1::SecondaryAttack( void )
 
 	m_iSecondaryAttacks++;
 	gamestats->Event_WeaponFired( pPlayer, false, GetClassname() );
+}
+
+void CWeaponSMG1::ProcessAnimationEvents(void) {
+
 }
 
 #define	COMBINE_MIN_GRENADE_CLEAR_DIST 256

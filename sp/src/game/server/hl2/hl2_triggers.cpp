@@ -229,33 +229,6 @@ void CTriggerWeaponDissolve::DissolveThink( void )
 	{
 		CBaseCombatWeapon *pWeapon = m_pWeapons[i];
 		Vector vecConduit = GetConduitPoint( pWeapon );
-		
-		// The physcannon upgrades when this happens
-		if ( FClassnameIs( pWeapon, "weapon_physcannon" ) )
-		{
-			// This must be the last weapon for us to care
-			if ( numWeapons > 1 )
-				continue;
-
-			//FIXME: Make them do this on a stagger!
-
-			// All conduits send power to the weapon
-			for ( int i = 0; i < m_pConduitPoints.Count(); i++ )
-			{
-				CreateBeam( m_pConduitPoints[i]->GetAbsOrigin(), pWeapon, 4.0f );
-			}
-
-			PhysCannonBeginUpgrade( pWeapon );
-			m_OnChargingPhyscannon.FireOutput( this, this );
-
-			EmitSound( "WeaponDissolve.Beam" );
-
-			// We're done
-			m_pWeapons.Purge();
-			m_pConduitPoints.Purge();
-			SetContextThink( NULL, 0, s_pDissolveThinkContext );
-			return;
-		}
 
 		// Randomly dissolve them all
 		float flLifetime = random->RandomFloat( 2.5f, 4.0f );
@@ -455,15 +428,6 @@ void CTriggerPhysicsTrap::Touch( CBaseEntity *pOther )
 	CBaseAnimating *pAnim = pOther->GetBaseAnimating();
 	if ( !pAnim )
 		return;
-
-#ifdef HL2_DLL
-	// HACK: Upgrade the physcannon
-	if ( FClassnameIs( pAnim, "weapon_physcannon" ) )
-	{
-		PhysCannonBeginUpgrade( pAnim );
-		return;
-	}
-#endif
 
 	pAnim->Dissolve( NULL, gpGlobals->curtime, false, m_nDissolveType );
 }

@@ -39,7 +39,7 @@
 #include "npc_barnacle.h"
 #include "entitylist.h"
 #include "env_zoom.h"
-#include "hl2_gamerules.h"
+#include "bb_gamerules.h"
 #include "prop_combine_ball.h"
 #include "datacache/imdlcache.h"
 #include "eventqueue.h"

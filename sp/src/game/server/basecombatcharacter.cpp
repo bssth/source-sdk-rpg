@@ -45,7 +45,7 @@
 
 #ifdef HL2_DLL
 #include "weapon_physcannon.h"
-#include "hl2_gamerules.h"
+#include "bb_gamerules.h"
 #endif
 
 #ifdef PORTAL
@@ -233,7 +233,7 @@ bool CBaseCombatCharacter::HasHumanGibs( void )
 	if ( myClass == CLASS_CITIZEN_PASSIVE   ||
 		 myClass == CLASS_CITIZEN_REBEL		||
 		 myClass == CLASS_COMBINE			||
-		 myClass == CLASS_CONSCRIPT			||
+		 myClass == CLASS_HERMIT			||
 		 myClass == CLASS_METROPOLICE		||
 		 myClass == CLASS_PLAYER )	
 		 return true;
@@ -1529,39 +1529,16 @@ bool CBaseCombatCharacter::BecomeRagdoll( const CTakeDamageInfo &info, const Vec
 	CTakeDamageInfo newinfo = info;
 	newinfo.SetDamageForce( forceVector );
 
-#ifdef HL2_EPISODIC
 	// Burning corpses are server-side in episodic, if we're in darkness mode
-	if ( IsOnFire() && HL2GameRules()->IsAlyxInDarknessMode() )
+	if (IsOnFire())
 	{
-		CBaseEntity *pRagdoll = CreateServerRagdoll( this, m_nForceBone, newinfo, COLLISION_GROUP_DEBRIS );
-		FixupBurningServerRagdoll( pRagdoll );
+		CBaseEntity* pRagdoll = CreateServerRagdoll(this, m_nForceBone, newinfo, COLLISION_GROUP_DEBRIS);
+		FixupBurningServerRagdoll(pRagdoll);
 		RemoveDeferred();
 		return true;
 	}
-#endif
 
 #ifdef HL2_DLL	
-
-	bool bMegaPhyscannonActive = false;
-#if !defined( HL2MP )
-	bMegaPhyscannonActive = HL2GameRules()->MegaPhyscannonActive();
-#endif // !HL2MP
-
-	// Mega physgun requires everything to be a server-side ragdoll
-	if ( m_bForceServerRagdoll == true || ( ( bMegaPhyscannonActive == true ) && !IsPlayer() && Classify() != CLASS_PLAYER_ALLY_VITAL && Classify() != CLASS_PLAYER_ALLY ) )
-	{
-		if ( CanBecomeServerRagdoll() == false )
-			return false;
-
-		//FIXME: This is fairly leafy to be here, but time is short!
-		CBaseEntity *pRagdoll = CreateServerRagdoll( this, m_nForceBone, newinfo, COLLISION_GROUP_INTERACTIVE_DEBRIS, true );
-		FixupBurningServerRagdoll( pRagdoll );
-		PhysSetEntityGameFlags( pRagdoll, FVPHYSICS_NO_SELF_COLLISIONS );
-		RemoveDeferred();
-
-		return true;
-	}
-
 	if( hl2_episodic.GetBool() && Classify() == CLASS_PLAYER_ALLY_VITAL )
 	{
 		CreateServerRagdoll( this, m_nForceBone, newinfo, COLLISION_GROUP_INTERACTIVE_DEBRIS, true );
@@ -1645,15 +1622,6 @@ void CBaseCombatCharacter::Event_Killed( const CTakeDamageInfo &info )
 				pDroppedWeapon->Dissolve( NULL, gpGlobals->curtime, false, nDissolveType );
 			}
 		}
-#ifdef HL2_DLL
-		else if ( PlayerHasMegaPhysCannon() )
-		{
-			if ( pDroppedWeapon )
-			{
-				pDroppedWeapon->Dissolve( NULL, gpGlobals->curtime, false, ENTITY_DISSOLVE_NORMAL );
-			}
-		}
-#endif
 
 		if ( !bRagdollCreated && ( info.GetDamageType() & DMG_REMOVENORAGDOLL ) == 0 )
 		{
@@ -3092,13 +3060,6 @@ void CBaseCombatCharacter::VPhysicsShadowCollision( int index, gamevcollisioneve
 	// which can occur owing to ordering issues it appears.
 	float flOtherAttackerTime = 0.0f;
 
-#if defined( HL2_DLL ) && !defined( HL2MP )
-	if ( HL2GameRules()->MegaPhyscannonActive() == true )
-	{
-		flOtherAttackerTime = 1.0f;
-	}
-#endif // HL2_DLL && !HL2MP
-
 	if ( this == pOther->HasPhysicsAttacker( flOtherAttackerTime ) )
 		return;
 
@@ -3114,7 +3075,7 @@ void CBaseCombatCharacter::VPhysicsShadowCollision( int index, gamevcollisioneve
 	// REVISIT: Maybe resolve this collision on death with a different (not approximately infinite like AABB tensor)
 	// inertia tensor to get torque?
 	Vector damageForce = pEvent->postVelocity[index] * pEvent->pObjects[index]->GetMass() * phys_impactforcescale.GetFloat();
-	
+
 	IServerVehicle *vehicleOther = pOther->GetServerVehicle();
 	if ( vehicleOther )
 	{

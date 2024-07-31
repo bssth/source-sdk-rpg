@@ -192,8 +192,6 @@ public:
 	bool			IsFollowingCommandPoint();
 	CAI_BaseNPC *	GetSquadCommandRepresentative();
 	void			SetSquad( CAI_Squad *pSquad );
-	void			AddInsignia();
-	void			RemoveInsignia();
 	bool			SpeakCommandResponse( AIConcept_t concept, const char *modifiers = NULL );
 	
 	//---------------------------------
@@ -409,14 +407,6 @@ public:
 private:
 	float	m_flResponseAddedTime[ MAX_CITIZEN_RESPONSES ];		// Time at which the response was added. 0 if we have no response.
 	float	m_flNextResponseTime;
-};
-
-//-------------------------------------
-
-class CSquadInsignia : public CBaseAnimating
-{
-	DECLARE_CLASS( CSquadInsignia, CBaseAnimating );
-	void Spawn();
 };
 
 //-------------------------------------

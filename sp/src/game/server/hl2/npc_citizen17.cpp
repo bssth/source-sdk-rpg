@@ -37,8 +37,6 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-#define INSIGNIA_MODEL "models/chefhat.mdl"
-
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
@@ -64,8 +62,6 @@ ConVar	sk_citizen_stare_heal_time		( "sk_citizen_stare_heal_time",			"5" );
 
 ConVar	g_ai_citizen_show_enemy( "g_ai_citizen_show_enemy", "0" );
 
-ConVar	npc_citizen_insignia( "npc_citizen_insignia", "0" );
-ConVar	npc_citizen_squad_marker( "npc_citizen_squad_marker", "0" );
 ConVar	npc_citizen_explosive_resist( "npc_citizen_explosive_resist", "0" );
 ConVar	npc_citizen_auto_player_squad( "npc_citizen_auto_player_squad", "1" );
 ConVar	npc_citizen_auto_player_squad_allow_use( "npc_citizen_auto_player_squad_allow_use", "0" );
@@ -496,7 +492,7 @@ void CNPC_Citizen::Spawn()
 
 	m_flTimePlayerStare = FLT_MAX;
 
-	AddEFlags( EFL_NO_DISSOLVE | EFL_NO_MEGAPHYSCANNON_RAGDOLL | EFL_NO_PHYSCANNON_INTERACTION );
+	AddEFlags( EFL_NO_DISSOLVE | EFL_NO_PHYSCANNON_INTERACTION );
 
 	NPCInit();
 
@@ -507,11 +503,6 @@ void CNPC_Citizen::Spawn()
 
 	// Use render bounds instead of human hull for guys sitting in chairs, etc.
 	m_ActBusyBehavior.SetUseRenderBounds( HasSpawnFlags( SF_CITIZEN_USE_RENDER_BOUNDS ) );
-
-	if(m_isBadCitizen)
-	{
-		AddEntityRelationship(UTIL_GetLocalPlayer(), D_HT, 1);
-	}
 }
 
 //-----------------------------------------------------------------------------
@@ -768,6 +759,9 @@ string_t CNPC_Citizen::GetModelName() const
 //-----------------------------------------------------------------------------
 Class_T	CNPC_Citizen::Classify()
 {
+	if (m_isBadCitizen)
+		return CLASS_HERMIT;
+
 	if (GlobalEntity_GetState("gordon_precriminal") == GLOBAL_ON)
 		return CLASS_CITIZEN_PASSIVE;
 
@@ -964,33 +958,6 @@ void CNPC_Citizen::PrescheduleThink()
 	UpdatePlayerSquad();
 	UpdateFollowCommandPoint();
 
-	if ( !npc_citizen_insignia.GetBool() && npc_citizen_squad_marker.GetBool() && IsInPlayerSquad() )
-	{
-		Vector mins = WorldAlignMins() * .5 + GetAbsOrigin();
-		Vector maxs = WorldAlignMaxs() * .5 + GetAbsOrigin();
-		
-		float rMax = 255;
-		float gMax = 255;
-		float bMax = 255;
-
-		float rMin = 255;
-		float gMin = 128;
-		float bMin = 0;
-
-		const float TIME_FADE = 1.0;
-		float timeInSquad = gpGlobals->curtime - m_flTimeJoinedPlayerSquad;
-		timeInSquad = MIN( TIME_FADE, MAX( timeInSquad, 0 ) );
-
-		float fade = ( 1.0 - timeInSquad / TIME_FADE );
-
-		float r = rMin + ( rMax - rMin ) * fade;
-		float g = gMin + ( gMax - gMin ) * fade;
-		float b = bMin + ( bMax - bMin ) * fade;
-
-		// THIS IS A PLACEHOLDER UNTIL WE HAVE A REAL DESIGN & ART -- DO NOT REMOVE
-		NDebugOverlay::Line( Vector( mins.x, GetAbsOrigin().y, GetAbsOrigin().z+1 ), Vector( maxs.x, GetAbsOrigin().y, GetAbsOrigin().z+1 ), r, g, b, false, .11 );
-		NDebugOverlay::Line( Vector( GetAbsOrigin().x, mins.y, GetAbsOrigin().z+1 ), Vector( GetAbsOrigin().x, maxs.y, GetAbsOrigin().z+1 ), r, g, b, false, .11 );
-	}
 	if( GetEnemy() && g_ai_citizen_show_enemy.GetBool() )
 	{
 		NDebugOverlay::Line( EyePosition(), GetEnemy()->EyePosition(), 255, 0, 0, false, .1 );
@@ -1906,7 +1873,6 @@ void CNPC_Citizen::SimpleUse( CBaseEntity *pActivator, CBaseEntity *pCaller, USE
 {
 	if (IsAngryToPlayer())
 	{
-		m_OnDenyCommanderUse.FireOutput(this, this);
 		return;
 	}
 
@@ -2559,6 +2525,11 @@ void CNPC_Citizen::OnMoveOrder()
 //-----------------------------------------------------------------------------
 void CNPC_Citizen::CommanderUse( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value )
 {
+	if (IsAngryToPlayer())
+	{
+		return;
+	}
+
 	m_OnPlayerUse.FireOutput( pActivator, pCaller );
 
 	// Under these conditions, citizens will refuse to go with the player.
@@ -3206,13 +3177,9 @@ void CNPC_Citizen::SetSquad( CAI_Squad *pSquad )
 	if( IsInPlayerSquad() && !bWasInPlayerSquad )
 	{
 		m_OnJoinedPlayerSquad.FireOutput(this, this);
-		if ( npc_citizen_insignia.GetBool() )
-			AddInsignia();
 	}
 	else if ( !IsInPlayerSquad() && bWasInPlayerSquad )
 	{
-		if ( npc_citizen_insignia.GetBool() )
-			RemoveInsignia();
 		m_OnLeftPlayerSquad.FireOutput(this, this);
 	}
 }
@@ -4110,62 +4077,6 @@ void CCitizenResponseSystem::ResponseThink()
 	{
 		SetNextThink( gpGlobals->curtime + 0.1 );
 	}
-}
-
-void CNPC_Citizen::AddInsignia()
-{
-	CBaseEntity *pMark = CreateEntityByName( "squadinsignia" );
-	pMark->SetOwnerEntity( this );
-	pMark->Spawn();
-}
-
-void CNPC_Citizen::RemoveInsignia()
-{
-	// This is crap right now.
-	CBaseEntity *FirstEnt();
-	CBaseEntity *pEntity = gEntList.FirstEnt();
-
-	while( pEntity )
-	{
-		if( pEntity->GetOwnerEntity() == this )
-		{
-			// Is this my insignia?
-			CSquadInsignia *pInsignia = dynamic_cast<CSquadInsignia *>(pEntity);
-
-			if( pInsignia )
-			{
-				UTIL_Remove( pInsignia );
-				return;
-			}
-		}
-
-		pEntity = gEntList.NextEnt( pEntity );
-	}
-}
-
-//-----------------------------------------------------------------------------
-LINK_ENTITY_TO_CLASS( squadinsignia, CSquadInsignia );
-
-void CSquadInsignia::Spawn()
-{
-	CAI_BaseNPC *pOwner = ( GetOwnerEntity() ) ? GetOwnerEntity()->MyNPCPointer() : NULL;
-
-	if ( pOwner )
-	{
-		int attachment = pOwner->LookupAttachment( "eyes" );
-		if ( attachment )
-		{
-			SetAbsAngles( GetOwnerEntity()->GetAbsAngles() );
-			SetParent( GetOwnerEntity(), attachment );
-
-			Vector vecPosition;
-			vecPosition.Init( -2.5, 0, 3.9 );
-			SetLocalOrigin( vecPosition );
-		}
-	}
-
-	SetModel( INSIGNIA_MODEL );
-	SetSolid( SOLID_NONE );	
 }
 
 //-----------------------------------------------------------------------------

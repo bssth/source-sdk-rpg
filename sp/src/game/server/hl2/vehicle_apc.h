@@ -58,6 +58,7 @@ public:
 	virtual Class_T	ClassifyPassenger( CBaseCombatCharacter *pPassenger, Class_T defaultClassification );
 	virtual int		OnTakeDamage( const CTakeDamageInfo &info );
 	virtual float	PassengerDamageModifier( const CTakeDamageInfo &info );
+	virtual void	EnterVehicle(CBaseCombatCharacter* pPassenger);
 
 	// Weaponry
 	const Vector	&GetPrimaryGunOrigin( void );

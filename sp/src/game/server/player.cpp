@@ -6620,17 +6620,7 @@ bool CBasePlayer::BumpWeapon( CBaseCombatWeapon *pWeapon )
 				UTIL_HudHintText( this, hint.Access() );
 			}
 
-			// Always switch to a newly-picked up weapon
-			if ( !PlayerHasMegaPhysCannon() )
-			{
-				// If it uses clips, load it full. (this is the first time you've picked up this type of weapon)
-				if ( pWeapon->UsesClipsForAmmo1() )
-				{
-					pWeapon->m_iClip1 = pWeapon->GetMaxClip1();
-				}
-
-				Weapon_Switch( pWeapon );
-			}
+			Weapon_Switch( pWeapon );
 #endif
 		}
 		return true;

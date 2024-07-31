@@ -110,7 +110,7 @@ void CNPC_BaseScanner::Spawn(void)
 
 	// This entity cannot be dissolved by the combine balls,
 	// nor does it get killed by the mega physcannon.
-	AddEFlags( EFL_NO_DISSOLVE | EFL_NO_MEGAPHYSCANNON_RAGDOLL );
+	AddEFlags( EFL_NO_DISSOLVE );
 
 	m_flGoalOverrideDistance = 0.0f;
 
@@ -467,7 +467,7 @@ void CNPC_BaseScanner::TakeDamageFromPhysicsImpact( int index, gamevcollisioneve
 	CBaseEntity *pHitEntity = pEvent->pEntities[!index];
 
 	// NOTE: Augment the normal impact energy scale here.
-	float flDamageScale = PlayerHasMegaPhysCannon() ? 10.0f : 5.0f;
+	float flDamageScale = 5.0f;
 
 	// Scale by the mapmaker's energyscale
 	flDamageScale *= m_impactEnergyScale;

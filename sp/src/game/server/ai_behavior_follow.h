@@ -14,7 +14,7 @@
 #include "ai_moveshoot.h"
 
 #ifdef HL2_EPISODIC
-	#include "hl2_gamerules.h"
+	#include "bb_gamerules.h"
 #endif
 
 #if defined( _WIN32 )
