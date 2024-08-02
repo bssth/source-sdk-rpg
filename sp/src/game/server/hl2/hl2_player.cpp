@@ -70,9 +70,6 @@ extern ConVar autoaim_max_dist;
 // the X/Y of the player's hull to get the volume to trace bullets against.
 #define PLAYER_HULL_REDUCTION	0.70
 
-// This switches between the single primary weapon, and multiple weapons with buckets approach (jdw)
-#define	HL2_SINGLE_PRIMARY_WEAPON_MODE	1
-
 #define TIME_IGNORE_FALL_DAMAGE 10.0
 
 extern int gEvilImpulse101;
@@ -83,21 +80,9 @@ ConVar hl2_walkspeed( "hl2_walkspeed", "150" );
 ConVar hl2_normspeed( "hl2_normspeed", "190" );
 ConVar hl2_sprintspeed( "hl2_sprintspeed", "320" );
 
-ConVar hl2_darkness_flashlight_factor ( "hl2_darkness_flashlight_factor", "1" );
-ConVar hl2_battery_stunstick ( "hl2_battery_stunstick", "0" );
-
-#ifdef HL2MP
-	#define	HL2_WALK_SPEED 150
-	#define	HL2_NORM_SPEED 190
-	#define	HL2_SPRINT_SPEED 320
-#else
 	#define	HL2_WALK_SPEED hl2_walkspeed.GetFloat()
 	#define	HL2_NORM_SPEED hl2_normspeed.GetFloat()
 	#define	HL2_SPRINT_SPEED hl2_sprintspeed.GetFloat()
-#endif
-
-ConVar player_showpredictedposition( "player_showpredictedposition", "0" );
-ConVar player_showpredictedposition_timestep( "player_showpredictedposition_timestep", "1.0" );
 
 ConVar player_squad_transient_commands( "player_squad_transient_commands", "1", FCVAR_REPLICATED );
 ConVar player_squad_double_tap_time( "player_squad_double_tap_time", "0.25" );
@@ -158,29 +143,6 @@ static impactdamagetable_t gCappedPlayerImpactDamageTable =
 	320.0f,		// min velocity for player speed to cause damage
 
 };
-
-// Flashlight utility
-bool g_bCacheLegacyFlashlightStatus = true;
-bool g_bUseLegacyFlashlight;
-bool Flashlight_UseLegacyVersion( void )
-{
-	// If this is the first run through, cache off what the answer should be (cannot change during a session)
-	if ( g_bCacheLegacyFlashlightStatus )
-	{
-		char modDir[MAX_PATH];
-		if ( UTIL_GetModDir( modDir, sizeof(modDir) ) == false )
-			return false;
-
-		g_bUseLegacyFlashlight = ( !Q_strcmp( modDir, "hl2" ) ||
-					   !Q_strcmp( modDir, "episodic" ) ||
-					   !Q_strcmp( modDir, "lostcoast" ) || !Q_strcmp( modDir, "hl1" ));
-
-		g_bCacheLegacyFlashlightStatus = false;
-	}
-
-	// Return the results
-	return g_bUseLegacyFlashlight;
-}
 
 //-----------------------------------------------------------------------------
 // Purpose: Used to relay outputs/inputs from the player to the world and viceversa
@@ -589,16 +551,6 @@ void CHL2_Player::HandleArmorReduction( void )
 //-----------------------------------------------------------------------------
 void CHL2_Player::PreThink(void)
 {
-	if ( player_showpredictedposition.GetBool() )
-	{
-		Vector	predPos;
-
-		UTIL_PredictedPosition( this, player_showpredictedposition_timestep.GetFloat(), &predPos );
-
-		NDebugOverlay::Box( predPos, NAI_Hull::Mins( GetHullType() ), NAI_Hull::Maxs( GetHullType() ), 0, 255, 0, 0, 0.01f );
-		NDebugOverlay::Line( GetAbsOrigin(), predPos, 0, 255, 0, 0, 0.01f );
-	}
-
 #ifdef HL2_EPISODIC
 	if( m_hLocatorTargetEntity != NULL )
 	{
@@ -2026,30 +1978,10 @@ void CHL2_Player::SuitPower_Update( void )
 			{
 				StopSprinting();
 			}
-
-			if ( Flashlight_UseLegacyVersion() )
-			{
-				if( FlashlightIsOn() )
-				{
-#ifndef HL2MP
-					FlashlightTurnOff();
-#endif
 				}
 			}
 		}
 
-		if ( Flashlight_UseLegacyVersion() )
-		{
-			// turn off flashlight a little bit after it hits below one aux power notch (5%)
-			if( m_HL2Local.m_flSuitPower < 4.8f && FlashlightIsOn() )
-			{
-#ifndef HL2MP
-				FlashlightTurnOff();
-#endif
-			}
-		}
-	}
-}
 
 
 //-----------------------------------------------------------------------------
@@ -2233,16 +2165,6 @@ void CHL2_Player::FlashlightTurnOn( void )
 	if( m_bFlashlightDisabled )
 		return;
 
-	if ( Flashlight_UseLegacyVersion() )
-	{
-		if( !SuitPower_AddDevice( SuitDeviceFlashlight ) )
-			return;
-	}
-#ifdef HL2_DLL
-	if( !IsSuitEquipped() )
-		return;
-#endif
-
 	AddEffects( EF_DIMLIGHT );
 	EmitSound( "HL2Player.FlashLightOn" );
 
@@ -2256,12 +2178,6 @@ void CHL2_Player::FlashlightTurnOn( void )
 //-----------------------------------------------------------------------------
 void CHL2_Player::FlashlightTurnOff( void )
 {
-	if ( Flashlight_UseLegacyVersion() )
-	{
-		if( !SuitPower_RemoveDevice( SuitDeviceFlashlight ) )
-			return;
-	}
-
 	RemoveEffects( EF_DIMLIGHT );
 	EmitSound( "HL2Player.FlashLightOff" );
 
@@ -2584,7 +2500,7 @@ int CHL2_Player::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 	}
 
 
-	if( (info.GetDamageType() & DMG_SLASH) && hl2_episodic.GetBool() )
+	if( (info.GetDamageType() & DMG_SLASH) )
 	{
 		if( m_afPhysicsFlags & PFLAG_USING )
 		{
@@ -2834,15 +2750,6 @@ int CHL2_Player::GiveAmmo( int nCount, int nAmmoIndex, bool bSuppressSound)
 //-----------------------------------------------------------------------------
 bool CHL2_Player::Weapon_CanUse( CBaseCombatWeapon *pWeapon )
 {
-#ifndef HL2MP
-	if (hl2_battery_stunstick.GetBool() && pWeapon->ClassMatches( "weapon_stunstick" ))
-	{
-		if ( ApplyBattery( 0.5 ) )
-			UTIL_Remove( pWeapon );
-		return false;
-	}
-#endif
-
 	if (pWeapon->ClassMatches("weapon_frag") && weapon_frag_tutorial.GetBool())
 	{
 		UTIL_HudHintText(this, "#Valve_Hint_Grenade");
@@ -2858,14 +2765,10 @@ bool CHL2_Player::Weapon_CanUse( CBaseCombatWeapon *pWeapon )
 //-----------------------------------------------------------------------------
 void CHL2_Player::Weapon_Equip( CBaseCombatWeapon *pWeapon )
 {
-#if	HL2_SINGLE_PRIMARY_WEAPON_MODE
-
-	if ( pWeapon->GetSlot() == WEAPON_PRIMARY_SLOT )
+	if (pWeapon->GetSlot() == WEAPON_PRIMARY_SLOT)
 	{
-		Weapon_DropSlot( WEAPON_PRIMARY_SLOT );
+		Weapon_DropSlot(WEAPON_PRIMARY_SLOT);
 	}
-
-#endif
 
 	if( GetActiveWeapon() == NULL )
 	{
@@ -2882,9 +2785,6 @@ void CHL2_Player::Weapon_Equip( CBaseCombatWeapon *pWeapon )
 //-----------------------------------------------------------------------------
 bool CHL2_Player::BumpWeapon( CBaseCombatWeapon *pWeapon )
 {
-
-#if	HL2_SINGLE_PRIMARY_WEAPON_MODE
-
 	CBaseCombatCharacter *pOwner = pWeapon->GetOwner();
 
 	// Can I have this weapon type?
@@ -2950,12 +2850,6 @@ bool CHL2_Player::BumpWeapon( CBaseCombatWeapon *pWeapon )
 		
 		return true;
 	}
-#else
-
-	return BaseClass::BumpWeapon( pWeapon );
-
-#endif
-
 }
 
 //-----------------------------------------------------------------------------
@@ -2965,16 +2859,12 @@ bool CHL2_Player::BumpWeapon( CBaseCombatWeapon *pWeapon )
 //-----------------------------------------------------------------------------
 bool CHL2_Player::ClientCommand( const CCommand &args )
 {
-#if	HL2_SINGLE_PRIMARY_WEAPON_MODE
-
 	//Drop primary weapon
-	if ( !Q_stricmp( args[0], "DropPrimary" ) )
+	if (!Q_stricmp(args[0], "DropPrimary"))
 	{
-		Weapon_DropSlot( WEAPON_PRIMARY_SLOT );
+		Weapon_DropSlot(WEAPON_PRIMARY_SLOT);
 		return true;
 	}
-
-#endif
 
 	if ( !Q_stricmp( args[0], "emit" ) )
 	{
@@ -3084,16 +2974,14 @@ void CHL2_Player::PlayerUse ( void )
 			usedSomething = true;
 		}
 
-#if	HL2_SINGLE_PRIMARY_WEAPON_MODE
-
-		//Check for weapon pick-up
+		// Check for weapon pick-up
 		if ( m_afButtonPressed & IN_USE )
 		{
 			CBaseCombatWeapon *pWeapon = dynamic_cast<CBaseCombatWeapon *>(pUseEntity);
 
 			if ( ( pWeapon != NULL ) && ( Weapon_CanSwitchTo( pWeapon ) ) )
 			{
-				//Try to take ammo or swap the weapon
+				// Try to take ammo or swap the weapon
 				if ( Weapon_OwnsThisType( pWeapon->GetClassname(), pWeapon->GetSubType() ) )
 				{
 					Weapon_EquipAmmoOnly( pWeapon );
@@ -3107,7 +2995,6 @@ void CHL2_Player::PlayerUse ( void )
 				usedSomething = true;
 			}
 		}
-#endif
 	}
 	else if ( m_afButtonPressed & IN_USE )
 	{
@@ -3124,8 +3011,6 @@ void CHL2_Player::PlayerUse ( void )
 		m_afButtonPressed &= ~IN_USE;
 	}
 }
-
-ConVar	sv_show_crosshair_target( "sv_show_crosshair_target", "0" );
 
 //-----------------------------------------------------------------------------
 // Purpose: Updates the posture of the weapon from lowered to ready
@@ -3191,21 +3076,13 @@ void CHL2_Player::UpdateWeaponPosture( void )
 				//See if we hates it
 				if ( dis == D_LI  )
 				{
-					//We're over a friendly, drop our weapon
-					if ( Weapon_Lower() == false )
-					{
-						//FIXME: We couldn't lower our weapon!
-					}
-
+					Weapon_Lower();
 					return;
 				}
 			}
 		}
 
-		if ( Weapon_Ready() == false )
-		{
-			//FIXME: We couldn't raise our weapon!
-		}
+		Weapon_Ready();
 	}
 
 	if( g_pGameRules->GetAutoAimMode() != AUTOAIM_NONE )
@@ -3450,13 +3327,10 @@ void CHL2_Player::UpdateClientData( void )
 	}
 
 	// Update Flashlight
-#ifdef HL2_EPISODIC
-	if ( Flashlight_UseLegacyVersion() == false )
-	{
-		if ( FlashlightIsOn() && sv_infinite_aux_power.GetBool() == false )
+	if (FlashlightIsOn() && sv_infinite_aux_power.GetBool() == false)
 		{
 			m_HL2Local.m_flFlashBattery -= FLASH_DRAIN_TIME * gpGlobals->frametime;
-			if ( m_HL2Local.m_flFlashBattery < 0.0f )
+		if (m_HL2Local.m_flFlashBattery < 0.0f)
 			{
 				FlashlightTurnOff();
 				m_HL2Local.m_flFlashBattery = 0.0f;
@@ -3465,17 +3339,11 @@ void CHL2_Player::UpdateClientData( void )
 		else
 		{
 			m_HL2Local.m_flFlashBattery += FLASH_CHARGE_TIME * gpGlobals->frametime;
-			if ( m_HL2Local.m_flFlashBattery > 100.0f )
+		if (m_HL2Local.m_flFlashBattery > 100.0f)
 			{
 				m_HL2Local.m_flFlashBattery = 100.0f;
 			}
-		}
 	}
-	else
-	{
-		m_HL2Local.m_flFlashBattery = -1.0f;
-	}
-#endif // HL2_EPISODIC
 
 	BaseClass::UpdateClientData();
 }
