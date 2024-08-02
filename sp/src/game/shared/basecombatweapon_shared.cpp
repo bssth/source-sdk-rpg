@@ -679,10 +679,7 @@ void CBaseCombatWeapon::Drop( const Vector &vecVelocity )
 	SetThink( &CBaseCombatWeapon::SetPickupTouch );
 	SetTouch(NULL);
 
-	if( hl2_episodic.GetBool() )
-	{
-		RemoveSpawnFlags( SF_WEAPON_NO_PLAYER_PICKUP );
-	}
+	RemoveSpawnFlags(SF_WEAPON_NO_PLAYER_PICKUP);
 
 	IPhysicsObject *pObj = VPhysicsGetObject();
 	if ( pObj != NULL )
@@ -1645,6 +1642,8 @@ void CBaseCombatWeapon::ItemPreFrame( void )
 
 void CBaseCombatWeapon::ProcessAnimationEvents(void)
 {
+	// FIXME: too many bugs right now
+#if 0
 	CBasePlayer* pOwner = ToBasePlayer(GetOwner());
 	if (!pOwner)
 		return;
@@ -1673,6 +1672,7 @@ void CBaseCombatWeapon::ProcessAnimationEvents(void)
 			m_flNextSecondaryAttack = m_flNextPrimaryAttack;
 		}
 	}
+#endif
 }
 
 //====================================================================================

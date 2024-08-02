@@ -379,6 +379,8 @@ void CNPC_Citizen::Precache()
 	PrecacheScriptSound( "NPC_Citizen.FootstepRight" );
 	PrecacheScriptSound( "NPC_Citizen.Die" );
 	PrecacheScriptSound("npc_citizen.upthere02");
+	PrecacheScriptSound("npc_citizen.downthere01");
+	PrecacheScriptSound("npc_citizen.overhere01");
 
 	PrecacheInstancedScene( "scenes/Expressions/CitizenIdle.vcd" );
 	PrecacheInstancedScene( "scenes/Expressions/CitizenAlert_loop.vcd" );
@@ -839,13 +841,9 @@ void CNPC_Citizen::GatherConditions()
 {
 	BaseClass::GatherConditions();
 
-	if( IsInPlayerSquad() && hl2_episodic.GetBool() )
+	if( IsInPlayerSquad() && IRelationType(UTIL_GetLocalPlayer()) != D_LI)
 	{
-		// Leave the player squad if someone has made me neutral to player.
-		if( IRelationType(UTIL_GetLocalPlayer()) == D_NU )
-		{
-			RemoveFromPlayerSquad();
-		}
+		RemoveFromPlayerSquad();
 	}
 
 	if ( !SpokeConcept( TLK_JOINPLAYER ) && IsRunningScriptedSceneWithSpeech( this, true ) )
@@ -2160,6 +2158,7 @@ int CNPC_Citizen::OnTakeDamage_Alive(const CTakeDamageInfo& info)
 			CBasePlayer *pPlayer = ToBasePlayer(attacker);
 			if (pPlayer && IsPlayerAlly(pPlayer))
 			{
+				// FIXME: add timer
 				DevMsg("Citizen %s is now angry with player\n", GetDebugName());
 				m_isAngryToPlayer = true;
 				AddEntityRelationship(attacker, D_HT, 1);
@@ -2444,7 +2443,7 @@ void CNPC_Citizen::MoveOrder( const Vector &vecDest, CAI_BaseNPC **Allies, int n
 	if ( !AI_IsSinglePlayer() )
 		return;
 
-	if( hl2_episodic.GetBool() && m_iszDenyCommandConcept != NULL_STRING )
+	if( m_iszDenyCommandConcept != NULL_STRING )
 	{
 		SpeakCommandResponse( STRING(m_iszDenyCommandConcept) );
 		return;
@@ -3287,13 +3286,6 @@ bool CNPC_Citizen::CanHeal()
 { 
 	if ( !IsMedic() && !IsAmmoResupplier() )
 		return false;
-
-	if( !hl2_episodic.GetBool() )
-	{
-		// If I'm not armed, my priority should be to arm myself.
-		if ( IsMedic() && !GetActiveWeapon() )
-			return false;
-	}
 
 	if ( IsInAScript() || (m_NPCState == NPC_STATE_SCRIPT) )
 		return false;

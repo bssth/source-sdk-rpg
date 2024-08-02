@@ -370,16 +370,13 @@ bool CNPC_BaseZombie::FindNearestPhysicsObject( int iMaxMass )
 		if ( !FVisible( pList[i] ) )
 			continue;
 
-		if ( hl2_episodic.GetBool() )
-		{
-			// Skip things that the enemy can't see. Do we want this as a general thing? 
-			// The case for this feature is that zombies who are pursuing the player will
-			// stop along the way to swat objects at the player who is around the corner or 
-			// otherwise not in a place that the object has a hope of hitting. This diversion
-			// makes the zombies very late (in a random fashion) getting where they are going. (sjb 1/2/06)
-			if( !GetEnemy()->FVisible( pList[i] ) )
-				continue;
-		}
+		// Skip things that the enemy can't see. Do we want this as a general thing? 
+		// The case for this feature is that zombies who are pursuing the player will
+		// stop along the way to swat objects at the player who is around the corner or 
+		// otherwise not in a place that the object has a hope of hitting. This diversion
+		// makes the zombies very late (in a random fashion) getting where they are going. (sjb 1/2/06)
+		if (!GetEnemy()->FVisible(pList[i]))
+			continue;
 
 		// Make this the last check, since it makes a string.
 		// Don't swat server ragdolls!
@@ -733,24 +730,10 @@ bool CNPC_BaseZombie::ShouldBecomeTorso( const CTakeDamageInfo &info, float flDa
 	{
 		return true;
 	}
+	// Always split after a cannon hit
+	if (info.GetAmmoType() == GetAmmoDef()->Index("CombineHeavyCannon"))
+		return true;
 
-	if ( hl2_episodic.GetBool() )
-	{
-		// Always split after a cannon hit
-		if ( info.GetAmmoType() == GetAmmoDef()->Index("CombineHeavyCannon") )
-			return true;
-	}
-
-#if 0
-	if( info.GetDamageType() & DMG_BUCKSHOT )
-	{
-		if( m_iHealth <= 0 || flDamageThreshold >= 0.5 )
-		{
-			return true;
-		}
-	}
-#endif 
-	
 	return false;
 }
 
@@ -909,13 +892,10 @@ int CNPC_BaseZombie::OnTakeDamage_Alive( const CTakeDamageInfo &inputInfo )
 				}
 
 				// For Combine cannon impacts
-				if ( hl2_episodic.GetBool() )
+				if (bHitByCombineCannon)
 				{
-					if ( bHitByCombineCannon )
-					{
-						// Catch on fire.
-						Ignite( 5.0f + random->RandomFloat( 0.0f, 5.0f ) );
-					}
+					// Catch on fire.
+					Ignite(5.0f + random->RandomFloat(0.0f, 5.0f));
 				}
 
 				if (flDamageThreshold >= 1.0)
@@ -1720,7 +1700,7 @@ void CNPC_BaseZombie::StartTouch( CBaseEntity *pOther )
 {
 	BaseClass::StartTouch( pOther );
 
-	if( IsSlumped() && hl2_episodic.GetBool() )
+	if( IsSlumped() )
 	{
 		if( FClassnameIs( pOther, "prop_physics" ) )
 		{
@@ -1915,20 +1895,9 @@ int CNPC_BaseZombie::SelectSchedule ( void )
 //---------------------------------------------------------
 bool CNPC_BaseZombie::IsSlumped( void )
 {
-	if( hl2_episodic.GetBool() )
+	if (m_ActBusyBehavior.IsInsideActBusy() && !m_ActBusyBehavior.IsStopBusying())
 	{
-		if( m_ActBusyBehavior.IsInsideActBusy() && !m_ActBusyBehavior.IsStopBusying() )
-		{
-			return true;
-		}
-	}
-	else
-	{
-		int sequence = GetSequence();
-		if ( sequence != -1 )
-		{
-			return ( strncmp( GetSequenceName( sequence ), "slump", 5 ) == 0 );
-		}
+		return true;
 	}
 
 	return false;

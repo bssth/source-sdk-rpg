@@ -91,6 +91,7 @@ reslists
 scene.cache
 modelsounds.cache
 DownloadLists
+ep1_gamestats.dat
 
 # shader files
 *.tmp

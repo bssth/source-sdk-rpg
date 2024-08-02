@@ -134,7 +134,7 @@ int CAI_LeadBehavior::DrawDebugTextOverlays( int text_offset )
 bool CAI_LeadBehavior::IsNavigationUrgent( void )
 {
 #if defined( HL2_DLL )
-	if( HasGoal() && !hl2_episodic.GetBool() )
+	if( HasGoal() )
 	{
 		return (GetOuter()->Classify() == CLASS_PLAYER_ALLY_VITAL);
 	}
@@ -1011,15 +1011,12 @@ bool CAI_LeadBehavior::Speak( AIConcept_t concept )
 	if ( !m_hasspokenstart && bNag )
 		return false;
 
-	if ( hl2_episodic.GetBool() )
-	{
-		// If we're a player ally, only speak the concept if we're allowed to.
-		// This allows the response rules to control it better (i.e. handles respeakdelay)
-		// We ignore nag timers for this, because the response rules will control refire rates.
-		CAI_PlayerAlly *pAlly = dynamic_cast<CAI_PlayerAlly*>(GetOuter());
-		if ( pAlly )
- 			return pAlly->SpeakIfAllowed( concept, GetConceptModifiers( concept ) );
-	}
+	// If we're a player ally, only speak the concept if we're allowed to.
+	// This allows the response rules to control it better (i.e. handles respeakdelay)
+	// We ignore nag timers for this, because the response rules will control refire rates.
+	CAI_PlayerAlly* pAlly = dynamic_cast<CAI_PlayerAlly*>(GetOuter());
+	if (pAlly)
+		return pAlly->SpeakIfAllowed(concept, GetConceptModifiers(concept));
 
 	// Don't spam Nags
 	if ( bNag )

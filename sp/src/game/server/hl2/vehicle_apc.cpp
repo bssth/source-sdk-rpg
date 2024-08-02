@@ -495,15 +495,7 @@ void CPropAPC::Event_Killed( const CTakeDamageInfo &info )
 
 	UTIL_ScreenShake( vecAbsPoint, 25.0, 150.0, 1.0, 750.0f, SHAKE_START );
 
-	if( hl2_episodic.GetBool() )
-	{
-		// EP1 perf hit
-		Ignite( 6, false );
-	}
-	else
-	{
-		Ignite( 60, false );
-	}
+	Ignite(15, false);
 
 	m_lifeState = LIFE_DYING;
 
@@ -910,15 +902,7 @@ void CPropAPC::CreateCorpse( )
 			}
 			pGib->SetCollisionGroup( COLLISION_GROUP_DEBRIS );
 		}	
-		if( hl2_episodic.GetBool() )
-		{
-			// EP1 perf hit
-			pGib->Ignite( 6, false );
-		}
-		else
-		{
-			pGib->Ignite( 60, false );
-		}
+		pGib->Ignite(15, false);
 	}
 
 	AddSolidFlags( FSOLID_NOT_SOLID );

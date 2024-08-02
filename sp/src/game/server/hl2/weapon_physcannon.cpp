@@ -205,14 +205,6 @@ protected:
 //-----------------------------------------------------------------------------
 void UTIL_PhyscannonTraceLine( const Vector &vecAbsStart, const Vector &vecAbsEnd, CBaseEntity *pTraceOwner, trace_t *pTrace )
 {
-	// Default to HL2 vanilla
-	if ( hl2_episodic.GetBool() == false )
-	{
-		CTraceFilterNoOwnerTest filter( pTraceOwner, COLLISION_GROUP_NONE );
-		UTIL_TraceLine( vecAbsStart, vecAbsEnd, (MASK_SHOT|CONTENTS_GRATE), &filter, pTrace );
-		return;
-	}
-
 	// First, trace against entities
 	CTraceFilterPhyscannon filter( pTraceOwner, COLLISION_GROUP_NONE );
 	UTIL_TraceLine( vecAbsStart, vecAbsEnd, (MASK_SHOT|CONTENTS_GRATE), &filter, pTrace );
@@ -237,14 +229,6 @@ void UTIL_PhyscannonTraceLine( const Vector &vecAbsStart, const Vector &vecAbsEn
 //-----------------------------------------------------------------------------
 void UTIL_PhyscannonTraceHull( const Vector &vecAbsStart, const Vector &vecAbsEnd, const Vector &vecAbsMins, const Vector &vecAbsMaxs, CBaseEntity *pTraceOwner, trace_t *pTrace )
 {
-	// Default to HL2 vanilla
-	if ( hl2_episodic.GetBool() == false )
-	{
-		CTraceFilterNoOwnerTest filter( pTraceOwner, COLLISION_GROUP_NONE );
-		UTIL_TraceHull( vecAbsStart, vecAbsEnd, vecAbsMins, vecAbsMaxs, (MASK_SHOT|CONTENTS_GRATE), &filter, pTrace );
-		return;
-	}
-
 	// First, trace against entities
 	CTraceFilterPhyscannon filter( pTraceOwner, COLLISION_GROUP_NONE );
 	UTIL_TraceHull( vecAbsStart, vecAbsEnd, vecAbsMins, vecAbsMaxs, (MASK_SHOT|CONTENTS_GRATE), &filter, pTrace );
@@ -1729,8 +1713,8 @@ void CWeaponPhysCannon::Physgun_OnPhysGunPickup( CBaseEntity *pEntity, CBasePlay
 		RecordThrownObject( pEntity );
 	}
 
-	// Warn Alyx if the player is punting a car around.
-	if( hl2_episodic.GetBool() && mass > 250.0f )
+	// Warn if the player is punting a car around.
+	if( mass > 250.0f )
 	{
 		CAI_BaseNPC **ppAIs = g_AI_Manager.AccessAIs();
 		int nAIs = g_AI_Manager.NumAIs();
@@ -2096,21 +2080,18 @@ void CWeaponPhysCannon::PrimaryAttack( void )
 		UTIL_PhyscannonTraceLine( start, end, pOwner, &tr );
 		if ( tr.fraction == 1 || !tr.m_pEnt || tr.m_pEnt->IsEFlagSet( EFL_NO_PHYSCANNON_INTERACTION ) )
 		{
-			if( hl2_episodic.GetBool() )
+			// Try to find something in a very small cone. 
+			CBaseEntity* pObject = FindObjectInCone(start, forward, physcannon_punt_cone.GetFloat());
+
+			if (pObject)
 			{
-				// Try to find something in a very small cone. 
-				CBaseEntity *pObject = FindObjectInCone( start, forward, physcannon_punt_cone.GetFloat() );
+				// Trace to the object.
+				UTIL_PhyscannonTraceLine(start, pObject->WorldSpaceCenter(), pOwner, &tr);
 
-				if( pObject )
+				if (tr.m_pEnt && tr.m_pEnt == pObject && !(pObject->IsEFlagSet(EFL_NO_PHYSCANNON_INTERACTION)))
 				{
-					// Trace to the object.
-					UTIL_PhyscannonTraceLine( start, pObject->WorldSpaceCenter(), pOwner, &tr );
-
-					if( tr.m_pEnt && tr.m_pEnt == pObject && !(pObject->IsEFlagSet(EFL_NO_PHYSCANNON_INTERACTION)) )
-					{
-						bValid = true;
-						pEntity = pObject;
-					}
+					bValid = true;
+					pEntity = pObject;
 				}
 			}
 		}

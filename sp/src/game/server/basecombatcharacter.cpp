@@ -1539,7 +1539,7 @@ bool CBaseCombatCharacter::BecomeRagdoll( const CTakeDamageInfo &info, const Vec
 	}
 
 #ifdef HL2_DLL	
-	if( hl2_episodic.GetBool() && Classify() == CLASS_PLAYER_ALLY_VITAL )
+	if( Classify() == CLASS_PLAYER_ALLY_VITAL )
 	{
 		CreateServerRagdoll( this, m_nForceBone, newinfo, COLLISION_GROUP_INTERACTIVE_DEBRIS, true );
 		RemoveDeferred();
@@ -1693,54 +1693,14 @@ bool CBaseCombatCharacter::Weapon_Detach( CBaseCombatWeapon *pWeapon )
 //-----------------------------------------------------------------------------
 void CBaseCombatCharacter::ThrowDirForWeaponStrip( CBaseCombatWeapon *pWeapon, const Vector &vecForward, Vector *pVecThrowDir )
 {
-	// HACK! Always throw the physcannon directly in front of the player
-	// This is necessary for the physgun upgrade scene.
-	if ( FClassnameIs( pWeapon, "weapon_physcannon" ) )
-	{
-		if( hl2_episodic.GetBool() )
-		{
-			// It has been discovered that it's possible to throw the physcannon out of the world this way.
-			// So try to find a direction to throw the physcannon that's legal.
-			Vector vecOrigin = EyePosition();
-			Vector vecRight;
+	VMatrix zRot;
+	MatrixBuildRotateZ(zRot, random->RandomFloat(-60.0f, 60.0f));
 
-			CrossProduct( vecForward, Vector( 0, 0, 1), vecRight );
+	Vector vecThrow;
+	Vector3DMultiply(zRot, vecForward, *pVecThrowDir);
 
-			Vector vecTest[ 4 ];
-			vecTest[0] = vecForward;
-			vecTest[1] = -vecForward;
-			vecTest[2] = vecRight;
-			vecTest[3] = -vecRight;
-
-			trace_t tr;
-			int i;
-			for( i = 0 ; i < 4 ; i++ )
-			{
-				UTIL_TraceLine( vecOrigin, vecOrigin + vecTest[ i ] * 48.0f, MASK_SOLID_BRUSHONLY, this, COLLISION_GROUP_NONE, &tr );
-
-				if ( !tr.startsolid && tr.fraction == 1.0f )
-				{
-					*pVecThrowDir = vecTest[ i ];
-					return;
-				}
-			}
-		}
-
-		// Well, fall through to what we did before we tried to make this a bit more robust.
-		*pVecThrowDir = vecForward;
-	}
-	else
-	{
-		// Nowhere in particular; just drop it.
-		VMatrix zRot;
-		MatrixBuildRotateZ( zRot, random->RandomFloat( -60.0f, 60.0f ) );
-
-		Vector vecThrow;
-		Vector3DMultiply( zRot, vecForward, *pVecThrowDir );
-
-		pVecThrowDir->z = random->RandomFloat( -0.5f, 0.5f );
-		VectorNormalize( *pVecThrowDir );
-	}
+	pVecThrowDir->z = random->RandomFloat(-0.5f, 0.5f);
+	VectorNormalize(*pVecThrowDir);
 }
 
 
@@ -2793,19 +2753,6 @@ bool CBaseCombatCharacter::Weapon_IsOnGround( CBaseCombatWeapon *pWeapon )
 //-----------------------------------------------------------------------------
 CBaseEntity *CBaseCombatCharacter::Weapon_FindUsable( const Vector &range )
 {
-	bool bConservative = false;
-
-#ifdef HL2_DLL
-	if( hl2_episodic.GetBool() && !GetActiveWeapon() )
-	{
-		// Unarmed citizens are conservative in their weapon finding
-		if ( Classify() != CLASS_PLAYER_ALLY_VITAL )
-		{
-			bConservative = true;
-		}
-	}
-#endif
-
 	CBaseCombatWeapon *weaponList[64];
 	CBaseCombatWeapon *pBestWeapon = NULL;
 
@@ -2891,11 +2838,6 @@ CBaseEntity *CBaseCombatCharacter::Weapon_FindUsable( const Vector &range )
 
 			if ( tr.startsolid || (tr.fraction < 1.0) )
 				continue;
-		}
-		else if( bConservative )
-		{
-			// Skip it.
-			continue;
 		}
 
 		if( FVisible(pWeapon) )
@@ -2999,9 +2941,7 @@ void CBaseCombatCharacter::ApplyStressDamage( IPhysicsObject *pPhysics, bool bRe
 #ifdef HL2_DLL
 	if( Classify() == CLASS_PLAYER_ALLY || Classify() == CLASS_PLAYER_ALLY_VITAL )
 	{
-		// Bypass stress completely for allies and vitals.
-		if( hl2_episodic.GetBool() )
-			return;
+		return;
 	}
 #endif//HL2_DLL
 

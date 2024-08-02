@@ -261,18 +261,9 @@ void CPropCombineBall::Precache( void )
 	PrecacheScriptSound( "NPC_CombineBall.Launch" );
 	PrecacheScriptSound( "NPC_CombineBall.KillImpact" );
 
-	if ( hl2_episodic.GetBool() )
-	{
-		PrecacheScriptSound( "NPC_CombineBall_Episodic.Explosion" );
-		PrecacheScriptSound( "NPC_CombineBall_Episodic.WhizFlyby" );
-		PrecacheScriptSound( "NPC_CombineBall_Episodic.Impact" );
-	}
-	else
-	{
-		PrecacheScriptSound( "NPC_CombineBall.Explosion" );
-		PrecacheScriptSound( "NPC_CombineBall.WhizFlyby" );
-		PrecacheScriptSound( "NPC_CombineBall.Impact" );
-	}
+	PrecacheScriptSound("NPC_CombineBall_Episodic.Explosion");
+	PrecacheScriptSound("NPC_CombineBall_Episodic.WhizFlyby");
+	PrecacheScriptSound("NPC_CombineBall_Episodic.Impact");
 
 	PrecacheScriptSound( "NPC_CombineBall.HoldingInPhysCannon" );
 }
@@ -607,16 +598,13 @@ void CPropCombineBall::UpdateOnRemove()
 		m_pGlowTrail = NULL;
 	}
 
-	//Sigh... this is the only place where I can get a message after the ball is done dissolving.
-	if ( hl2_episodic.GetBool()  )
+	// Sigh... this is the only place where I can get a message after the ball is done dissolving.
+	if (IsDissolving())
 	{
-		if ( IsDissolving() )
+		if (GetSpawner())
 		{
-			if ( GetSpawner() )
-			{
-				GetSpawner()->BallGrabbed( this );
-				NotifySpawnerOfRemoval();
-			}
+			GetSpawner()->BallGrabbed(this);
+			NotifySpawnerOfRemoval();
 		}
 	}
 
@@ -649,12 +637,8 @@ void CPropCombineBall::DieThink()
 {
 	if ( GetSpawner() )
 	{
-		//Let the spawner know we died so it does it's thing
-		if( hl2_episodic.GetBool() && IsInField() )
-		{
-			GetSpawner()->BallGrabbed( this );
-		}
-
+		// Let the spawner know we died so it does it's thing
+		GetSpawner()->BallGrabbed(this);
 		GetSpawner()->RespawnBall( 0.1 );
 	}
 
@@ -725,14 +709,7 @@ void CPropCombineBall::WhizSoundThink()
 
 					EmitSound_t ep;
 					ep.m_nChannel = CHAN_STATIC;
-					if ( hl2_episodic.GetBool() )
-					{
-						ep.m_pSoundName = "NPC_CombineBall_Episodic.WhizFlyby";
-					}
-					else
-					{
-						ep.m_pSoundName = "NPC_CombineBall.WhizFlyby";
-					}
+					ep.m_pSoundName = "NPC_CombineBall_Episodic.WhizFlyby";
 					ep.m_flVolume = 1.0f;
 					ep.m_SoundLevel = SNDLVL_NORM;
 
@@ -805,16 +782,7 @@ void CPropCombineBall::OnPhysGunPickup( CBasePlayer *pPhysGunUser, PhysGunPickup
 		
 		EmitSound_t ep;
 		ep.m_nChannel = CHAN_STATIC;
-
-		if( hl2_episodic.GetBool() )
-		{
-			ep.m_pSoundName = "NPC_CombineBall_Episodic.HoldingInPhysCannon";
-		}
-		else
-		{
-			ep.m_pSoundName = "NPC_CombineBall.HoldingInPhysCannon";
-		}
-
+		ep.m_pSoundName = "NPC_CombineBall_Episodic.HoldingInPhysCannon";
 		ep.m_flVolume = 1.0f;
 		ep.m_SoundLevel = SNDLVL_NORM;
 
@@ -981,7 +949,7 @@ float CPropCombineBall::GetBallHoldDissolveTime()
 {
 	float flDissolveTime = PROP_COMBINE_BALL_HOLD_DISSOLVE_TIME;
 
-	if( g_pGameRules->IsSkillLevel( 1 ) && hl2_episodic.GetBool() )
+	if( g_pGameRules->IsSkillLevel( 1 ) )
 	{
 		// Give players more time to handle/aim combine balls on Easy.
 		flDissolveTime *= 1.5f;
@@ -1022,14 +990,7 @@ void CPropCombineBall::DoExplosion( )
 
 	if ( OutOfBounces() == false )
 	{
-		if ( hl2_episodic.GetBool() )
-		{
-			EmitSound( "NPC_CombineBall_Episodic.Explosion" );
-		}
-		else
-		{
-			EmitSound( "NPC_CombineBall.Explosion" );
-		}
+		EmitSound("NPC_CombineBall_Episodic.Explosion");
 
 		UTIL_ScreenShake( GetAbsOrigin(), 20.0f, 150.0, 1.0, 1250.0f, SHAKE_START );
 
@@ -1101,10 +1062,7 @@ void CPropCombineBall::DoExplosion( )
 			);
 	}
 
-	if( hl2_episodic.GetBool() )
-	{
-		CSoundEnt::InsertSound( SOUND_COMBAT | SOUND_CONTEXT_EXPLOSION, WorldSpaceCenter(), 180.0f, 0.25, this );
-	}
+	CSoundEnt::InsertSound(SOUND_COMBAT | SOUND_CONTEXT_EXPLOSION, WorldSpaceCenter(), 180.0f, 0.25, this);
 
 	// Turn us off and wait because we need our trails to finish up properly
 	SetAbsVelocity( vec3_origin );
@@ -1114,7 +1072,7 @@ void CPropCombineBall::DoExplosion( )
 	m_bEmit = false;
 
 	
-	if( !m_bStruckEntity && hl2_episodic.GetBool() && GetOwnerEntity() != NULL )
+	if( !m_bStruckEntity && GetOwnerEntity() != NULL )
 	{
 		// Notify the player proxy that this combine ball missed so that it can fire an output.
 		CHL2_Player *pPlayer = dynamic_cast<CHL2_Player *>( GetOwnerEntity() );
@@ -1231,7 +1189,7 @@ void CPropCombineBall::OnHitEntity( CBaseEntity *pHitEntity, float flSpeed, int 
 				{
 					EmitSound( "NPC_CombineBall.KillImpact" );
 
-					if ( pHitEntity->IsNPC() && pHitEntity->Classify() != CLASS_PLAYER_ALLY_VITAL && hl2_episodic.GetBool() == true )
+					if ( pHitEntity->IsNPC() && pHitEntity->Classify() != CLASS_PLAYER_ALLY_VITAL )
 					{
 						if ( pHitEntity->Classify() != CLASS_PLAYER_ALLY || ( pHitEntity->Classify() == CLASS_PLAYER_ALLY && m_bStruckEntity == false ) )
 						{
@@ -1322,14 +1280,7 @@ void CPropCombineBall::DoImpactEffect( const Vector &preVelocity, int index, gam
 		DispatchEffect( "cball_bounce", data );
 	}
 
-	if ( hl2_episodic.GetBool() )
-	{
-		EmitSound( "NPC_CombineBall_Episodic.Impact" );
-	}
-	else
-	{
-		EmitSound( "NPC_CombineBall.Impact" );
-	}
+	EmitSound("NPC_CombineBall_Episodic.Impact");
 }
 
 //-----------------------------------------------------------------------------
@@ -1566,28 +1517,6 @@ void CPropCombineBall::VPhysicsCollision( int index, gamevcollisionevent_t *pEve
 {
 	Vector preVelocity = pEvent->preVelocity[index];
 	float flSpeed = VectorNormalize( preVelocity );
-
-	if ( m_nMaxBounces == -1 )
-	{
-		const surfacedata_t *pHit = physprops->GetSurfaceData( pEvent->surfaceProps[!index] );
-
-		if( pHit->game.material != CHAR_TEX_FLESH || !hl2_episodic.GetBool() )
-		{
-			CBaseEntity *pHitEntity = pEvent->pEntities[!index];
-			if ( pHitEntity && IsHittableEntity( pHitEntity ) )
-			{
-				OnHitEntity( pHitEntity, flSpeed, index, pEvent );
-			}
-
-			// Remove self without affecting the object that was hit. (Unless it was flesh)
-			NotifySpawnerOfRemoval();
-			PhysCallbackRemove( this->NetworkProp() );
-
-			// disable dissolve damage so we don't kill off the player when he's the one we hit
-			PhysClearGameFlags( VPhysicsGetObject(), FVPHYSICS_DMG_DISSOLVE );
-			return;
-		}
-	}
 
 	// Prevents impact sounds, effects, etc. when it's in the field
 	if ( !IsInField() )

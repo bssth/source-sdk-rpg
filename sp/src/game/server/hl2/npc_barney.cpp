@@ -67,7 +67,6 @@ public:
 	void	Spawn( void );
 	void	SelectModel();
 	Class_T Classify( void );
-	void	Weapon_Equip( CBaseCombatWeapon *pWeapon );
 
 	bool CreateBehaviors( void );
 
@@ -143,19 +142,6 @@ void CNPC_Barney::Spawn( void )
 Class_T	CNPC_Barney::Classify( void )
 {
 	return	CLASS_PLAYER_ALLY_VITAL;
-}
-
-//-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
-void CNPC_Barney::Weapon_Equip( CBaseCombatWeapon *pWeapon )
-{
-	BaseClass::Weapon_Equip( pWeapon );
-
-	if( hl2_episodic.GetBool() && FClassnameIs( pWeapon, "weapon_ar2" ) )
-	{
-		// Allow Barney to defend himself at point-blank range in c17_05.
-		pWeapon->m_fMinRange1 = 0.0f;
-	}
 }
 
 //---------------------------------------------------------

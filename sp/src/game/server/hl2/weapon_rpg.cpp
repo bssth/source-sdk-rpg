@@ -574,13 +574,10 @@ void CMissile::SeekThink( void )
 		}
 	}
 
-	if( hl2_episodic.GetBool() )
+	if (flBestDist <= (GetAbsVelocity().Length() * 2.5f) && FVisible(pBestDot->GetAbsOrigin()))
 	{
-		if( flBestDist <= ( GetAbsVelocity().Length() * 2.5f ) && FVisible( pBestDot->GetAbsOrigin() ) )
-		{
-			// Scare targets
-			CSoundEnt::InsertSound( SOUND_DANGER, pBestDot->GetAbsOrigin(), CMissile::EXPLOSION_RADIUS, 0.2f, pBestDot, SOUNDENT_CHANNEL_REPEATED_DANGER, NULL );
-		}
+		// Scare targets
+		CSoundEnt::InsertSound(SOUND_DANGER, pBestDot->GetAbsOrigin(), CMissile::EXPLOSION_RADIUS, 0.2f, pBestDot, SOUNDENT_CHANNEL_REPEATED_DANGER, NULL);
 	}
 
 	if ( rpg_missle_use_custom_detonators.GetBool() )
@@ -640,7 +637,7 @@ void CMissile::SeekThink( void )
 	VectorSubtract( targetPos, GetAbsOrigin(), vTargetDir );
 	float flDist = VectorNormalize( vTargetDir );
 
-	if( pLaserDot->GetTargetEntity() != NULL && flDist <= 240.0f && hl2_episodic.GetBool() )
+	if( pLaserDot->GetTargetEntity() != NULL && flDist <= 240.0f )
 	{
 		// Prevent the missile circling the Strider like a Halo in ep1_c17_06. If the missile gets within 20
 		// feet of a Strider, tighten up the turn speed of the missile so it can break the halo and strike. (sjb 4/27/2006)
@@ -1660,19 +1657,16 @@ void CWeaponRPG::PrimaryAttack( void )
 		}
 	}
 
-	if( hl2_episodic.GetBool() )
+	CAI_BaseNPC** ppAIs = g_AI_Manager.AccessAIs();
+	int nAIs = g_AI_Manager.NumAIs();
+
+	string_t iszStriderClassname = AllocPooledString("npc_strider");
+
+	for (int i = 0; i < nAIs; i++)
 	{
-		CAI_BaseNPC **ppAIs = g_AI_Manager.AccessAIs();
-		int nAIs = g_AI_Manager.NumAIs();
-
-		string_t iszStriderClassname = AllocPooledString( "npc_strider" );
-
-		for ( int i = 0; i < nAIs; i++ )
+		if (ppAIs[i]->m_iClassname == iszStriderClassname)
 		{
-			if( ppAIs[ i ]->m_iClassname == iszStriderClassname )
-			{
-				ppAIs[ i ]->DispatchInteraction( g_interactionPlayerLaunchedRPG, NULL, m_hMissile );
-			}
+			ppAIs[i]->DispatchInteraction(g_interactionPlayerLaunchedRPG, NULL, m_hMissile);
 		}
 	}
 }

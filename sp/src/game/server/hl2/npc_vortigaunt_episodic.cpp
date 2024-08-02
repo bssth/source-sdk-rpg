@@ -1142,19 +1142,6 @@ void CNPC_Vortigaunt::Precache()
 	m_nLightningSprite = PrecacheModel("sprites/lgtning.vmt");
 	PrecacheModel("sprites/vortring1.vmt");
 
-	// HACK: Only precache this for EP2 because reslists cannot be rebuilt - 08/22/07 - jdw
-	if ( hl2_episodic.GetBool() )
-	{
-		char modDir[MAX_PATH];
-		if ( UTIL_GetModDir( modDir, sizeof(modDir) ) )
-		{
-			if ( !Q_stricmp( modDir, "ep2" ) )
-			{
-				PrecacheMaterial( "effects/rollerglow" );
-			}
-		}
-	}
-
 	PrecacheScriptSound( "NPC_Vortigaunt.SuitOn" );
 	PrecacheScriptSound( "NPC_Vortigaunt.SuitCharge" );
 	PrecacheScriptSound( "NPC_Vortigaunt.ZapPowerup" );

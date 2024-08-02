@@ -1358,7 +1358,7 @@ int CBasePlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 
 	float flPunch = -2;
 
-	if( hl2_episodic.GetBool() && info.GetAttacker() && !FInViewCone( info.GetAttacker() ) )
+	if( info.GetAttacker() && !FInViewCone( info.GetAttacker() ) )
 	{
 		if( info.GetDamage() > 10.0f )
 			flPunch = -10;
@@ -6561,19 +6561,9 @@ bool CBasePlayer::BumpWeapon( CBaseCombatWeapon *pWeapon )
 		return false;
 	}
 
-	// Act differently in the episodes
-	if ( hl2_episodic.GetBool() )
-	{
-		// Don't let the player touch the item unless unobstructed
-		if ( !UTIL_ItemCanBeTouchedByPlayer( pWeapon, this ) && !gEvilImpulse101 )
-			return false;
-	}
-	else
-	{
-		// Don't let the player fetch weapons through walls (use MASK_SOLID so that you can't pickup through windows)
-		if( pWeapon->FVisible( this, MASK_SOLID ) == false && !(GetFlags() & FL_NOTARGET) )
-			return false;
-	}
+	// Don't let the player touch the item unless unobstructed
+	if (!UTIL_ItemCanBeTouchedByPlayer(pWeapon, this) && !gEvilImpulse101)
+		return false;
 	
 	// ----------------------------------------
 	// If I already have it just take the ammo

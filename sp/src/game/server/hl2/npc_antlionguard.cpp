@@ -1063,7 +1063,7 @@ int CNPC_AntlionGuard::SelectCombatSchedule( void )
 bool CNPC_AntlionGuard::ShouldCharge( const Vector &startPos, const Vector &endPos, bool useTime, bool bCheckForCancel )
 {
 	// Don't charge in tight spaces unless forced to
-	if ( hl2_episodic.GetBool() && m_bInCavern && !(m_hChargeTarget.Get() && m_hChargeTarget->IsAlive()) )
+	if ( m_bInCavern && !(m_hChargeTarget.Get() && m_hChargeTarget->IsAlive()) )
 		return false;
 
 	// Must have a target
@@ -1265,7 +1265,7 @@ int CNPC_AntlionGuard::MeleeAttack1Conditions( float flDot, float flDist )
 	if ( IsCurSchedule( SCHED_ANTLIONGUARD_CHARGE ) )
 		return 0;
 
-	if ( hl2_episodic.GetBool() && m_bInCavern )
+	if ( m_bInCavern )
 	{
 		// Predict where they'll be and see if THAT is within range
 		Vector vecPredPos;
@@ -1324,7 +1324,7 @@ float CNPC_AntlionGuard::MaxYawSpeed( void )
 	if ( eActivity == ACT_ANTLIONGUARD_CHARGE_START )
 		return 4.0f;
 
-	if ( hl2_episodic.GetBool() && m_bInCavern )
+	if ( m_bInCavern )
 	{
 		// Allow a better turning rate when moving quickly but not charging the player
 		if ( ( eActivity == ACT_ANTLIONGUARD_CHARGE_RUN ) && IsCurSchedule( SCHED_ANTLIONGUARD_CHARGE ) == false )
@@ -1734,7 +1734,6 @@ void CNPC_AntlionGuard::HandleAnimEvent( animevent_t *pEvent )
 			//Setup the throw velocity
 			IPhysicsObject *physObj = m_hPhysicsTarget->VPhysicsGetObject();
 			Vector vecShoveVel = ( pEnemy->GetAbsOrigin() - m_hPhysicsTarget->WorldSpaceCenter() );
-			float flTargetDist = VectorNormalize( vecShoveVel );
 
 			// Must still be close enough to our target
 			Vector shoveDir = m_hPhysicsTarget->WorldSpaceCenter() - WorldSpaceCenter();
@@ -1747,57 +1746,42 @@ void CNPC_AntlionGuard::HandleAnimEvent( animevent_t *pEvent )
 				return;
 			}
 
-			// Toss this if we're episodic
-			if ( hl2_episodic.GetBool() )
+			Vector vecTargetDir = vecShoveVel;
+
+			// Get our shove direction
+			GetPhysicsShoveDir(m_hPhysicsTarget, physObj->GetMass(), &vecShoveVel);
+
+			// If the player isn't looking at me, and isn't reachable, be more forgiving about hitting them
+			if (HasCondition(COND_ENEMY_UNREACHABLE) && HasCondition(COND_ENEMY_FACING_ME) == false)
 			{
-				Vector vecTargetDir = vecShoveVel;
+				// Build an arc around the top of the target that we'll offset our aim by
+				Vector vecOffset;
+				float flSin, flCos;
+				float flRad = random->RandomFloat(0, M_PI / 6.0f); // +/- 30 deg
+				if (random->RandomInt(0, 1))
+					flRad *= -1.0f;
 
-				// Get our shove direction
-				GetPhysicsShoveDir( m_hPhysicsTarget, physObj->GetMass(), &vecShoveVel );
+				SinCos(flRad, &flSin, &flCos);
 
-				// If the player isn't looking at me, and isn't reachable, be more forgiving about hitting them
-				if ( HasCondition( COND_ENEMY_UNREACHABLE ) && HasCondition( COND_ENEMY_FACING_ME ) == false )
-				{
-					// Build an arc around the top of the target that we'll offset our aim by
-					Vector vecOffset;
-					float flSin, flCos;
-					float flRad = random->RandomFloat( 0, M_PI / 6.0f ); // +/- 30 deg
-					if ( random->RandomInt( 0, 1 ) )
-						flRad *= -1.0f;
+				// Rotate the 2-d circle to be "facing" along our shot direction
+				Vector vecArc;
+				QAngle vecAngles;
+				VectorAngles(vecTargetDir, vecAngles);
+				VectorRotate(Vector(0.0f, flCos, flSin), vecAngles, vecArc);
 
-					SinCos( flRad, &flSin, &flCos );
+				// Find the radius by which to avoid the player
+				float flOffsetRadius = (m_hPhysicsTarget->CollisionProp()->BoundingRadius() + GetEnemy()->CollisionProp()->BoundingRadius()) * 1.5f;
 
-					// Rotate the 2-d circle to be "facing" along our shot direction
-					Vector vecArc;
-					QAngle vecAngles;
-					VectorAngles( vecTargetDir, vecAngles );
-					VectorRotate( Vector( 0.0f, flCos, flSin ), vecAngles, vecArc );
-
-					// Find the radius by which to avoid the player
-					float flOffsetRadius = ( m_hPhysicsTarget->CollisionProp()->BoundingRadius() + GetEnemy()->CollisionProp()->BoundingRadius() ) * 1.5f;
-
-					// Add this to our velocity to offset it
-					vecShoveVel += ( vecArc * flOffsetRadius );
-				}
-
-				// Factor out mass
-				vecShoveVel *= physObj->GetMass();
-				
-				// FIXME: We need to restore this on the object at some point if we do this!
-				float flDragCoef = 0.0f;
-				physObj->SetDragCoefficient( &flDragCoef, &flDragCoef );
+				// Add this to our velocity to offset it
+				vecShoveVel += (vecArc * flOffsetRadius);
 			}
-			else
-			{
-				if ( flTargetDist < 512 )
-					flTargetDist = 512;
 
-				if ( flTargetDist > 1024 )
-					flTargetDist = 1024;
+			// Factor out mass
+			vecShoveVel *= physObj->GetMass();
 
-				vecShoveVel *= flTargetDist * 3 * physObj->GetMass();	//FIXME: Scale by skill
-				vecShoveVel[2] += physObj->GetMass() * 350.0f;
-			}
+			// FIXME: We need to restore this on the object at some point if we do this!
+			float flDragCoef = 0.0f;
+			physObj->SetDragCoefficient(&flDragCoef, &flDragCoef);
 
 			if ( NPC_Rollermine_IsRollermine( m_hPhysicsTarget ) )
 			{
@@ -3371,7 +3355,7 @@ Activity CNPC_AntlionGuard::NPC_TranslateActivity( Activity baseAct )
 		return (Activity) ACT_ANTLIONGUARD_CHARGE_RUN;
 
 	// Do extra code if we're trying to close on an enemy in a confined space (unless scripted)
-	if ( hl2_episodic.GetBool() && m_bInCavern && baseAct == ACT_RUN && IsInAScript() == false )
+	if ( m_bInCavern && baseAct == ACT_RUN && IsInAScript() == false )
 		return (Activity) ACT_ANTLIONGUARD_CHARGE_RUN;
 
 	if ( ( baseAct == ACT_RUN ) && ( m_iHealth <= (m_iMaxHealth/4) ) )
@@ -4353,10 +4337,7 @@ void CNPC_AntlionGuard::Event_Killed( const CTakeDamageInfo &info )
 //-----------------------------------------------------------------------------
 bool CNPC_AntlionGuard::CanBecomeRagdoll( void )
 {
-	if ( IsCurSchedule( SCHED_DIE ) )
-		return true;
-
-	return hl2_episodic.GetBool();
+	return true;
 }
 
 //-----------------------------------------------------------------------------

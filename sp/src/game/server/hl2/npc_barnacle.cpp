@@ -379,16 +379,6 @@ int	CNPC_Barnacle::OnTakeDamage_Alive( const CTakeDamageInfo &inputInfo )
 		SetActivity( ACT_SMALL_FLINCH );
 	}
 
-	if( hl2_episodic.GetBool() && info.GetAttacker() && info.GetAttacker()->Classify() == CLASS_PLAYER_ALLY_VITAL )
-	{
-		if( FClassnameIs( info.GetAttacker(), "npc_alyx" ) )
-		{
-			// Alyx does double damage to barnacles, so that she can save the 
-			// player's life in a more timely fashion. (sjb)
-			info.ScaleDamage( 2.0f );
-		}
-	}
-
 	DropTongue();
 
 	return BaseClass::OnTakeDamage_Alive( info );
@@ -1048,16 +1038,8 @@ void CNPC_Barnacle::LiftRagdoll( float flBiteZOffset )
 
   		if ( GetEnemy()->Classify() == CLASS_ZOMBIE )
 		{
-			// lifted the prey high enough to see it's a zombie. Spit it out.
-			if ( hl2_episodic.GetBool() )
-			{
-				m_bLiftingPrey = false;
-				SetActivity( (Activity)ACT_BARNACLE_BITE_SMALL_THINGS );
-			}
-			else
-			{
-				SpitPrey();
-			}
+			m_bLiftingPrey = false;
+			SetActivity((Activity)ACT_BARNACLE_BITE_SMALL_THINGS);
 			return;
 		}
 
@@ -1145,43 +1127,33 @@ void CNPC_Barnacle::LiftPhysicsObject( float flBiteZOffset )
 		// If we got a physics prop, wait until the thing has settled down
 		m_bLiftingPrey = false;
 
-		if ( hl2_episodic.GetBool() )
+		CBounceBomb* pBounce = dynamic_cast<CBounceBomb*>(pVictim);
+
+		if (pBounce)
 		{
-			CBounceBomb *pBounce = dynamic_cast<CBounceBomb *>( pVictim );
-
-			if ( pBounce )
+			if (m_bSwallowingBomb == true)
 			{
-				if ( m_bSwallowingBomb == true )
-				{
-					pBounce->ExplodeThink();
-					return;
-				}
+				pBounce->ExplodeThink();
+				return;
+			}
 
-				SetActivity( (Activity)ACT_BARNACLE_BITE_SMALL_THINGS );
-			}
-			else
-			{
-				// Start the bite animation. The anim event in it will finish the job.
-				SetActivity( (Activity)ACT_BARNACLE_TASTE_SPIT );
-			}
+			SetActivity((Activity)ACT_BARNACLE_BITE_SMALL_THINGS);
 		}
 		else
 		{
 			// Start the bite animation. The anim event in it will finish the job.
-			SetActivity( (Activity)ACT_BARNACLE_TASTE_SPIT );
+			SetActivity((Activity)ACT_BARNACLE_TASTE_SPIT);
 		}
 		
-#ifdef HL2_EPISODIC
 		// if the object is a combatclass, send it a chomp interaction in case it wants to respond to that
 		// in some nonstandard way.
-		CBaseCombatCharacter *pBCC = dynamic_cast<CBaseCombatCharacter *>(pVictim);
-		if( pBCC ) 
+		CBaseCombatCharacter* pBCC = dynamic_cast<CBaseCombatCharacter*>(pVictim);
+		if (pBCC)
 		{
 			Vector tipPos = m_vecTip.Get();
 
-			pBCC->DispatchInteraction( g_interactionBarnacleVictimBite, &tipPos, this );
+			pBCC->DispatchInteraction(g_interactionBarnacleVictimBite, &tipPos, this);
 		}
-#endif
 	}
 	else
 	{

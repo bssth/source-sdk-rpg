@@ -2046,109 +2046,40 @@ void CNPC_AttackHelicopter::ShootAtVehicle( const Vector &vBasePos, const Vector
 
 	DoMuzzleFlash();
 
-	// Do special code against episodic drivers
-	if ( hl2_episodic.GetBool() )
-	{
-		Vector vecVelocity;
-		GetEnemyVehicle()->GetVelocity( &vecVelocity, NULL );
-		
-		float flSpeed = clamp( vecVelocity.Length(), 0.0f, 400.0f );
-		float flRange = RemapVal( flSpeed, 0.0f, 400.0f, 0.05f, 1.0f );
+	Vector vecVelocity;
+	GetEnemyVehicle()->GetVelocity(&vecVelocity, NULL);
 
-		// Alter each shot's trajectory based on our speed
-		for ( int i = 0; i < nShotsRemaining; i++ )
+	float flSpeed = clamp(vecVelocity.Length(), 0.0f, 400.0f);
+	float flRange = RemapVal(flSpeed, 0.0f, 400.0f, 0.05f, 1.0f);
+
+	// Alter each shot's trajectory based on our speed
+	for (int i = 0; i < nShotsRemaining; i++)
+	{
+		Vector vecShotDir;
+
+		// If they're at a dead stand-still, just hit them
+		if (flRange <= 0.1f)
 		{
-			Vector vecShotDir;
-			
-			// If they're at a dead stand-still, just hit them
-			if ( flRange <= 0.1f )
-			{
-				VectorSubtract( GetEnemy()->EyePosition(), vBasePos, vecShotDir );
+			VectorSubtract(GetEnemy()->EyePosition(), vBasePos, vecShotDir);
 
-				Vector vecOffset;
-				vecOffset.Random( -40.0f, 40.0f );
-				vecShotDir += vecOffset;
-				VectorNormalize( vecShotDir );
-			}
-			else
-			{
-				// Aim in a cone around them
-				AimCloseToTargetButMiss( GetEnemy(), (3*12) * flRange, (10*12) * flRange, vBasePos, &vecShotDir );
-			}
-			
-			FireBulletsInfo_t info( 1, vBasePos, vecShotDir, VECTOR_CONE_PRECALCULATED, MAX_COORD_RANGE, m_iAmmoType );
-			info.m_iTracerFreq = 1;
-			FireBullets( info );
-		}
-
-		// We opt out of the rest of the function
-		// FIXME: Should we emulate the below functionality and have half the bullets attempt to miss admirably? -- jdw
-		return;
-	}
-
-	// Pop one at the player based on how fast he's going
-	if ( m_nBurstHits < m_nMaxBurstHits )
-	{
-		Vector vecDir;						   
-		VectorSubtract( GetEnemy()->EyePosition(), vBasePos, vecDir );
-		
-		Vector vecOffset;
-		vecOffset.Random( -5.0f, 5.0f );
-		vecDir += vecOffset;
-		VectorNormalize( vecDir );
-
-		FireBulletsInfo_t info( 1, vBasePos, vecDir, VECTOR_CONE_PRECALCULATED, MAX_COORD_RANGE, m_iAmmoType );
-		info.m_iTracerFreq = 1;
-		FireBullets( info );
-		--nShotsRemaining;
-	}
-
-	// Fire half of the bullets within the circle of death, the other half at interesting things
-	int i;
-	int nFireInCircle = nShotsRemaining >> 1;
-	nShotsRemaining -= nFireInCircle;
-	for ( i = 0; i < nFireInCircle; ++i )
-	{
-		ShootInsideCircleOfDeath( vBasePos, vecFireAtPosition );
-	}
-
-	// Fire the rest of the bullets at objects around the enemy
-	CBaseEntity *ppNearbyTargets[16];
-	int nActualTargets = BuildMissTargetList( 16, ppNearbyTargets ); 
-
-	// Randomly sort it...
-	for ( i = 0; i < nActualTargets; ++i )
-	{
-		int nSwap = random->RandomInt( 0, nActualTargets - 1 ); 
-		V_swap( ppNearbyTargets[i], ppNearbyTargets[nSwap] );
-	}
-
-	// Just shoot where we're facing
-	float flSinConeDegrees = sin( sk_helicopter_firingcone.GetFloat() * 0.5f * (3.14f / 180.0f) );
-	Vector vecSpread( flSinConeDegrees, flSinConeDegrees, flSinConeDegrees );
-
-	for ( i = nShotsRemaining; --i >= 0; )
-	{
-		// Find something interesting around the enemy to shoot instead of just missing.
-		if ( nActualTargets > i )
-		{
-			Vector vecFireDirection;
-			ppNearbyTargets[i]->CollisionProp()->RandomPointInBounds( Vector(.25, .25, .25), Vector(.75, .75, .75), &vecFireDirection );
-			vecFireDirection -= vBasePos;
-			VectorNormalize( vecFireDirection );
-
-			// FIXME: Constrain to the firing cone?
-
-			// I put in all the default arguments simply so I could guarantee the first shot of one of the bursts always hits
-			FireBulletsInfo_t info( 1, vBasePos, vecFireDirection, VECTOR_CONE_PRECALCULATED, MAX_COORD_RANGE, m_iAmmoType );
-			info.m_iTracerFreq = 1;
-			FireBullets( info );
+			Vector vecOffset;
+			vecOffset.Random(-40.0f, 40.0f);
+			vecShotDir += vecOffset;
+			VectorNormalize(vecShotDir);
 		}
 		else
 		{
-			ShootInsideCircleOfDeath( vBasePos, vecFireAtPosition );
+			// Aim in a cone around them
+			AimCloseToTargetButMiss(GetEnemy(), (3 * 12) * flRange, (10 * 12) * flRange, vBasePos, &vecShotDir);
 		}
+
+		FireBulletsInfo_t info(1, vBasePos, vecShotDir, VECTOR_CONE_PRECALCULATED, MAX_COORD_RANGE, m_iAmmoType);
+		info.m_iTracerFreq = 1;
+		FireBullets(info);
 	}
+
+	// We opt out of the rest of the function
+	// FIXME: Should we emulate the below functionality and have half the bullets attempt to miss admirably? -- jdw
 }
 
 
@@ -3651,13 +3582,10 @@ void Chopper_BecomeChunks( CBaseEntity *pChopper )
 
 	Vector vecRight(0,0,0);
 
-	if( hl2_episodic.GetBool() )
-	{
-		// We need to get a right hand vector to toss the cockpit and tail pieces
-		// so their motion looks like a continuation of the tailspin animation
-		// that the chopper plays before crashing.
-		pChopper->GetVectors( NULL, &vecRight, NULL );
-	}
+	// We need to get a right hand vector to toss the cockpit and tail pieces
+	// so their motion looks like a continuation of the tailspin animation
+	// that the chopper plays before crashing.
+	pChopper->GetVectors(NULL, &vecRight, NULL);
 
 	// Body
 	CHelicopterChunk *pBodyChunk = CHelicopterChunk::CreateHelicopterChunk( vecChunkPos, vecChunkAngles, pChopper->GetAbsVelocity(), HELICOPTER_CHUNK_BODY, CHUNK_BODY );
@@ -4225,7 +4153,7 @@ void CNPC_AttackHelicopter::UpdateFacingDirection( const Vector &vecActualDesire
 	{
 		if ( !IsLeading() )
 		{
-			if( IsCarpetBombing() && hl2_episodic.GetBool() )
+			if( IsCarpetBombing() )
 			{
 				m_vecDesiredFaceDir = vecActualDesiredPosition - GetAbsOrigin();
 			}
@@ -4233,10 +4161,6 @@ void CNPC_AttackHelicopter::UpdateFacingDirection( const Vector &vecActualDesire
 			{
 				// If we've seen the target recently, face the target.
 				m_vecDesiredFaceDir = m_vecTargetPosition - GetAbsOrigin();
-			}
-			else
-			{
-				// Remain facing the way you were facing...
 			}
 		}
 		else
@@ -5034,21 +4958,11 @@ void CGrenadeHelicopter::Spawn( void )
 	// use a lower gravity for grenades to make them easier to see
 	SetGravity( UTIL_ScaleForGravity( 400 ) );
 
-#ifdef HL2_EPISODIC
 	m_bPickedUp = false;
 	m_flLifetime = BOMB_LIFETIME * 2.0;
-#endif // HL2_EPISODIC
 
-	if ( hl2_episodic.GetBool() )
-	{
-		// Disallow this, we'd rather deal with them as physobjects
-		m_takedamage = DAMAGE_NO;
-	}
-	else
-	{
-		// Allow player to blow this puppy up in the air
-		m_takedamage = DAMAGE_YES;
-	}
+	// Allow player to blow this puppy up in the air
+	m_takedamage = DAMAGE_YES;
 
 	m_bActivated = false;
 	m_pWarnSound = NULL;
@@ -5058,10 +4972,7 @@ void CGrenadeHelicopter::Spawn( void )
 
 	g_pNotify->AddEntity( this, this );
 
-	if( hl2_episodic.GetBool() )
-	{
-		SetContextThink( &CGrenadeHelicopter::AnimateThink, gpGlobals->curtime, s_pAnimateThinkContext );
-	}
+	SetContextThink(&CGrenadeHelicopter::AnimateThink, gpGlobals->curtime, s_pAnimateThinkContext);
 }
 
 
@@ -5117,22 +5028,15 @@ void CGrenadeHelicopter::BecomeActive()
 
 	SetThink( &CGrenadeHelicopter::ExplodeThink );
 	
-	if ( hl2_episodic.GetBool() )
+	if (HasSpawnFlags(SF_HELICOPTER_GRENADE_DUD) == false)
 	{
-		if ( HasSpawnFlags( SF_HELICOPTER_GRENADE_DUD ) == false )
-		{
-			SetNextThink( gpGlobals->curtime + GetBombLifetime() );
-		}
-		else
-		{
-			// NOTE: A dud will not explode after a set time, only when launched!
-			SetThink( NULL );
-			return;
-		}
+		SetNextThink(gpGlobals->curtime + GetBombLifetime());
 	}
 	else
 	{
-		SetNextThink( gpGlobals->curtime + GetBombLifetime() );
+		// NOTE: A dud will not explode after a set time, only when launched!
+		SetThink(NULL);
+		return;
 	}
 
 	if ( !bMegaBomb )
@@ -5300,23 +5204,10 @@ void CGrenadeHelicopter::VPhysicsCollision( int index, gamevcollisionevent_t *pE
 	BaseClass::VPhysicsCollision( index, pEvent );
 	BecomeActive();
 
-#ifndef HL2_EPISODIC	// in ep2, don't do this here, do it in Touch()
-	if ( m_bExplodeOnContact )
+	float flImpactSpeed = pEvent->preVelocity->Length();
+	if (flImpactSpeed > 400.0f && pEvent->pEntities[1]->IsWorld())
 	{
-		Vector vecVelocity;
-		GetVelocity( &vecVelocity, NULL );
-		DoExplosion( GetAbsOrigin(), vecVelocity );
-	}
-#endif
-	
-
-	if( hl2_episodic.GetBool() )
-	{
-		float flImpactSpeed = pEvent->preVelocity->Length();
-		if( flImpactSpeed > 400.0f && pEvent->pEntities[ 1 ]->IsWorld() )
-		{
-			EmitSound( "NPC_AttackHelicopterGrenade.HardImpact" );
-		}
+		EmitSound("NPC_AttackHelicopterGrenade.HardImpact");
 	}
 }
 
@@ -5449,20 +5340,11 @@ void CGrenadeHelicopter::ExplodeConcussion( CBaseEntity *pOther )
 	if ( !pOther->IsSolid() )
 		return;
 
-	if ( !m_bExplodeOnContact )
+	if ( !m_bExplodeOnContact && pOther->IsWorld())
 	{
-		if ( pOther->IsWorld() )
-			return;
-
-		if ( hl2_episodic.GetBool() )
-		{
-			// Don't hit anything other than vehicles
-			if ( pOther->GetCollisionGroup() != COLLISION_GROUP_VEHICLE )
-				return;
-		}
+		return;
 	}
 
-#ifdef HL2_EPISODIC
 	CBaseEntity *pEntityHit = pOther;
 	if ( pEntityHit->ClassMatches( "phys_bone_follower" ) && pEntityHit->GetOwnerEntity() )
 	{
@@ -5476,7 +5358,6 @@ void CGrenadeHelicopter::ExplodeConcussion( CBaseEntity *pOther )
 			SendMissEvent();
 		}		
 	}
-#endif // HL2_EPISODIC
 
 	Vector vecVelocity;
 	GetVelocity( &vecVelocity, NULL );

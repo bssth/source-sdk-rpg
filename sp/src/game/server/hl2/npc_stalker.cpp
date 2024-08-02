@@ -539,16 +539,8 @@ void CNPC_Stalker::StartTask( const Task_t *pTask )
 				// Never hit target on first try
 				Vector missPos = m_vLaserTargetPos;
 				
-				if( pEnemy->Classify() == CLASS_BULLSEYE && hl2_episodic.GetBool() )
-				{
-					missPos.x += 60 + 120*random->RandomInt(-1,1);
-					missPos.y += 60 + 120*random->RandomInt(-1,1);
-				}
-				else
-				{
-					missPos.x += 80*random->RandomInt(-1,1);
-					missPos.y += 80*random->RandomInt(-1,1);
-				}
+				missPos.x += 80 * random->RandomInt(-1, 1);
+				missPos.y += 80 * random->RandomInt(-1, 1);
 
 				// ----------------------------------------------------------------------
 				// If target is facing me and not running towards me shoot below his feet

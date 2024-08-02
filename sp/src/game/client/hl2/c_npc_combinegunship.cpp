@@ -430,14 +430,7 @@ public:
 
 	virtual RenderGroup_t GetRenderGroup()
 	{
-		if ( hl2_episodic.GetBool() == true )
-		{
-			return RENDER_GROUP_TWOPASS;
-		}
-		else
-		{
-			return BaseClass::GetRenderGroup();
-		}
+		return RENDER_GROUP_TWOPASS;
 	}
 
 private:

@@ -659,47 +659,6 @@ int CFourWheelVehiclePhysics::DrawDebugTextOverlays( int nOffset )
 	return nOffset;
 }
 
-//----------------------------------------------------
-// Place dust at vector passed in
-//----------------------------------------------------
-void CFourWheelVehiclePhysics::PlaceWheelDust( int wheelIndex, bool ignoreSpeed )
-{
-	// New vehicles handle this deeper into the base class
-	if ( hl2_episodic.GetBool() )
-		return;
-
-	// Old dust
-	Vector	vecPos, vecVel;
-	m_pVehicle->GetWheelContactPoint( wheelIndex, &vecPos, NULL );
-
-	vecVel.Random( -1.0f, 1.0f );
-	vecVel.z = random->RandomFloat( 0.3f, 1.0f );
-
-	VectorNormalize( vecVel );
-
-	// Higher speeds make larger dust clouds
-	float flSize;
-	if ( ignoreSpeed )
-	{
-		flSize = 1.0f;
-	}
-	else
-	{
-		flSize = RemapValClamped( m_nSpeed, DUST_SPEED, m_flMaxSpeed, 0.0f, 1.0f );
-	}
-
-	if ( flSize )
-	{
-		CEffectData	data;
-
-		data.m_vOrigin = vecPos;
-		data.m_vNormal = vecVel;
-		data.m_flScale = flSize;
-
-		DispatchEffect( "WheelDust", data );
-	}
-}
-
 //-----------------------------------------------------------------------------
 // Frame-based updating 
 //-----------------------------------------------------------------------------
@@ -760,26 +719,11 @@ bool CFourWheelVehiclePhysics::Think()
 				CPASAttenuationFilter filter( m_pOuter );
 				m_pOuterServerVehicle->PlaySound( VS_SKID_FRICTION_NORMAL );
 			}
-
-			// kick up dust from the wheels while skidding
-			for ( int i = 0; i < 4; i++ )
-			{
-				PlaceWheelDust( i, true );
-			}
 		}
 		else if ( m_bLastSkid == true )
 		{
 			m_bLastSkid = false;
 			m_pOuterServerVehicle->StopSound( VS_SKID_FRICTION_NORMAL );
-		}
-
-		// toss dust up from the wheels of the vehicle if we're moving fast enough
-		if ( m_nSpeed >= DUST_SPEED && vehicleData.steering.dustCloud && m_bIsOn )
-		{
-			for ( int i = 0; i < 4; i++ )
-			{
-				PlaceWheelDust( i );
-			}
 		}
 	}
 

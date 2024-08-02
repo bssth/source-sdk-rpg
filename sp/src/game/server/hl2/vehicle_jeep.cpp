@@ -795,33 +795,22 @@ void CPropJeep::Think( void )
 			}
 		}
 		
-		if ( hl2_episodic.GetBool() )
+		// Set its running animation idle
+		if (m_bEnterAnimOn)
 		{
-			// Set its running animation idle
-			if ( m_bEnterAnimOn )
+			// Idle running
+			int nSequence = SelectWeightedSequence(ACT_IDLE_STIMULATED);
+			if (nSequence > ACTIVITY_NOT_AVAILABLE)
 			{
-				// Idle running
-				int nSequence = SelectWeightedSequence( ACT_IDLE_STIMULATED );
-				if ( nSequence > ACTIVITY_NOT_AVAILABLE )
-				{
-					SetCycle( 0 );
-					m_flAnimTime = gpGlobals->curtime;
-					ResetSequence( nSequence );
-					ResetClientsideFrame();					
-				}
+				SetCycle(0);
+				m_flAnimTime = gpGlobals->curtime;
+				ResetSequence(nSequence);
+				ResetClientsideFrame();
 			}
 		}
 
 		// If we're exiting and have had the tau cannon removed, we don't want to reset the animation
-		if ( hl2_episodic.GetBool() )
-		{
-			// Reset on exit anim
-			GetServerVehicle()->HandleEntryExitFinish( m_bExitAnimOn, m_bExitAnimOn );
-		}
-		else
-		{
-			GetServerVehicle()->HandleEntryExitFinish( m_bExitAnimOn, !(m_bExitAnimOn && TauCannonHasBeenCutOff()) );
-		}
+		GetServerVehicle()->HandleEntryExitFinish(m_bExitAnimOn, !(m_bExitAnimOn&& TauCannonHasBeenCutOff()));
 	}
 
 	// See if the ammo crate needs to close

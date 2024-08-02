@@ -1341,7 +1341,7 @@ void CProtoSniper::Event_Killed( const CTakeDamageInfo &info )
 		}
 
 		CBaseEntity *pGib;
-		bool bShouldIgnite = IsOnFire() || hl2_episodic.GetBool();
+		bool bShouldIgnite = IsOnFire();
 		pGib = CreateRagGib( "models/combine_soldier.mdl", GetLocalOrigin(), GetLocalAngles(), (vecForward * flForce) + Vector(0, 0, 600), flFadeTime, bShouldIgnite );
 
 	}
@@ -2414,8 +2414,6 @@ Vector CProtoSniper::DesiredBodyTarget( CBaseEntity *pTarget )
 	// By default, aim for the center
 	Vector vecTarget = pTarget->WorldSpaceCenter();
 
-	float flTimeSinceLastMiss = gpGlobals->curtime - m_flTimeLastShotMissed;
-
 	if( pTarget->GetFlags() & FL_CLIENT )
 	{
 		if( !BaseClass::FVisible( vecTarget ) )
@@ -2435,15 +2433,8 @@ Vector CProtoSniper::DesiredBodyTarget( CBaseEntity *pTarget )
 		}
 		else if( !m_bShootZombiesInChest && pTarget->Classify() == CLASS_ZOMBIE )
 		{
-			if( flTimeSinceLastMiss > 0.0f && flTimeSinceLastMiss < 4.0f && hl2_episodic.GetBool() )
-			{
-				vecTarget = pTarget->BodyTarget( GetBulletOrigin(), false );
-			}
-			else
-			{
-				// Shoot zombies in the headcrab
-				vecTarget = pTarget->HeadTarget( GetBulletOrigin() );
-			}
+			// Shoot zombies in the headcrab
+			vecTarget = pTarget->HeadTarget(GetBulletOrigin());
 		}
 		else if( pTarget->Classify() == CLASS_ANTLION )
 		{

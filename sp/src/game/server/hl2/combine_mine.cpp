@@ -1030,18 +1030,13 @@ void CBounceBomb::ExplodeTouch( CBaseEntity *pOther )
 	// Don't touch gibs and other debris
 	if( pOther->GetCollisionGroup() == COLLISION_GROUP_DEBRIS )
 	{
-		if( hl2_episodic.GetBool() )
+		Vector vecVelocity;
+		VPhysicsGetObject()->GetVelocity(&vecVelocity, NULL);
+
+		if (vecVelocity == vec3_origin)
 		{
-			Vector vecVelocity;
-
-			VPhysicsGetObject()->GetVelocity( &vecVelocity, NULL );
-
-			if( vecVelocity == vec3_origin )
-			{
-				ExplodeThink();
-			}
+			ExplodeThink();
 		}
-
 		return;
 	}
 

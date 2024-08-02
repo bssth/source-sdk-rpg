@@ -304,12 +304,7 @@ Disposition_t CNPC_PlayerCompanion::IRelationType( CBaseEntity *pTarget )
 			// is active... that is, not classifying itself as CLASS_NONE
 			if( pTarget->Classify() != CLASS_NONE )
 			{
-				if( !hl2_episodic.GetBool() && IsSafeFromFloorTurret(GetAbsOrigin(), pTarget) )
-				{
-					return D_NU;
-				}
-
-				return D_FR;
+				return IsSafeFromFloorTurret(GetAbsOrigin(), pTarget) ? D_NU : D_FR;
 			}
 		}
 		else if ( baseRelationship == D_HT && 
@@ -366,17 +361,9 @@ void CNPC_PlayerCompanion::GatherConditions()
 			{
 				if ( HasCondition( COND_SEE_PLAYER ) && (GetAbsOrigin() - pPlayer->GetAbsOrigin()).LengthSqr() < Square(25 * 12) )
 				{
-					if ( hl2_episodic.GetBool() )
+					if (GetSquad() == NULL)
 					{
-						// Don't stomp our squad if we're in one
-						if ( GetSquad() == NULL )
-						{
-							AddToSquad( GetPlayerSquadName() );
-						}
-					}
-					else
-					{
-						AddToSquad( GetPlayerSquadName() );
+						AddToSquad(GetPlayerSquadName());
 					}
 				}
 			}
@@ -496,7 +483,7 @@ void CNPC_PlayerCompanion::GatherConditions()
 		DoCustomSpeechAI();
 	}
 
-	if ( AI_IsSinglePlayer() && hl2_episodic.GetBool() && !GetEnemy() && HasCondition( COND_HEAR_PLAYER ) )
+	if ( AI_IsSinglePlayer() && !GetEnemy() && HasCondition( COND_HEAR_PLAYER ) )
 	{
 		Vector los = ( UTIL_GetLocalPlayer()->EyePosition() - EyePosition() );
 		los.z = 0;
@@ -857,16 +844,7 @@ int CNPC_PlayerCompanion::SelectSchedulePlayerPush()
 //-----------------------------------------------------------------------------
 bool CNPC_PlayerCompanion::IgnorePlayerPushing( void )
 {
-	if ( hl2_episodic.GetBool() )
-	{
-		// Ignore player pushes if we're leading him
-		if ( m_LeadBehavior.IsRunning() && m_LeadBehavior.HasGoal() )
-			return true;
-		if ( m_AssaultBehavior.IsRunning() && m_AssaultBehavior.OnStrictAssault() )
-			return true;
-	}
-
-	return false;
+	return !m_FollowBehavior.IsActive();
 }
 
 //-----------------------------------------------------------------------------
@@ -911,17 +889,14 @@ bool CNPC_PlayerCompanion::ShouldDeferToFollowBehavior()
 	// Even though assault and act busy are placed ahead of the follow behavior in precedence, the below
 	// code is necessary because we call ShouldDeferToFollowBehavior BEFORE we call the generic
 	// BehaviorSelectSchedule, which tries the behaviors in priority order.
-	if ( m_AssaultBehavior.CanSelectSchedule() && hl2_episodic.GetBool() )
+	if ( m_AssaultBehavior.CanSelectSchedule() )
 	{
 		return false;
 	}
 
-	if ( hl2_episodic.GetBool() )
+	if (m_ActBusyBehavior.CanSelectSchedule() && m_ActBusyBehavior.IsCombatActBusy())
 	{
-		if ( m_ActBusyBehavior.CanSelectSchedule() && m_ActBusyBehavior.IsCombatActBusy() )
-		{
-			return false;
-		}
+		return false;
 	}
 	
 	return true;
@@ -1892,7 +1867,7 @@ bool CNPC_PlayerCompanion::PickTacticalLookTarget( AILookTargetArgs_t *pArgs )
 	flMaxLookTime = flMinLookTime + random->RandomFloat( 0.0f, 0.5f );
 	pArgs->flDuration = random->RandomFloat( flMinLookTime, flMaxLookTime );
 
-	if( HasCondition(COND_SEE_PLAYER) && hl2_episodic.GetBool() )
+	if( HasCondition(COND_SEE_PLAYER) )
 	{
 		// 1/3rd chance to authoritatively look at player
 		if( random->RandomInt( 0, 2 ) == 0 )
@@ -2265,23 +2240,13 @@ void CNPC_PlayerCompanion::OnUpdateShotRegulator()
 	{
 		if( GetAbsOrigin().DistTo( GetEnemy()->GetAbsOrigin() ) <= PC_LARGER_BURST_RANGE )
 		{
-			if( hl2_episodic.GetBool() )
-			{
-				// Longer burst
-				int longBurst = random->RandomInt( 10, 15 );
-				GetShotRegulator()->SetBurstShotsRemaining( longBurst );
-				GetShotRegulator()->SetRestInterval( 0.1, 0.2 );
-			}
-			else
-			{
-				// Longer burst
-				GetShotRegulator()->SetBurstShotsRemaining( GetShotRegulator()->GetBurstShotsRemaining() * 2 );
+			// Longer burst
+			GetShotRegulator()->SetBurstShotsRemaining(GetShotRegulator()->GetBurstShotsRemaining() * 2);
 
-				// Shorter Rest interval
-				float flMinInterval, flMaxInterval;
-				GetShotRegulator()->GetRestInterval( &flMinInterval, &flMaxInterval );
-				GetShotRegulator()->SetRestInterval( flMinInterval * 0.6f, flMaxInterval * 0.6f );
-			}
+			// Shorter Rest interval
+			float flMinInterval, flMaxInterval;
+			GetShotRegulator()->GetRestInterval(&flMinInterval, &flMaxInterval);
+			GetShotRegulator()->SetRestInterval(flMinInterval * 0.6f, flMaxInterval * 0.6f);
 		}
 	}
 }

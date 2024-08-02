@@ -47,7 +47,6 @@ public:
 	void Teleport( matrix3x4_t& relativeTransform );
 	bool VPhysicsUpdate( IPhysicsObject *pPhysics );
 	bool Think();
-	void PlaceWheelDust( int wheelIndex, bool ignoreSpeed = false );
 
 	void DrawDebugGeometryOverlays();
 	int DrawDebugTextOverlays( int nOffset );

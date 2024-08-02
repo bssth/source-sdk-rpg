@@ -1165,7 +1165,7 @@ void CBaseHeadcrab::BeginClimbFromCanister()
 	Vector vecSearchCenter = GetAbsOrigin();
 	CAI_Hint *pHint = CAI_HintManager::FindHint( this, HINT_HEADCRAB_BURROW_POINT, 0, HEADCRAB_BURROW_POINT_SEARCH_RADIUS, &vecSearchCenter );
 
-	if( !pHint && hl2_episodic.GetBool() )
+	if( !pHint )
 	{
 		// Look for exit points within 10 feet.
 		pHint = CAI_HintManager::FindHint( this, HINT_HEADCRAB_EXIT_POD_POINT, 0, 120.0f, &vecSearchCenter );
@@ -3244,24 +3244,16 @@ void CBlackHeadcrab::TouchDamage( CBaseEntity *pOther )
 
 		if ( pOther->IsAlive() && pOther->m_iHealth > 1)
 		{
-			// Episodic change to avoid NPCs dying too quickly from poison bites
-			if ( hl2_episodic.GetBool() )
+			// Avoid NPCs dying too quickly from poison bites
+			if (pOther->IsPlayer())
 			{
-				if ( pOther->IsPlayer() )
-				{
-					// That didn't finish them. Take them down to one point with poison damage. It'll heal.
-					pOther->TakeDamage( CTakeDamageInfo( this, this, pOther->m_iHealth - 1, DMG_POISON ) );
-				}
-				else
-				{
-					// Just take some amount of slash damage instead
-					pOther->TakeDamage( CTakeDamageInfo( this, this, sk_headcrab_poison_npc_damage.GetFloat(), DMG_SLASH ) );
-				}
+				// That didn't finish them. Take them down to one point with poison damage. It'll heal.
+				pOther->TakeDamage(CTakeDamageInfo(this, this, pOther->m_iHealth - 1, DMG_POISON));
 			}
 			else
 			{
-				// That didn't finish them. Take them down to one point with poison damage. It'll heal.
-				pOther->TakeDamage( CTakeDamageInfo( this, this, pOther->m_iHealth - 1, DMG_POISON ) );
+				// Just take some amount of slash damage instead
+				pOther->TakeDamage(CTakeDamageInfo(this, this, sk_headcrab_poison_npc_damage.GetFloat(), DMG_SLASH));
 			}
 		}
 	}

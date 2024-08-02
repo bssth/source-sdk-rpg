@@ -3136,22 +3136,10 @@ WeaponProficiency_t CNPC_Combine::CalcWeaponProficiency( CBaseCombatWeapon *pWea
 {
 	if( FClassnameIs( pWeapon, "weapon_ar2" ) )
 	{
-		if( hl2_episodic.GetBool() )
-		{
-			return WEAPON_PROFICIENCY_VERY_GOOD;
-		}
-		else
-		{
-			return WEAPON_PROFICIENCY_GOOD;
-		}
+		return WEAPON_PROFICIENCY_GOOD;
 	}
 	else if( FClassnameIs( pWeapon, "weapon_shotgun" )	)
 	{
-		if( m_nSkin != COMBINE_SKIN_SHOTGUNNER )
-		{
-			m_nSkin = COMBINE_SKIN_SHOTGUNNER;
-		}
-
 		return WEAPON_PROFICIENCY_PERFECT;
 	}
 	else if( FClassnameIs( pWeapon, "weapon_smg1" ) )

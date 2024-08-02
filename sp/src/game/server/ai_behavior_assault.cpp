@@ -405,7 +405,7 @@ void CAI_AssaultBehavior::GatherConditions( void )
 	//		b) Is flagged to Clear On Arrival,
 	// then hit and clear the assault point (fire all entity I/O) and move on to the next one without
 	// interrupting the NPC's schedule. This provides a more fluid movement from point to point.
-	if( IsCurSchedule( SCHED_MOVE_TO_ASSAULT_POINT ) && hl2_episodic.GetBool() )
+	if( IsCurSchedule( SCHED_MOVE_TO_ASSAULT_POINT ) )
 	{
 		if( m_hAssaultPoint && m_hAssaultPoint->HasSpawnFlags(SF_ASSAULTPOINT_CLEARONARRIVAL) && m_hAssaultPoint->m_NextAssaultPointName != NULL_STRING )
 		{
@@ -1204,17 +1204,6 @@ void CAI_AssaultBehavior::EndScheduleSelection()
 	{
 		if( !m_hRallyPoint->IsExclusive() )
 			m_bHitRallyPoint = false;
-
-		if( !hl2_episodic.GetBool() || !m_hRallyPoint->IsExclusive() || !GetOuter()->IsAlive() )
-		{
-			// Here we unlock the rally point if it is NOT EXCLUSIVE
-			// -OR- the Outer is DEAD. (This gives us a head-start on 
-			// preparing the point to take new NPCs right away. Otherwise
-			// we have to wait two seconds until the behavior is destroyed.)
-			// NOTICE that the legacy (non-episodic) support calls UnlockRallyPoint
-			// unconditionally on EndScheduleSelection()
-			UnlockRallyPoint();
-		}
 	}
 
 	GetOuter()->ClearForceCrouch();

@@ -396,11 +396,8 @@ bool CAI_FollowBehavior::SetFollowGoal( CAI_FollowGoal *pGoal, bool fFinishCurSc
 	{
 		GetOuter()->ClearCommandGoal();
 
-		if( hl2_episodic.GetBool() )
-		{
-			// Poke the NPC to interrupt any stubborn schedules
-			GetOuter()->SetCondition(COND_PROVOKED);
-		}
+		// Poke the NPC to interrupt any stubborn schedules
+		GetOuter()->SetCondition(COND_PROVOKED);
 
 		SetFollowTarget( pGoal->GetGoalEntity() );
 		Assert( pGoal->m_iFormation == AIF_SIMPLE || pGoal->m_iFormation == AIF_WIDE || pGoal->m_iFormation == AIF_MEDIUM || pGoal->m_iFormation == AIF_SIDEKICK || pGoal->m_iFormation == AIF_VORTIGAUNT );
@@ -1068,13 +1065,8 @@ int CAI_FollowBehavior::SelectScheduleMoveToFormation()
 
 int CAI_FollowBehavior::SelectSchedule()
 {
-	// Allow a range attack if we need to do it
-	if ( hl2_episodic.GetBool() )
-	{
-		// Range attack
-		if ( GetOuter()->ShouldMoveAndShoot() == false && HasCondition( COND_CAN_RANGE_ATTACK1 ) )
-			return SCHED_RANGE_ATTACK1;
-	}
+	if (GetOuter()->ShouldMoveAndShoot() == false && HasCondition(COND_CAN_RANGE_ATTACK1))
+		return SCHED_RANGE_ATTACK1;
 
 	if ( GetFollowTarget() )
 	{
@@ -1387,10 +1379,10 @@ void CAI_FollowBehavior::StartTask( const Task_t *pTask )
 					bool bIsEpisodicVitalAlly;
 					
 #ifdef HL2_DLL
-					bIsEpisodicVitalAlly = (hl2_episodic.GetBool() && GetOuter()->Classify() == CLASS_PLAYER_ALLY_VITAL);
+					bIsEpisodicVitalAlly = GetOuter()->Classify() == CLASS_PLAYER_ALLY_VITAL;
 #else
 					bIsEpisodicVitalAlly = false;
-#endif//HL2_DLL
+#endif
 
 					if( bIsEpisodicVitalAlly )
 					{
@@ -1953,18 +1945,15 @@ void CAI_FollowBehavior::BuildScheduleTestBits()
 	}
 
 	// Add logic for NPCs not able to move and shoot
-	if ( hl2_episodic.GetBool() )
+	if (IsCurScheduleFollowSchedule() && GetOuter()->ShouldMoveAndShoot() == false)
 	{
-		if ( IsCurScheduleFollowSchedule() && GetOuter()->ShouldMoveAndShoot() == false )
-		{
-			GetOuter()->SetCustomInterruptCondition( COND_CAN_RANGE_ATTACK1 );
-		}
+		GetOuter()->SetCustomInterruptCondition(COND_CAN_RANGE_ATTACK1);
+	}
 
-		if (IsCurSchedule(SCHED_FOLLOW, false) || IsCurSchedule(SCHED_MOVE_TO_FACE_FOLLOW_TARGET, false) ||
-			IsCurSchedule(SCHED_FACE_FOLLOW_TARGET, false))
-		{
-			GetOuter()->SetCustomInterruptCondition(GetClassScheduleIdSpace()->ConditionLocalToGlobal(COND_FOLLOW_PLAYER_IS_NOT_LIT));
-		}
+	if (IsCurSchedule(SCHED_FOLLOW, false) || IsCurSchedule(SCHED_MOVE_TO_FACE_FOLLOW_TARGET, false) ||
+		IsCurSchedule(SCHED_FACE_FOLLOW_TARGET, false))
+	{
+		GetOuter()->SetCustomInterruptCondition(GetClassScheduleIdSpace()->ConditionLocalToGlobal(COND_FOLLOW_PLAYER_IS_NOT_LIT));
 	}
 
 	if ( GetNpcState() == NPC_STATE_COMBAT && IsCurScheduleFollowSchedule() )

@@ -513,14 +513,7 @@ void CNPC_FloorTurret::OnPhysGunPickup( CBasePlayer *pPhysGunUser, PhysGunPickup
 		bool bBehind = DotProduct( vecToTurret, forward ) < 0.85f;
 
 		// Correct our angles only if we're not upright or we're mostly behind the turret
-		if ( hl2_episodic.GetBool() )
-		{
-			m_bUseCarryAngles = ( bUpright == false || bBehind );
-		}
-		else
-		{
-			m_bUseCarryAngles = ( bUpright == false );
-		}
+		m_bUseCarryAngles = (bUpright == false || bBehind);
 	}
 
 	// Clear out our last NPC to kick me, because it makes no sense now

@@ -2479,9 +2479,6 @@ void CAI_ActBusyGoal::InputForceNPCToActBusy( inputdata_t &inputdata )
 	if ( !pBehavior )
 		return;
 
-	// Wrapped this bugfix so that it doesn't break HL2.
-	bool bEpisodicBugFix = hl2_episodic.GetBool();
-
 	// Do we have a specified node too?
 	pszParam = strtok(NULL," ");
 	if ( pszParam )
@@ -2497,19 +2494,11 @@ void CAI_ActBusyGoal::InputForceNPCToActBusy( inputdata_t &inputdata )
 				return;
 			}
 
-			if ( bEpisodicBugFix )
-			{
-				pszParam = strtok(NULL," ");
-			}
+			pszParam = strtok(NULL, " ");
 		}
 	}
 
 	Activity activity = ACT_INVALID;
-
-	if ( !bEpisodicBugFix )
-	{
- 		pszParam = strtok(NULL," ");
-	}
 
 	while ( pszParam )
 	{

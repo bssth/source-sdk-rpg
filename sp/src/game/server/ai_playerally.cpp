@@ -457,7 +457,7 @@ void CAI_PlayerAlly::GatherEnemyConditions( CBaseEntity *pEnemy )
 #ifdef HL2_DLL
 		if ( HasCondition( COND_SEE_ENEMY ) && ( pEnemy->Classify() != CLASS_BULLSEYE ) )
 		{
-			if( Classify() == CLASS_PLAYER_ALLY_VITAL && hl2_episodic.GetBool() )
+			if( Classify() == CLASS_PLAYER_ALLY_VITAL )
 			{
 				CBasePlayer *pPlayer = AI_GetSinglePlayer();
 

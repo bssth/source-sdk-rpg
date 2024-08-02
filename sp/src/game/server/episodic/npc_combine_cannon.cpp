@@ -1066,7 +1066,7 @@ Vector CNPC_Combine_Cannon::DesiredBodyTarget( CBaseEntity *pTarget )
 		}
 		else if( pTarget->Classify() == CLASS_ZOMBIE )
 		{
-			if( flTimeSinceLastMiss > 0.0f && flTimeSinceLastMiss < 4.0f && hl2_episodic.GetBool() )
+			if( flTimeSinceLastMiss > 0.0f && flTimeSinceLastMiss < 4.0f )
 			{
 				vecTarget = pTarget->BodyTarget( GetBulletOrigin(), false );
 			}

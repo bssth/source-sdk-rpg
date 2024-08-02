@@ -619,10 +619,7 @@ void CNPC_CombineGunship::Spawn( void )
 
 	CapabilitiesAdd( bits_CAP_SQUAD);
 
-	if ( hl2_episodic.GetBool() == true )
-	{
-		CreateBellyBlastEnergyCore();
-	}
+	CreateBellyBlastEnergyCore();
 
 	// Allows autoaim to help attack the gunship.
 	if( g_pGameRules->GetAutoAimMode() == AUTOAIM_ON_CONSOLE )
@@ -680,11 +677,8 @@ void CNPC_CombineGunship::Precache( void )
 	PrecacheScriptSound( "NPC_CombineGunship.ExhaustSound" );
 	PrecacheScriptSound( "NPC_CombineGunship.RotorBlastSound" );
 
-	if ( hl2_episodic.GetBool() == true )
-	{
-		UTIL_PrecacheOther( "env_citadel_energy_core" );
-		g_iGunshipEffectIndex = PrecacheModel( "sprites/physbeam.vmt" );
-	}
+	UTIL_PrecacheOther("env_citadel_energy_core");
+	g_iGunshipEffectIndex = PrecacheModel("sprites/physbeam.vmt");
 
 	PropBreakablePrecacheAll( MAKE_STRING("models/gunship.mdl") );
 
@@ -923,15 +917,12 @@ void CNPC_CombineGunship::StartGroundAttack( void )
 	
 	CSoundEnt::InsertSound ( SOUND_DANGER, endpos, 1024, 0.5f );
 
-	if ( hl2_episodic.GetBool() == true )
+	if (m_hEnergyCore)
 	{
-		if ( m_hEnergyCore )
-		{
-			variant_t value;
-			value.SetFloat( 3.0f );
+		variant_t value;
+		value.SetFloat(3.0f);
 
-			g_EventQueue.AddEvent( m_hEnergyCore, "StartCharge", value, 0, this, this );
-		}
+		g_EventQueue.AddEvent(m_hEnergyCore, "StartCharge", value, 0, this, this);
 	}
 }
 
@@ -1103,31 +1094,28 @@ void CNPC_CombineGunship::DoGroundAttackExplosion( void )
 	UTIL_TraceLine( vecSrc, impactPoint, MASK_SHOT, this, COLLISION_GROUP_NONE, &tr );
 	UTIL_DecalTrace( &tr, "Scorch" );
 
-	if ( hl2_episodic.GetBool() == true )
-	{
-		g_pEffects->EnergySplash( tr.endpos, tr.plane.normal );
+	g_pEffects->EnergySplash(tr.endpos, tr.plane.normal);
 
-		CBroadcastRecipientFilter filter;
-		te->BeamRingPoint( filter, 0.0, 
-			tr.endpos,							//origin
-			0,									//start radius
-			GUNSHIP_BELLY_BLAST_RADIUS,			//end radius
-			g_iGunshipEffectIndex,				//texture
-			0,									//halo index
-			0,									//start frame
-			0,									//framerate
-			0.2,								//life
-			10,									//width
-			0,									//spread
-			0,									//amplitude
-			255,								//r
-			255,								//g
-			255,								//b
-			50,									//a
-			0,									//speed
-			FBEAM_FADEOUT
-			);
-	}
+	CBroadcastRecipientFilter filter;
+	te->BeamRingPoint(filter, 0.0,
+		tr.endpos,							//origin
+		0,									//start radius
+		GUNSHIP_BELLY_BLAST_RADIUS,			//end radius
+		g_iGunshipEffectIndex,				//texture
+		0,									//halo index
+		0,									//start frame
+		0,									//framerate
+		0.2,								//life
+		10,									//width
+		0,									//spread
+		0,									//amplitude
+		255,								//r
+		255,								//g
+		255,								//b
+		50,									//a
+		0,									//speed
+		FBEAM_FADEOUT
+	);
 
 	// Send the effect over
 	CEffectData	data;
@@ -1176,15 +1164,12 @@ void CNPC_CombineGunship::StopGroundAttack( bool bDoAttack )
 		WRITE_VEC3COORD( hitPos );
 	MessageEnd();
 
-	if ( hl2_episodic.GetBool() == true )
+	if (m_hEnergyCore)
 	{
-		if ( m_hEnergyCore )
-		{
-			variant_t value;
-			value.SetFloat( 1.0f );
+		variant_t value;
+		value.SetFloat(1.0f);
 
-			g_EventQueue.AddEvent( m_hEnergyCore, "Stop", value, 0, this, this );
-		}
+		g_EventQueue.AddEvent(m_hEnergyCore, "Stop", value, 0, this, this);
 	}
 
 	// Only attack if told to
@@ -1971,7 +1956,7 @@ void CNPC_CombineGunship::BeginDestruct( void )
 	m_flEndDestructTime = gpGlobals->curtime + 3.0;
 
 	// Clamp velocity
-	if( hl2_episodic.GetBool() && GetAbsVelocity().Length() > 700.0f )
+	if( GetAbsVelocity().Length() > 700.0f )
 	{
 		Vector vecVelocity = GetAbsVelocity(); 
 		VectorNormalize( vecVelocity );
@@ -2232,10 +2217,9 @@ void CNPC_CombineGunship::Flight( void )
 
 	Vector vecImpulse = m_flForce * up;
 	
-	if ( !m_hCrashTarget && m_lifeState == LIFE_DYING && !hl2_episodic.GetBool() )
+	if ( !m_hCrashTarget && m_lifeState == LIFE_DYING )
 	{
 		// Force gunship to the ground if it doesn't have a specific place to crash.
-		// EXCEPT In episodic, where forcing it to the ground means it crashes where the player can't see (attic showdown) (sjb)
 		vecImpulse.z = -10;
 	}
 	else

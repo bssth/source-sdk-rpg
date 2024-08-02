@@ -1292,7 +1292,7 @@ void CNPC_Strider::BuildScheduleTestBits()
 		SetCustomInterruptCondition( COND_STRIDER_HAS_CANNON_TARGET );
 	}
 
-	if( IsCurSchedule( SCHED_IDLE_WALK ) || ( IsCurSchedule( SCHED_IDLE_STAND ) && hl2_episodic.GetBool() ) )
+	if( IsCurSchedule( SCHED_IDLE_WALK ) || IsCurSchedule( SCHED_IDLE_STAND ) )
 	{
 		SetCustomInterruptCondition(COND_STRIDER_SHOULD_CROUCH);
 	}
@@ -4219,16 +4219,8 @@ Vector CNPC_Strider::LeftFootHit( float eventtime )
 
 	GetAttachment( "left foot", footPosition, angles );
 
-	if ( hl2_episodic.GetBool() )
-	{
-		CPASAttenuationFilter filter( this, "NPC_Strider.FootstepEverywhere" );
-		EmitSound( filter, 0, "NPC_Strider.FootstepEverywhere", &footPosition, eventtime );
-	}
-	else
-	{
-		CPASAttenuationFilter filter( this, "NPC_Strider.Footstep" );
-		EmitSound( filter, 0, "NPC_Strider.Footstep", &footPosition, eventtime );
-	}
+	CPASAttenuationFilter filter(this, "NPC_Strider.Footstep");
+	EmitSound(filter, 0, "NPC_Strider.Footstep", &footPosition, eventtime);
 
 	FootFX( footPosition );
 
@@ -4243,16 +4235,8 @@ Vector CNPC_Strider::RightFootHit( float eventtime )
 
 	GetAttachment( "right foot", footPosition );
 	
-	if ( hl2_episodic.GetBool() )
-	{
-		CPASAttenuationFilter filter( this, "NPC_Strider.FootstepEverywhere" );
-		EmitSound( filter, 0, "NPC_Strider.FootstepEverywhere", &footPosition, eventtime );
-	}
-	else
-	{
-		CPASAttenuationFilter filter( this, "NPC_Strider.Footstep" );
-		EmitSound( filter, 0, "NPC_Strider.Footstep", &footPosition, eventtime );
-	}
+	CPASAttenuationFilter filter(this, "NPC_Strider.Footstep");
+	EmitSound(filter, 0, "NPC_Strider.Footstep", &footPosition, eventtime);
 
 	FootFX( footPosition );
 
@@ -4268,16 +4252,8 @@ Vector CNPC_Strider::BackFootHit( float eventtime )
 
 	GetAttachment( "back foot", footPosition );
 
-	if ( hl2_episodic.GetBool() )
-	{
-		CPASAttenuationFilter filter( this, "NPC_Strider.FootstepEverywhere" );
-		EmitSound( filter, 0, "NPC_Strider.FootstepEverywhere", &footPosition, eventtime );
-	}
-	else
-	{
-		CPASAttenuationFilter filter( this, "NPC_Strider.Footstep" );
-		EmitSound( filter, 0, "NPC_Strider.Footstep", &footPosition, eventtime );
-	}
+	CPASAttenuationFilter filter(this, "NPC_Strider.Footstep");
+	EmitSound(filter, 0, "NPC_Strider.Footstep", &footPosition, eventtime);
 
 	FootFX( footPosition );
 

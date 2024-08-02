@@ -64,7 +64,6 @@ ConVar  sk_antlion_worker_burst_radius( "sk_antlion_worker_burst_radius", "160",
 #endif
 
 ConVar  g_test_new_antlion_jump( "g_test_new_antlion_jump", "1", FCVAR_ARCHIVE );
-ConVar	antlion_easycrush( "antlion_easycrush", "1" );
 ConVar g_antlion_cascade_push( "g_antlion_cascade_push", "1", FCVAR_ARCHIVE );
  
 ConVar g_debug_antlion_worker( "g_debug_antlion_worker", "0" );
@@ -2418,7 +2417,7 @@ int CNPC_Antlion::SelectSchedule( void )
 	case NPC_STATE_COMBAT:
 		{
 			// Worker-only AI
-			if ( hl2_episodic.GetBool() && IsWorker() )
+			if ( IsWorker() )
 			{
 				// Melee attack if we can
 				if ( HasCondition( COND_CAN_MELEE_ATTACK1 ) )
@@ -2562,22 +2561,6 @@ int CNPC_Antlion::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 {
 	CTakeDamageInfo newInfo = info;
 
-	if( hl2_episodic.GetBool() && antlion_easycrush.GetBool() )
-	{
-		if( newInfo.GetDamageType() & DMG_CRUSH )
-		{
-			if( newInfo.GetInflictor() && newInfo.GetInflictor()->VPhysicsGetObject() )
-			{
-				float flMass = newInfo.GetInflictor()->VPhysicsGetObject()->GetMass();
-
-				if( flMass > 250.0f && newInfo.GetDamage() < GetHealth() )
-				{
-					newInfo.SetDamage( GetHealth() );
-				}
-			}
-		}
-	}
-
 	// If we're being hoisted by a barnacle, we only take damage from that barnacle (otherwise we can die too early!)
 	if ( IsEFlagSet( EFL_IS_BEING_LIFTED_BY_BARNACLE ) )
 	{
@@ -2608,10 +2591,6 @@ int CNPC_Antlion::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 //-----------------------------------------------------------------------------
 void CNPC_Antlion::CascadePush( const Vector &vecForce )
 {
-	// Controlled via this convar until this is proven worthwhile
-	if ( hl2_episodic.GetBool() == false /*|| g_antlion_cascade_push.GetBool() == false*/ )
-		return;
-
 	Vector vecForceDir = vecForce;
 	float flMagnitude = VectorNormalize( vecForceDir );
 	Vector vecPushBack = GetAbsOrigin() + ( vecForceDir * (flMagnitude*0.1f) );
@@ -2686,37 +2665,19 @@ void CNPC_Antlion::TraceAttack( const CTakeDamageInfo &info, const Vector &vecDi
 		if ( !IsRunningDynamicInteraction() )
  		{
 			//Grenades, physcannons, and physics impacts make us fuh-lip!
-			
-			if( hl2_episodic.GetBool() )
+			PainSound(newInfo);
+
+			if (GetFlags() & FL_ONGROUND)
 			{
-				PainSound( newInfo );
-
-				if( GetFlags() & FL_ONGROUND )
-				{
-					// Only flip if on the ground.
-					SetCondition( COND_ANTLION_FLIPPED );
-				}
-
-				Vector vecForce = ( vecShoveDir * random->RandomInt( 500.0f, 1000.0f ) ) + Vector(0,0,64.0f);
-
-				CascadePush( vecForce );
-				ApplyAbsVelocityImpulse( vecForce );
-				SetGroundEntity( NULL );
+				// Only flip if on the ground.
+				SetCondition(COND_ANTLION_FLIPPED);
 			}
-			else
-			{
-				//Don't flip off the deck
-				if ( GetFlags() & FL_ONGROUND )
-				{
-					PainSound( newInfo );
 
-					SetCondition( COND_ANTLION_FLIPPED );
+			Vector vecForce = (vecShoveDir * random->RandomInt(500.0f, 1000.0f)) + Vector(0, 0, 64.0f);
 
-					//Get tossed!
-					ApplyAbsVelocityImpulse( ( vecShoveDir * random->RandomInt( 500.0f, 1000.0f ) ) + Vector(0,0,64.0f) );
-					SetGroundEntity( NULL );
-				}
-			}
+			CascadePush(vecForce);
+			ApplyAbsVelocityImpulse(vecForce);
+			SetGroundEntity(NULL);
 		}
 	}
 
@@ -3501,7 +3462,7 @@ void CNPC_Antlion::CreateDust( bool placeDecal )
 	{
 		const surfacedata_t *pdata = physprops->GetSurfaceData( tr.surface.surfaceProps );
 
-		if ( hl2_episodic.GetBool() == true || ( pdata->game.material == CHAR_TEX_CONCRETE ) || 
+		if ( ( pdata->game.material == CHAR_TEX_CONCRETE ) || 
 			 ( pdata->game.material == CHAR_TEX_DIRT ) ||
 			 ( pdata->game.material == CHAR_TEX_SAND ) ) 
 		{
@@ -4153,13 +4114,10 @@ void CNPC_Antlion::Touch( CBaseEntity *pOther )
 //-----------------------------------------------------------------------------
 bool CNPC_Antlion::OverrideMoveFacing( const AILocalMoveGoal_t &move, float flInterval )
 {
-	if ( hl2_episodic.GetBool() )
+	if (IsWorker() && GetEnemy())
 	{
-		if ( IsWorker() && GetEnemy() )
-		{
-			AddFacingTarget( GetEnemy(), GetEnemy()->WorldSpaceCenter(), 1.0f, 0.2f );
-			return BaseClass::OverrideMoveFacing( move, flInterval );
-		}
+		AddFacingTarget(GetEnemy(), GetEnemy()->WorldSpaceCenter(), 1.0f, 0.2f);
+		return BaseClass::OverrideMoveFacing(move, flInterval);
 	}
 
 	//Adrian: Make antlions face the thumper while they flee away.
@@ -4421,7 +4379,7 @@ void CNPC_Antlion::DoPoisonBurst()
 //-----------------------------------------------------------------------------
 bool CNPC_Antlion::IsHeavyDamage( const CTakeDamageInfo &info )
 {
-	if ( hl2_episodic.GetBool() && IsWorker() )
+	if ( IsWorker() )
 	{
 		if ( m_nSustainedDamage + info.GetDamage() > 6 )
 			return true;
