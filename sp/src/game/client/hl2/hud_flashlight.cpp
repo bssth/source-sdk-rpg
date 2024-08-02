@@ -65,7 +65,7 @@ CHudFlashlight::CHudFlashlight( const char *pElementName ) : CHudElement( pEleme
 	vgui::Panel *pParent = g_pClientMode->GetViewport();
 	SetParent( pParent );
 
-	SetHiddenBits( HIDEHUD_HEALTH | HIDEHUD_PLAYERDEAD | HIDEHUD_NEEDSUIT );
+	SetHiddenBits( HIDEHUD_HEALTH | HIDEHUD_PLAYERDEAD );
 }
 
 //-----------------------------------------------------------------------------
@@ -110,7 +110,7 @@ void CHudFlashlight::Paint()
 		return;
 
 	// Only paint if we're using the new flashlight code
-	if ( pPlayer->m_HL2Local.m_flFlashBattery < 0.0f )
+	if ( pPlayer->m_HL2Local.m_flFlashBattery <= 0.0f )
 	{
 		SetPaintBackgroundEnabled( false );
 		return;

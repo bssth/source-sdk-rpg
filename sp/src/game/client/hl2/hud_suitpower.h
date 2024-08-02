@@ -1,10 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
-//
-// Purpose: 
-//
-// $NoKeywords: $
-//=============================================================================//
-#if !defined( HUD_SUITPOWER_H )
+#if 0 && !defined( HUD_SUITPOWER_H )
 #define HUD_SUITPOWER_H
 #ifdef _WIN32
 #pragma once

@@ -71,7 +71,7 @@ CHudLocator::CHudLocator( const char *pElementName ) : CHudElement( pElementName
 	vgui::Panel *pParent = g_pClientMode->GetViewport();
 	SetParent( pParent );
 
-	SetHiddenBits( HIDEHUD_HEALTH | HIDEHUD_PLAYERDEAD | HIDEHUD_NEEDSUIT );
+	SetHiddenBits( HIDEHUD_HEALTH | HIDEHUD_PLAYERDEAD );
 
 	m_textureID_IconJalopy = -1;
 	m_textureID_IconSmallTick = -1;
