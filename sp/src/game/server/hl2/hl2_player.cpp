@@ -80,9 +80,9 @@ ConVar hl2_walkspeed( "hl2_walkspeed", "150" );
 ConVar hl2_normspeed( "hl2_normspeed", "190" );
 ConVar hl2_sprintspeed( "hl2_sprintspeed", "320" );
 
-	#define	HL2_WALK_SPEED hl2_walkspeed.GetFloat()
-	#define	HL2_NORM_SPEED hl2_normspeed.GetFloat()
-	#define	HL2_SPRINT_SPEED hl2_sprintspeed.GetFloat()
+#define	HL2_WALK_SPEED hl2_walkspeed.GetFloat()
+#define	HL2_NORM_SPEED hl2_normspeed.GetFloat()
+#define	HL2_SPRINT_SPEED hl2_sprintspeed.GetFloat()
 
 ConVar player_squad_transient_commands( "player_squad_transient_commands", "1", FCVAR_REPLICATED );
 ConVar player_squad_double_tap_time( "player_squad_double_tap_time", "0.25" );
@@ -197,7 +197,7 @@ void CC_ToggleZoom( void )
 	{
 		CHL2_Player *pHL2Player = dynamic_cast<CHL2_Player*>(pPlayer);
 
-		if( pHL2Player && pHL2Player->IsSuitEquipped() )
+		if( pHL2Player )
 		{
 			pHL2Player->ToggleZoom();
 		}
@@ -396,7 +396,7 @@ void CHL2_Player::Precache( void )
 {
 	BaseClass::Precache();
 
-	PrecacheScriptSound( "HL2Player.SprintNoPower" );
+	PrecacheScriptSound( "k_lab.teleport_breathing" );
 	PrecacheScriptSound( "HL2Player.SprintStart" );
 	PrecacheScriptSound( "HL2Player.UseDeny" );
 	PrecacheScriptSound( "HL2Player.FlashLightOn" );
@@ -414,20 +414,14 @@ void CHL2_Player::Precache( void )
 //-----------------------------------------------------------------------------
 void CHL2_Player::CheckSuitZoom( void )
 {
-//#ifndef _XBOX 
-	//Adrian - No zooming without a suit!
-	if ( IsSuitEquipped() )
+	if (m_afButtonReleased & IN_ZOOM)
 	{
-		if ( m_afButtonReleased & IN_ZOOM )
-		{
-			StopZooming();
-		}	
-		else if ( m_afButtonPressed & IN_ZOOM )
-		{
-			StartZooming();
-		}
+		StopZooming();
 	}
-//#endif//_XBOX
+	else if (m_afButtonPressed & IN_ZOOM)
+	{
+		StartZooming();
+	}
 }
 
 void CHL2_Player::CheckThrowGrenade(void)
@@ -474,7 +468,7 @@ void CHL2_Player::HandleSpeedChanges( void )
 
 	bool bCanSprint = CanSprint();
 	bool bIsSprinting = IsSprinting();
-	bool bWantSprint = ( bCanSprint && IsSuitEquipped() && (m_nButtons & IN_SPEED) );
+	bool bWantSprint = ( bCanSprint && (m_nButtons & IN_SPEED) );
 	if ( bIsSprinting != bWantSprint && (buttonsChanged & IN_SPEED) )
 	{
 		// If someone wants to sprint, make sure they've pressed the button to do so. We want to prevent the
@@ -504,16 +498,7 @@ void CHL2_Player::HandleSpeedChanges( void )
 
 	bool bIsWalking = IsWalking();
 	// have suit, pressing button, not sprinting or ducking
-	bool bWantWalking;
-	
-	if( IsSuitEquipped() )
-	{
-		bWantWalking = (m_nButtons & IN_WALK) && !IsSprinting() && !(m_nButtons & IN_DUCK);
-	}
-	else
-	{
-		bWantWalking = true;
-	}
+	bool bWantWalking = (m_nButtons & IN_WALK) && !IsSprinting() && !(m_nButtons & IN_DUCK);
 	
 	if( bIsWalking != bWantWalking )
 	{
@@ -1079,21 +1064,13 @@ void CHL2_Player::Spawn(void)
 
 #ifndef HL2MP
 #ifndef PORTAL
-	//SetModel( "models/player.mdl" );
 	SetModel(PLAYER_MODEL);
 #endif
 #endif
 
 	BaseClass::Spawn();
 
-	//
-	// Our player movement speed is set once here. This will override the cl_xxxx
-	// cvars unless they are set to be lower than this.
-	//
-	//m_flMaxspeed = 320;
-
-	if ( !IsSuitEquipped() )
-		 StartWalking();
+	StartWalking();
 
 	SuitPower_SetCharge( 100 );
 
@@ -1162,7 +1139,7 @@ void CHL2_Player::StartAutoSprint()
 //-----------------------------------------------------------------------------
 void CHL2_Player::StartSprinting( void )
 {
-	if( m_HL2Local.m_flSuitPower < 10 )
+	if( m_HL2Local.m_flSuitPower < 50 )
 	{
 		// Don't sprint unless there's a reasonable
 		// amount of suit power.
@@ -1170,9 +1147,7 @@ void CHL2_Player::StartSprinting( void )
 		// debounce the button for sound playing
 		if ( m_afButtonPressed & IN_SPEED )
 		{
-			CPASAttenuationFilter filter( this );
-			filter.UsePredictionRules();
-			EmitSound( filter, entindex(), "HL2Player.SprintNoPower" );
+			EmitSound("k_lab.teleport_breathing");
 		}
 		return;
 	}
@@ -1182,8 +1157,6 @@ void CHL2_Player::StartSprinting( void )
 
 	CPASAttenuationFilter filter( this );
 	filter.UsePredictionRules();
-	EmitSound( filter, entindex(), "HL2Player.SprintStart" );
-
 	SetMaxSpeed( HL2_SPRINT_SPEED );
 	m_fIsSprinting = true;
 }
@@ -1198,14 +1171,7 @@ void CHL2_Player::StopSprinting( void )
 		SuitPower_RemoveDevice( SuitDeviceSprint );
 	}
 
-	if( IsSuitEquipped() )
-	{
-		SetMaxSpeed( HL2_NORM_SPEED );
-	}
-	else
-	{
-		SetMaxSpeed( HL2_WALK_SPEED );
-	}
+	SetMaxSpeed(HL2_NORM_SPEED);
 
 	m_fIsSprinting = false;
 
@@ -1978,10 +1944,9 @@ void CHL2_Player::SuitPower_Update( void )
 			{
 				StopSprinting();
 			}
-				}
-			}
 		}
-
+	}
+}
 
 
 //-----------------------------------------------------------------------------
@@ -2123,8 +2088,8 @@ bool CHL2_Player::ApplyBattery( float powerMultiplier )
 
 		IncrementArmorValue( sk_battery.GetFloat() * powerMultiplier, MAX_NORMAL_BATTERY );
 
-		CPASAttenuationFilter filter( this, "ItemBattery.Touch" );
-		EmitSound( filter, entindex(), "ItemBattery.Touch" );
+		CPASAttenuationFilter filter( this, "HL2Player.PickupWeapon" );
+		EmitSound( filter, entindex(), "HL2Player.PickupWeapon" );
 
 		CSingleUserRecipientFilter user( this );
 		user.MakeReliable();
@@ -2787,7 +2752,6 @@ bool CHL2_Player::BumpWeapon( CBaseCombatWeapon *pWeapon )
 {
 	CBaseCombatCharacter *pOwner = pWeapon->GetOwner();
 
-	// Can I have this weapon type?
 	if ( pOwner || !Weapon_CanUse( pWeapon ) || !g_pGameRules->CanHavePlayerItem( this, pWeapon ) )
 	{
 		if ( gEvilImpulse101 )
@@ -3019,59 +2983,61 @@ void CHL2_Player::UpdateWeaponPosture( void )
 {
 	CBaseCombatWeapon *pWeapon = dynamic_cast<CBaseCombatWeapon *>(GetActiveWeapon());
 
+	VPROF("CHL2_Player::UpdateWeaponPosture");
+
+	Vector vecAim = BaseClass::GetAutoaimVector(AUTOAIM_SCALE_DIRECT_ONLY);
+	trace_t	tr;
+	const float CHECK_FRIENDLY_RANGE = 50 * 12;
+	UTIL_TraceLine(EyePosition(), EyePosition() + vecAim * CHECK_FRIENDLY_RANGE, MASK_SHOT, this, COLLISION_GROUP_NONE, &tr);
+	CBaseEntity* aimTarget = tr.m_pEnt;
+
+	if (m_ShowNameTimer.Expired())
+	{
+		m_ShowNameTimer.Set(.5);
+
+		if (aimTarget)
+		{
+			if (aimTarget->IsNPC())
+			{
+				CAI_BaseNPC* pBaseNPC = dynamic_cast<CAI_BaseNPC*>(aimTarget);
+				if (pBaseNPC != NULL)
+				{
+					DevMsg("[DEBUG] Entity name: %s \n", pBaseNPC->GetDebugName());
+
+					CSingleUserRecipientFilter user(this);
+					UserMessageBegin(user, "ShowObjectInfo");
+					WRITE_BOOL(true);
+					WRITE_STRING(pBaseNPC->GetDebugName());
+					MessageEnd();
+				}
+			}
+			else
+			{
+				CSingleUserRecipientFilter user(this);
+				UserMessageBegin(user, "ShowObjectInfo");
+				WRITE_BOOL(false);
+				MessageEnd();
+			}
+		}
+		else
+		{
+			CSingleUserRecipientFilter user(this);
+			UserMessageBegin(user, "ShowObjectInfo");
+			WRITE_BOOL(false);
+			MessageEnd();
+		}
+	}
+
 	if ( pWeapon && m_LowerWeaponTimer.Expired() && pWeapon->CanLower() )
 	{
 		m_LowerWeaponTimer.Set( .3 );
-		VPROF( "CHL2_Player::UpdateWeaponPosture-CheckLower" );
-		Vector vecAim = BaseClass::GetAutoaimVector( AUTOAIM_SCALE_DIRECT_ONLY );
 
-		const float CHECK_FRIENDLY_RANGE = 50 * 12;
-		trace_t	tr;
-		UTIL_TraceLine( EyePosition(), EyePosition() + vecAim * CHECK_FRIENDLY_RANGE, MASK_SHOT, this, COLLISION_GROUP_NONE, &tr );
-
-		CBaseEntity *aimTarget = tr.m_pEnt;
-
-		//If we're over something
-		if (  aimTarget && !tr.DidHitWorld() )
+		// If we're over something
+		if ( aimTarget && !tr.DidHitWorld() )
 		{
 			if ( !aimTarget->IsNPC() || aimTarget->MyNPCPointer()->GetState() != NPC_STATE_COMBAT )
 			{
 				Disposition_t dis = IRelationType( aimTarget );
-
-				//Debug info for seeing what an object "cons" as
-				if ( sv_show_crosshair_target.GetBool() )
-				{
-					int text_offset = BaseClass::DrawDebugTextOverlays();
-
-					char tempstr[255];	
-
-					switch ( dis )
-					{
-					case D_LI:
-						Q_snprintf( tempstr, sizeof(tempstr), "Disposition: Like" );
-						break;
-
-					case D_HT:
-						Q_snprintf( tempstr, sizeof(tempstr), "Disposition: Hate" );
-						break;
-
-					case D_FR:
-						Q_snprintf( tempstr, sizeof(tempstr), "Disposition: Fear" );
-						break;
-
-					case D_NU:
-						Q_snprintf( tempstr, sizeof(tempstr), "Disposition: Neutral" );
-						break;
-
-					default:
-					case D_ER:
-						Q_snprintf( tempstr, sizeof(tempstr), "Disposition: !!!ERROR!!!" );
-						break;
-					}
-
-					//Draw the text
-					NDebugOverlay::EntityText( aimTarget->entindex(), text_offset, tempstr, 0 );
-				}
 
 				//See if we hates it
 				if ( dis == D_LI  )
@@ -3328,21 +3294,21 @@ void CHL2_Player::UpdateClientData( void )
 
 	// Update Flashlight
 	if (FlashlightIsOn() && sv_infinite_aux_power.GetBool() == false)
-		{
-			m_HL2Local.m_flFlashBattery -= FLASH_DRAIN_TIME * gpGlobals->frametime;
+	{
+		m_HL2Local.m_flFlashBattery -= FLASH_DRAIN_TIME * gpGlobals->frametime;
 		if (m_HL2Local.m_flFlashBattery < 0.0f)
-			{
-				FlashlightTurnOff();
-				m_HL2Local.m_flFlashBattery = 0.0f;
-			}
-		}
-		else
 		{
-			m_HL2Local.m_flFlashBattery += FLASH_CHARGE_TIME * gpGlobals->frametime;
+			FlashlightTurnOff();
+			m_HL2Local.m_flFlashBattery = 0.0f;
+		}
+	}
+	else
+	{
+		m_HL2Local.m_flFlashBattery += FLASH_CHARGE_TIME * gpGlobals->frametime;
 		if (m_HL2Local.m_flFlashBattery > 100.0f)
-			{
-				m_HL2Local.m_flFlashBattery = 100.0f;
-			}
+		{
+			m_HL2Local.m_flFlashBattery = 100.0f;
+		}
 	}
 
 	BaseClass::UpdateClientData();
@@ -3909,7 +3875,7 @@ void CLogicPlayerProxy::InputSetFlashlightSlowDrain( inputdata_t &inputdata )
 	CHL2_Player *pPlayer = dynamic_cast<CHL2_Player*>(m_hPlayer.Get());
 
 	if( pPlayer )
-		pPlayer->SetFlashlightPowerDrainScale( hl2_darkness_flashlight_factor.GetFloat() );
+		pPlayer->SetFlashlightPowerDrainScale( 1.0f );
 }
 
 void CLogicPlayerProxy::InputSetFlashlightNormalDrain( inputdata_t &inputdata )
