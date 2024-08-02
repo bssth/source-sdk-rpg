@@ -378,6 +378,7 @@ void CNPC_Citizen::Precache()
 	PrecacheScriptSound( "NPC_Citizen.FootstepLeft" );
 	PrecacheScriptSound( "NPC_Citizen.FootstepRight" );
 	PrecacheScriptSound( "NPC_Citizen.Die" );
+	PrecacheScriptSound("npc_citizen.upthere02");
 
 	PrecacheInstancedScene( "scenes/Expressions/CitizenIdle.vcd" );
 	PrecacheInstancedScene( "scenes/Expressions/CitizenAlert_loop.vcd" );
@@ -1924,19 +1925,23 @@ void CNPC_Citizen::LocateEnemySound()
 	if ( !GetEnemy() )
 		return;
 
+	// Squad-only response. We don't want NPCs to talk to themselves
+	if (!IsInSquad())
+		return;
+
 	float flZDiff = GetLocalOrigin().z - GetEnemy()->GetLocalOrigin().z;
 
 	if( flZDiff < -128 )
 	{
-		EmitSound( "NPC_Citizen.UpThere" );
+		EmitSound( "npc_citizen.upthere02" );
 	}
 	else if( flZDiff > 128 )
 	{
-		EmitSound( "NPC_Citizen.DownThere" );
+		EmitSound( "npc_citizen.downthere01" );
 	}
 	else
 	{
-		EmitSound( "NPC_Citizen.OverHere" );
+		EmitSound( "npc_citizen.overhere01" );
 	}
 }
 
