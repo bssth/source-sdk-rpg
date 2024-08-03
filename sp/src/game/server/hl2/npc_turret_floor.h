@@ -180,6 +180,8 @@ public:
 	static float	fMaxTipControllerVelocity;
 	static float	fMaxTipControllerAngularVelocity;
 
+	char* GetReadableName(void) { return "Turret"; }
+
 protected:
 
 	virtual bool	PreThink( turretState_e state );

@@ -150,6 +150,7 @@ public:
 	
 	void TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, trace_t *ptr, CDmgAccumulator *pAccumulator );
 	void StartTargetHandling( CBaseEntity *pTargetEnt );
+	char* GetReadableName(void) { return "Crow"; }
 
 	DEFINE_CUSTOM_AI;
 	DECLARE_DATADESC();

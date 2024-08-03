@@ -63,7 +63,6 @@ public:
 	CAI_Schedule*	WakeUp(void);
 	void			GoDormant(void);
 
-public:
 	void			Spawn( void );
 	void			Precache( void );
 	bool			CreateBehaviors();
@@ -102,6 +101,7 @@ public:
 	void			AddZigZagToPath(void);
 	void			StartAttackBeam();
 	void			UpdateAttackBeam();
+	char*			GetReadableName(void) { return "Stalker"; }
 
 	CNPC_Stalker(void);
 

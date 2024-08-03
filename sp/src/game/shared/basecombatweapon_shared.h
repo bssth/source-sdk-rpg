@@ -335,6 +335,7 @@ public:
 	virtual bool			CanBePickedUpByNPCs( void ) { return true;	}
 
 	virtual int				GetSkinOverride() const { return -1; }
+	virtual char 			GetGlyph() { return '\0'; }
 
 public:
 

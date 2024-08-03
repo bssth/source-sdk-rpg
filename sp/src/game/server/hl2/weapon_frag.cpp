@@ -53,6 +53,7 @@ public:
 	bool	Reload( void );
 
 	bool	ShouldDisplayHUDHint() { return true; }
+	char	GetGlyph() { return 'k'; }
 
 private:
 	void	ThrowGrenade( CBasePlayer *pPlayer );

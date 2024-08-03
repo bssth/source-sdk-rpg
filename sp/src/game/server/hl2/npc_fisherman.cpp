@@ -99,6 +99,7 @@ public:
 	bool ShouldLookForBetterWeapon() { return false; }
 	virtual bool	IgnorePlayerPushing( void ) { return true; }
 	void	DeathSound( const CTakeDamageInfo &info );
+	char* GetReadableName(void) { return "Fisherman"; }
 
 	int m_iHatLayer;	// overlay layer for hat, don't save/restore.
 	int m_iHatState;	// hat state, persistant.

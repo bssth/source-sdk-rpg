@@ -64,6 +64,7 @@ public:
 	}
 
 	const WeaponProficiencyInfo_t *GetProficiencyValues();
+	char  GetGlyph() { return ':'; }
 
 protected:
 

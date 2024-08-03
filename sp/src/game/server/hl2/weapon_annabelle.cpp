@@ -58,6 +58,7 @@ public:
 	virtual float GetFireRate( void ) { return 1.5; };
 	virtual float			GetMinRestTime() { return 1.0; }
 	virtual float			GetMaxRestTime() { return 1.5; }
+	char	GetGlyph() { return '('; }
 
 	void Operator_HandleAnimEvent( animevent_t *pEvent, CBaseCombatCharacter *pOperator );
 

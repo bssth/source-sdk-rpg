@@ -79,6 +79,7 @@ public:
 
 	void	MantainBoneFollowerCollisionGroups( int CollisionGroup );
 	virtual void SetPlayerAvoidState( void );
+	char* GetReadableName(void) { return "Dog robot"; }
 
 protected:
 	enum

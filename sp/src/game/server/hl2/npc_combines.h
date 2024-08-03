@@ -43,6 +43,7 @@ public:
 	bool		IsHeavyDamage( const CTakeDamageInfo &info );
 
 	virtual	bool		AllowedToIgnite( void ) { return true; }
+	char* GetReadableName(void) { return "Combine Soldier"; }
 
 private:
 	bool		ShouldHitPlayer( const Vector &targetDir, float targetDist );

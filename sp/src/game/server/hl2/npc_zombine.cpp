@@ -143,6 +143,7 @@ public:
 	void ReleaseGrenade( Vector vPhysgunPos );
 
 	virtual bool HandleInteraction( int interactionType, void *data, CBaseCombatCharacter *sourceEnt );
+	char* GetReadableName(void) { return "Zombine"; }
 
 	enum
 	{

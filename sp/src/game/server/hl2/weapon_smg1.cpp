@@ -40,6 +40,7 @@ public:
 
 	int		GetMinBurst() { return 2; }
 	int		GetMaxBurst() { return 5; }
+	char	GetGlyph() { return 'a'; }
 
 	virtual void Equip( CBaseCombatCharacter *pOwner );
 	bool	Reload( void );

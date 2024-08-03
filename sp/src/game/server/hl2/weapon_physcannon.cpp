@@ -1226,6 +1226,7 @@ public:
 	bool	IsAccountableForObject( CBaseEntity *pObject );
 	
 	bool	ShouldDisplayHUDHint() { return true; }
+	char	GetGlyph() { return 'm'; }
 
 
 

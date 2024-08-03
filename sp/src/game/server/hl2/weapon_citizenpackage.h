@@ -26,6 +26,7 @@ public:
 
 	void ItemPostFrame( void );
 	void Drop( const Vector &vecVelocity );
+	char GetGlyph() { return 'z'; }
 };
 
 #endif // WEAPON_CITIZENPACKAGE_H

@@ -104,6 +104,8 @@ public:
 		return 0.5f; 
 	}
 
+	char GetGlyph() { return 'd'; }
+
 	DECLARE_ACTTABLE();
 
 private:

@@ -80,7 +80,6 @@ public:
 
 	virtual float	GetHeadTurnRate( void );
 
-public:
 	bool			HandleInteraction(int interactionType, void *data, CBaseCombatCharacter* sourceEnt);
 
 	// ------------------------------
@@ -135,6 +134,8 @@ public:
 	Vector			SpotlightCurrentPos(void);
 	void			SpotlightCreate(void);
 	void			SpotlightDestroy(void);
+
+	char* GetReadableName(void) { return "Scanner"; }
 
 protected:
 	void			BecomeClawScanner( void ) { m_bIsClawScanner = true; }

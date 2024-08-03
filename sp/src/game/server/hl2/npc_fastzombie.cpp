@@ -292,25 +292,19 @@ public:
 	virtual const char *GetLegsModel( void );
 	virtual const char *GetTorsoModel( void );
 
-//=============================================================================
-#ifdef HL2_EPISODIC
-
-public:
 	virtual bool	CreateBehaviors( void );
 	virtual void	VPhysicsCollision( int index, gamevcollisionevent_t *pEvent );
 	virtual	void	UpdateEfficiency( bool bInPVS );
 	virtual bool	IsInAVehicle( void );
 	void			InputAttachToVehicle( inputdata_t &inputdata );
 	void			VehicleLeapAttackTouch( CBaseEntity *pOther );
+	char* GetReadableName(void) { return "Fast zombie"; }
 
 private:
 	void			VehicleLeapAttack( void );
 	bool			CanEnterVehicle( CPropJeepEpisodic *pVehicle );
 
 	CAI_PassengerBehaviorZombie		m_PassengerBehavior;
-
-#endif	// HL2_EPISODIC
-//=============================================================================
 
 protected:
 

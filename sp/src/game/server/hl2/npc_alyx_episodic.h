@@ -173,6 +173,7 @@ public:
 
 	void				Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
 	bool				PlayerInSpread( const Vector &sourcePos, const Vector &targetPos, float flSpread, float maxDistOffCenter, bool ignoreHatedPlayers );
+	char* GetReadableName(void) { return "Alyx Vance"; }
 
 private:
 	EHANDLE	m_hEmpTool;

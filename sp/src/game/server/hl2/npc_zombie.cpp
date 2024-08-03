@@ -103,6 +103,7 @@ public:
 
 	int SelectFailSchedule( int failedSchedule, int failedTask, AI_TaskFailureCode_t taskFailCode );
 	int TranslateSchedule( int scheduleType );
+	char* GetReadableName(void) { return "Zombie"; }
 
 #ifndef HL2_EPISODIC
 	void CheckFlinches() {} // Zombie has custom flinch code

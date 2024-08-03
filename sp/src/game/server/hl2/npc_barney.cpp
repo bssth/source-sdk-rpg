@@ -79,6 +79,7 @@ public:
 	void DeathSound( const CTakeDamageInfo &info );
 	void GatherConditions();
 	void UseFunc( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
+	char* GetReadableName(void) { return "Barney Calhoun"; }
 
 	CAI_FuncTankBehavior		m_FuncTankBehavior;
 	COutputEvent				m_OnPlayerUse;

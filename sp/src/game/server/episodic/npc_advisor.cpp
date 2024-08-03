@@ -163,6 +163,7 @@ public:
 	virtual void UpdateOnRemove();
 
 	virtual int DrawDebugTextOverlays();
+	char* GetReadableName(void) { return "Combine Advisor"; }
 
 	//
 	// CAI_BaseNPC:

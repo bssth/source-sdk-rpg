@@ -114,6 +114,7 @@ protected:
 	// Only move and shoot when attacking
 	virtual bool OnBeginMoveAndShoot();
 	virtual void OnEndMoveAndShoot();
+	char* GetReadableName(void) { return "Police"; }
 
 private:
 	bool		PlayerIsCriminal( void );

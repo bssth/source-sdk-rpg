@@ -1305,6 +1305,7 @@ public:
 	//---------------------------------	
 	void	StriderBusterAttached( CBaseEntity *pAttached );
 	void	StriderBusterDetached( CBaseEntity *pAttached );
+	char*	GetReadableName(void) { return "Combine Hunter"; }
 
 private:
 

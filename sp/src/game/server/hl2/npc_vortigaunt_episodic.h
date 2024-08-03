@@ -137,6 +137,7 @@ public:
 
 	// used so a grub can notify me that I stepped on it. Says a line.
 	void	OnSquishedGrub( const CBaseEntity *pGrub );
+	char* GetReadableName(void) { return "Vortigaunt"; }
 
 private:
 

@@ -35,6 +35,7 @@ public:
 	Class_T Classify ( void );
 	void	HandleAnimEvent( animevent_t *pEvent );
 	int		GetSoundInterests ( void );
+	char*	GetReadableName(void) { return "Isaac Kleiner"; }
 };
 
 LINK_ENTITY_TO_CLASS( npc_kleiner, CNPC_Kleiner );

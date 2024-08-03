@@ -37,6 +37,7 @@ public:
 	int		CapabilitiesGet( void ) { return bits_CAP_WEAPON_RANGE_ATTACK1; }
 	int		WeaponRangeAttack1Condition( float flDot, float flDist );
 	int		WeaponRangeAttack2Condition( float flDot, float flDist );
+	char	GetGlyph() { return '%'; }
 
 	virtual const Vector& GetBulletSpread( void );
 

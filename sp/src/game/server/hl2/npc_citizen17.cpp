@@ -82,12 +82,6 @@ ConVar	sk_citizen_heal_toss_player_delay("sk_citizen_heal_toss_player_delay", "2
 #define MEDIC_THROW_SPEED npc_citizen_medic_throw_speed.GetFloat()
 #endif
 
-ConVar player_squad_autosummon_time( "player_squad_autosummon_time", "5" );
-ConVar player_squad_autosummon_move_tolerance( "player_squad_autosummon_move_tolerance", "20" );
-ConVar player_squad_autosummon_player_tolerance( "player_squad_autosummon_player_tolerance", "10" );
-ConVar player_squad_autosummon_time_after_combat( "player_squad_autosummon_time_after_combat", "8" );
-ConVar player_squad_autosummon_debug( "player_squad_autosummon_debug", "0" );
-
 #define ShouldAutosquad() (npc_citizen_auto_player_squad.GetBool())
 
 enum SquadSlot_T
@@ -309,8 +303,6 @@ BEGIN_DATADESC( CNPC_Citizen )
 	DEFINE_FIELD(		m_isBadCitizen,				FIELD_BOOLEAN ),
 	DEFINE_FIELD(		m_isAngryToPlayer,			FIELD_BOOLEAN ),
 	DEFINE_FIELD( 		m_flTimeLastCloseToPlayer,	FIELD_TIME ),
-	DEFINE_EMBEDDED(	m_AutoSummonTimer ),
-	DEFINE_FIELD(		m_vAutoSummonAnchor, FIELD_POSITION_VECTOR ),
 	DEFINE_KEYFIELD(	m_Type, 					FIELD_INTEGER,	"citizentype" ),
 	DEFINE_KEYFIELD(	m_ExpressionType,			FIELD_INTEGER,	"expressiontype" ),
 	DEFINE_FIELD(		m_iHead,					FIELD_INTEGER ),
@@ -2263,125 +2255,6 @@ bool CNPC_Citizen::IsCommandMoving()
 }
 
 //-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
-bool CNPC_Citizen::ShouldAutoSummon()
-{
-	if ( !AI_IsSinglePlayer() || !IsFollowingCommandPoint() || !IsInPlayerSquad() )
-		return false;
-
-	CHL2_Player *pPlayer = (CHL2_Player *)UTIL_GetLocalPlayer();
-	
-	float distMovedSq = ( pPlayer->GetAbsOrigin() - m_vAutoSummonAnchor ).LengthSqr();
-	float moveTolerance = player_squad_autosummon_move_tolerance.GetFloat() * 12;
-	const Vector &vCommandGoal = GetCommandGoal();
-
-	if ( distMovedSq < Square(moveTolerance * 10) && (GetAbsOrigin() - vCommandGoal).LengthSqr() > Square(10*12) && IsCommandMoving() )
-	{
-		m_AutoSummonTimer.Set( player_squad_autosummon_time.GetFloat() );
-		if ( player_squad_autosummon_debug.GetBool() )
-			DevMsg( "Waiting for arrival before initiating autosummon logic\n");
-	}
-	else if ( m_AutoSummonTimer.Expired() )
-	{
-		bool bSetFollow = false;
-		bool bTestEnemies = true;
-		
-		// Auto summon unconditionally if a significant amount of time has passed
-		if ( gpGlobals->curtime - m_AutoSummonTimer.GetNext() > player_squad_autosummon_time.GetFloat() * 2 )
-		{
-			bSetFollow = true;
-			if ( player_squad_autosummon_debug.GetBool() )
-				DevMsg( "Auto summoning squad: long time (%f)\n", ( gpGlobals->curtime - m_AutoSummonTimer.GetNext() ) + player_squad_autosummon_time.GetFloat() );
-		}
-			
-		// Player must move for autosummon
-		if ( distMovedSq > Square(12) )
-		{
-			bool bCommandPointIsVisible = pPlayer->FVisible( vCommandGoal + pPlayer->GetViewOffset() );
-
-			// Auto summon if the player is close by the command point
-			if ( !bSetFollow && bCommandPointIsVisible && distMovedSq > Square(24) )
-			{
-				float closenessTolerance = player_squad_autosummon_player_tolerance.GetFloat() * 12;
-				if ( (pPlayer->GetAbsOrigin() - vCommandGoal).LengthSqr() < Square( closenessTolerance ) &&
-					 ((m_vAutoSummonAnchor - vCommandGoal).LengthSqr() > Square( closenessTolerance )) )
-				{
-					bSetFollow = true;
-					if ( player_squad_autosummon_debug.GetBool() )
-						DevMsg( "Auto summoning squad: player close to command point (%f)\n", (GetAbsOrigin() - vCommandGoal).Length() );
-				}
-			}
-			
-			// Auto summon if moved a moderate distance and can't see command point, or moved a great distance
-			if ( !bSetFollow )
-			{
-				if ( distMovedSq > Square( moveTolerance * 2 ) )
-				{
-					bSetFollow = true;
-					bTestEnemies = ( distMovedSq < Square( moveTolerance * 10 ) );
-					if ( player_squad_autosummon_debug.GetBool() )
-						DevMsg( "Auto summoning squad: player very far from anchor (%f)\n", sqrt(distMovedSq) );
-				}
-				else if ( distMovedSq > Square( moveTolerance ) )
-				{
-					if ( !bCommandPointIsVisible )
-					{
-						bSetFollow = true;
-						if ( player_squad_autosummon_debug.GetBool() )
-							DevMsg( "Auto summoning squad: player far from anchor (%f)\n", sqrt(distMovedSq) );
-					}
-				}
-			}
-		}
-		
-		// Auto summon only if there are no readily apparent enemies
-		if ( bSetFollow && bTestEnemies )
-		{
-			for ( int i = 0; i < g_AI_Manager.NumAIs(); i++ )
-			{
-				CAI_BaseNPC *pNpc = g_AI_Manager.AccessAIs()[i];
-				float timeSinceCombatTolerance = player_squad_autosummon_time_after_combat.GetFloat();
-				
-				if ( pNpc->IsInPlayerSquad() )
-				{
-					if ( gpGlobals->curtime - pNpc->GetLastAttackTime() > timeSinceCombatTolerance || 
-						 gpGlobals->curtime - pNpc->GetLastDamageTime() > timeSinceCombatTolerance )
-						continue;
-				}
-				else if ( pNpc->GetEnemy() )
-				{
-					CBaseEntity *pNpcEnemy = pNpc->GetEnemy();
-					if ( !IsSniper( pNpc ) && ( gpGlobals->curtime - pNpc->GetEnemyLastTimeSeen() ) > timeSinceCombatTolerance )
-						continue;
-
-					if ( pNpcEnemy == pPlayer )
-					{
-						if ( pNpc->CanBeAnEnemyOf( pPlayer ) )
-						{
-							bSetFollow = false;
-							break;
-						}
-					}
-					else if ( pNpcEnemy->IsNPC() && ( pNpcEnemy->MyNPCPointer()->GetSquad() == GetSquad() || pNpcEnemy->Classify() == CLASS_PLAYER_ALLY_VITAL ) )
-					{
-						if ( pNpc->CanBeAnEnemyOf( this ) )
-						{
-							bSetFollow = false;
-							break;
-						}
-					}
-				}
-			}
-			if ( !bSetFollow && player_squad_autosummon_debug.GetBool() )
-				DevMsg( "Auto summon REVOKED: Combat recent \n");
-		}
-		
-		return bSetFollow;
-	}
-	return false;
-}
-
-//-----------------------------------------------------------------------------
 // Is this entity something that the citizen should interact with (return true)
 // or something that he should try to get close to (return false)
 //-----------------------------------------------------------------------------
@@ -2450,9 +2323,6 @@ void CNPC_Citizen::MoveOrder( const Vector &vecDest, CAI_BaseNPC **Allies, int n
 	}
 
 	CHL2_Player *pPlayer = (CHL2_Player *)UTIL_GetLocalPlayer();
-
-	m_AutoSummonTimer.Set( player_squad_autosummon_time.GetFloat() );
-	m_vAutoSummonAnchor = pPlayer->GetAbsOrigin();
 
 	if( m_StandoffBehavior.IsRunning() )
 	{
@@ -3397,6 +3267,9 @@ bool CNPC_Citizen::ShouldHealTarget( CBaseEntity *pTarget, bool bActiveUse )
 //-----------------------------------------------------------------------------
 bool CNPC_Citizen::ShouldHealTossTarget( CBaseEntity *pTarget, bool bActiveUse )
 {
+	if (!pTarget)
+		return false;
+
 	Disposition_t disposition;
 
 	Assert( IsMedic() );

@@ -75,6 +75,7 @@ public:
 	void On( void ) { m_fIsStopped = false; }
 
 	bool IsOn( void ) { return !m_fIsStopped; }
+	char* GetReadableName(void) { return "Rollermine"; }
 
 private:
 	bool	m_fIsStopped;

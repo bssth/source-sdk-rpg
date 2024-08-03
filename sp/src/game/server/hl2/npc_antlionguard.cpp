@@ -286,6 +286,7 @@ public:
 	virtual bool	ShouldProbeCollideAgainstEntity( CBaseEntity *pEntity );
 
 	virtual Activity	NPC_TranslateActivity( Activity baseAct );
+	char* GetReadableName(void) { return "Antlion Guard"; }
 
 #if HL2_EPISODIC
 	//---------------------------------

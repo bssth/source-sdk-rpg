@@ -37,6 +37,7 @@ public:
 	int		GetSoundInterests( void );
 	void	SetupWithoutParent( void );
 	void	PrescheduleThink( void );
+	char* GetReadableName(void) { return "Eli Vance"; }
 };
 
 LINK_ENTITY_TO_CLASS( npc_eli, CNPC_Eli );

@@ -195,6 +195,7 @@ public:
 	void FootscuffSound( bool fRightFoot ) {};
 
 	virtual void StopLoopingSounds( void );
+	char* GetReadableName(void) { return "Poison zombie"; }
 
 protected:
 

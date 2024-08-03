@@ -45,6 +45,7 @@ public:
 
 	// Animation event
 	virtual void Operator_HandleAnimEvent( animevent_t *pEvent, CBaseCombatCharacter *pOperator );
+	char		 GetGlyph() { return 'c'; }
 
 private:
 	// Animation event handlers

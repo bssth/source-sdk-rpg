@@ -75,6 +75,7 @@ public:
 
 	bool IsJumpLegal( const Vector &startPos, const Vector &apex, const Vector &endPos ) const;
 	int SelectFailSchedule( int failedSchedule, int failedTask, AI_TaskFailureCode_t taskFailCode );
+	char* GetReadableName(void) { return "Father Grigori"; }
 
 	DECLARE_DATADESC();
 

@@ -51,6 +51,7 @@ public:
 	void	SeekThink( void );
 	void	DumbFire( void );
 	void	SetGracePeriod( float flGracePeriod );
+	char	GetGlyph() { return 'i'; }
 
 	int		OnTakeDamage_Alive( const CTakeDamageInfo &info );
 	void	Event_Killed( const CTakeDamageInfo &info );

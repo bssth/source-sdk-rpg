@@ -92,6 +92,7 @@ public:
 	Class_T Classify( void )	{	return CLASS_ANTLION;	}	//FIXME: No classification for various wildlife?
 
 	bool	FVisible( CBaseEntity *pEntity, int traceMask = MASK_BLOCKLOS, CBaseEntity **ppBlocker = NULL );
+	char*	GetReadableName(void) { return "Ichthyosaur"; }
 
 private:
 

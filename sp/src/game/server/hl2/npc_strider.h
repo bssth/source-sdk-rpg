@@ -100,6 +100,7 @@ public:
 	void			OnRestore();
 
 	Class_T			Classify();
+	char* GetReadableName(void) { return "Strider"; }
 	bool			ShouldAttractAutoAim( CBaseEntity *pAimingEnt );
 
 	virtual float	GetAutoAimRadius() { return 80.0f; }

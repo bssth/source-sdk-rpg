@@ -41,6 +41,7 @@ public:
 	int		GetSoundInterests ( void );
 	bool	CreateBehaviors( void );
 	int		SelectSchedule( void );
+	char* GetReadableName(void) { return "Unknown"; }
 
 private:
 	CAI_FollowBehavior	m_FollowBehavior;

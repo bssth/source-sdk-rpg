@@ -174,6 +174,7 @@ public:
 	bool CanBecomeRagdoll();
 
 	virtual void	NotifyDeadFriend( CBaseEntity *pFriend );
+	char* GetReadableName(void) { return "Antlion"; }
 
 private:
 

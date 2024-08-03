@@ -1096,7 +1096,6 @@ public:
 	virtual bool IsPlayerAlly( CBasePlayer *pPlayer = NULL );
 	virtual bool IsMedic()												{ return false; }
 	virtual bool IsCommandMoving()										{ return false; }
-	virtual bool ShouldAutoSummon()										{ return false; }
 	virtual void SetCommandGoal( const Vector &vecGoal );
 	virtual void ClearCommandGoal();
 	virtual void OnTargetOrder()										{}

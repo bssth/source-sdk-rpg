@@ -34,6 +34,7 @@ public:
 	void	HandleAnimEvent( animevent_t *pEvent );
 	int		GetSoundInterests ( void );
 	bool	UseSemaphore( void );
+	char* GetReadableName(void) { return "Wallace Breen"; }
 };
 
 LINK_ENTITY_TO_CLASS( npc_breen, CNPC_Breen );

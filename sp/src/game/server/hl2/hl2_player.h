@@ -317,7 +317,6 @@ protected:	// Jeep: Portal_Player needs access to this variable to overload Play
 private:
 
 	CAI_Squad *			m_pPlayerAISquad;
-	CSimpleSimTimer		m_CommanderUpdateTimer;
 	float				m_RealTimeLastSquadCommand;
 	CommanderCommand_t	m_QueuedCommand;
 

@@ -87,6 +87,8 @@ public:
 	// The tongue's vphysics updated
 	void OnTongueTipUpdated();
 
+	char* GetReadableName(void) { return "Barnacle"; }
+
 private:
 	void SetAltitude( float flAltitude );
 	void SpawnDeathGibs( void );

@@ -65,6 +65,7 @@ public:
 	virtual float			GetMaxRestTime();
 
 	virtual float			GetFireRate( void );
+	char					GetGlyph() { return 'b'; }
 
 	bool StartReload( void );
 	bool Reload( void );

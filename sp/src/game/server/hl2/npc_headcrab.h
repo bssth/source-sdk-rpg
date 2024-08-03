@@ -90,6 +90,7 @@ public:
 	virtual void PlayerHasIlluminatedNPC( CBasePlayer *pPlayer, float flDot );
 
 	void DropFromCeiling( void );
+	char* GetReadableName(void) { return "Headcrab"; }
 
 	DEFINE_CUSTOM_AI;
 	DECLARE_DATADESC();

@@ -171,7 +171,6 @@ public:
 	bool			WasInPlayerSquad();
 	bool			HaveCommandGoal() const;
 	bool			IsCommandMoving();
-	bool			ShouldAutoSummon();
 	bool 			IsValidCommandTarget( CBaseEntity *pTarget );
 	bool 			NearCommandGoal();
 	bool 			VeryFarFromCommandGoal();
@@ -247,6 +246,7 @@ public:
 	bool			UseSemaphore( void );
 
 	virtual void	OnChangeRunningBehavior( CAI_BehaviorBase *pOldBehavior,  CAI_BehaviorBase *pNewBehavior );
+	char* GetReadableName(void) { return "Citizen"; }
 
 private:
 	//-----------------------------------------------------
@@ -303,9 +303,6 @@ private:
 	bool			m_isAngryToPlayer;
 	float			m_flTimeLastCloseToPlayer;
 	string_t		m_iszDenyCommandConcept;
-
-	CSimpleSimTimer	m_AutoSummonTimer;
-	Vector			m_vAutoSummonAnchor;
 
 	CitizenType_t	m_Type;
 	CitizenExpressionTypes_t	m_ExpressionType;

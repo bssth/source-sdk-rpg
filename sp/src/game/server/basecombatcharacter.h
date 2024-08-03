@@ -328,6 +328,7 @@ public:
 	virtual int				IRelationPriority( CBaseEntity *pTarget );
 
 	virtual void			SetLightingOriginRelative( CBaseEntity *pLightingOrigin );
+	virtual char* GetReadableName(void) { return "NPC"; }
 
 protected:
 	Relationship_t			*FindEntityRelationship( CBaseEntity *pTarget );

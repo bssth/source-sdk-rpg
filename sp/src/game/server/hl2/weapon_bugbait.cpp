@@ -56,6 +56,7 @@ public:
 	void	SetSporeEmitterState( bool state = true );
 
 	bool	ShouldDisplayHUDHint() { return true; }
+	char	GetGlyph() { return '`'; }
 
 	DECLARE_DATADESC();
 

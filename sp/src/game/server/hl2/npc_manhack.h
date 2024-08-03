@@ -170,6 +170,8 @@ public:
 		m_iHealth = 0;
 	}
 
+	char* GetReadableName(void) { return "Manhack"; }
+
 
 	DEFINE_CUSTOM_AI;
 

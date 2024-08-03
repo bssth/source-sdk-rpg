@@ -49,6 +49,7 @@ public:
 	float		GetDamageForActivity( Activity hitActivity );
 
 	bool		CanBePickedUpByNPCs( void ) { return false;	}		
+	char		GetGlyph() { return 'n'; }
 
 private:
 

@@ -37,6 +37,7 @@ public:
 	Class_T Classify ( void );
 	void	HandleAnimEvent( animevent_t *pEvent );
 	int		GetSoundInterests ( void );
+	char*	GetReadableName(void) { return "Arne Magnusson"; }
 };
 
 LINK_ENTITY_TO_CLASS( npc_magnusson, CNPC_Magnusson );

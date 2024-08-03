@@ -200,6 +200,7 @@ public:
 	int GetBodygroup( int iGroup );
 
 	const char *GetBodygroupName( int iGroup );
+	virtual char* GetReadableName(void) { return ""; }
 	int FindBodygroupByName( const char *name );
 	int GetBodygroupCount( int iGroup );
 	int GetNumBodyGroups( void );

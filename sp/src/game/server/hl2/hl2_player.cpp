@@ -84,7 +84,6 @@ ConVar hl2_sprintspeed( "hl2_sprintspeed", "320" );
 #define	HL2_NORM_SPEED hl2_normspeed.GetFloat()
 #define	HL2_SPRINT_SPEED hl2_sprintspeed.GetFloat()
 
-ConVar player_squad_transient_commands( "player_squad_transient_commands", "1", FCVAR_REPLICATED );
 ConVar player_squad_double_tap_time( "player_squad_double_tap_time", "0.25" );
 
 ConVar sv_infinite_aux_power( "sv_infinite_aux_power", "0", FCVAR_CHEAT );
@@ -303,7 +302,6 @@ BEGIN_DATADESC( CHL2_Player )
 	DEFINE_FIELD( m_nNumMissPositions, FIELD_INTEGER ),
 
 	//					m_pPlayerAISquad
-	DEFINE_EMBEDDED( m_CommanderUpdateTimer ),
 	//					m_RealTimeLastSquadCommand
 	DEFINE_FIELD( m_QueuedCommand, FIELD_INTEGER ),
 
@@ -1645,27 +1643,6 @@ void CHL2_Player::CommanderUpdate()
 		m_HL2Local.m_iSquadMemberCount = GetNumSquadCommandables();
 		m_HL2Local.m_iSquadMedicCount = GetNumSquadCommandableMedics();
 		m_HL2Local.m_fSquadInFollowMode = bFollowMode;
-
-		// debugging code for displaying extra squad indicators
-		/*
-		char *pszMoving = "";
-		AISquadIter_t iter;
-		for ( CAI_BaseNPC *pAllyNpc = m_pPlayerAISquad->GetFirstMember(&iter); pAllyNpc; pAllyNpc = m_pPlayerAISquad->GetNextMember(&iter) )
-		{
-			if ( pAllyNpc->IsCommandMoving() )
-			{
-				pszMoving = "<-";
-				break;
-			}
-		}
-
-		NDebugOverlay::ScreenText(
-			0.932, 0.919, 
-			CFmtStr( "%d|%c%s", GetNumSquadCommandables(), ( bFollowMode ) ? 'F' : 'S', pszMoving ),
-			255, 128, 0, 128,
-			0 );
-		*/
-
 	}
 	else
 	{
@@ -1678,13 +1655,6 @@ void CHL2_Player::CommanderUpdate()
 	{
 		CommanderExecute( m_QueuedCommand );
 		m_QueuedCommand = CC_NONE;
-	}
-	else if ( !bFollowMode && pCommandRepresentative && m_CommanderUpdateTimer.Expired() && player_squad_transient_commands.GetBool() )
-	{
-		m_CommanderUpdateTimer.Set(2.5);
-
-		if ( pCommandRepresentative->ShouldAutoSummon() )
-			CommanderExecute( CC_FOLLOW );
 	}
 }
 
@@ -1808,7 +1778,7 @@ void CHL2_Player::CommanderMode()
 	}
 	else
 	{
-		m_QueuedCommand = (player_squad_transient_commands.GetBool()) ? CC_SEND : CC_TOGGLE;
+		m_QueuedCommand = CC_SEND;
 	}
 }
 
@@ -2997,17 +2967,22 @@ void CHL2_Player::UpdateWeaponPosture( void )
 
 		if (aimTarget)
 		{
-			if (aimTarget->IsNPC())
+			if (aimTarget->IsNPC() && aimTarget->Classify() != CLASS_BULLSEYE)
 			{
 				CAI_BaseNPC* pBaseNPC = dynamic_cast<CAI_BaseNPC*>(aimTarget);
 				if (pBaseNPC != NULL)
 				{
-					DevMsg("[DEBUG] Entity name: %s \n", pBaseNPC->GetDebugName());
+					float flPlayerHealthPerc = (float)pBaseNPC->GetHealth() / (float)pBaseNPC->GetMaxHealth();
 
 					CSingleUserRecipientFilter user(this);
 					UserMessageBegin(user, "ShowObjectInfo");
 					WRITE_BOOL(true);
-					WRITE_STRING(pBaseNPC->GetDebugName());
+					WRITE_STRING(pBaseNPC->GetReadableName());
+					WRITE_BOOL(pBaseNPC->IsMedic());
+					WRITE_CHAR(pBaseNPC->GetActiveWeapon() ? pBaseNPC->GetActiveWeapon()->GetGlyph() : '\0');
+					WRITE_BOOL(pBaseNPC->IRelationType(this) == D_HT);
+					WRITE_BOOL(flPlayerHealthPerc < 0.5f);
+					WRITE_BOOL(pBaseNPC->IsMoving() || !!pBaseNPC->GetEnemy());
 					MessageEnd();
 				}
 			}

@@ -36,6 +36,7 @@ public:
 
 	void	PrimaryAttack( void );
 	void	Operator_HandleAnimEvent( animevent_t *pEvent, CBaseCombatCharacter *pOperator );
+	char	GetGlyph();
 
 	float	WeaponAutoAimScale()	{ return 0.6f; }
 
@@ -173,4 +174,9 @@ void CWeapon357::PrimaryAttack( void )
 		// HEV suit - indicate out of ammo condition
 		pPlayer->SetSuitUpdate( "!HEV_AMO0", FALSE, 0 ); 
 	}
+}
+
+char CWeapon357::GetGlyph()
+{
+	return '$';
 }
