@@ -687,6 +687,10 @@ void CNPC_MetroPolice::Spawn( void )
 			GetActiveWeapon()->AddEffects( EF_NODRAW );
 		}
 	}
+	else
+	{
+		m_fWeaponDrawn = true;
+	}
 
 
 	m_TimeYieldShootSlot.Set( 2, 6 );
