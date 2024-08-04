@@ -1418,20 +1418,6 @@ void CPropJeep::CreateDangerSounds( void )
 		vecSpot = vecStart + vecDir * (speed * 1.1f);
 		CSoundEnt::InsertSound( SOUND_DANGER | SOUND_CONTEXT_PLAYER_VEHICLE, vecSpot, radius, soundDuration, this, 0 );
 		CSoundEnt::InsertSound( SOUND_PHYSICS_DANGER | SOUND_CONTEXT_PLAYER_VEHICLE, vecSpot, radius, soundDuration, this, 1 );
-		//NDebugOverlay::Box(vecSpot, Vector(-radius,-radius,-radius),Vector(radius,radius,radius), 255, 0, 255, 0, soundDuration);
-
-#if 0
-		trace_t	tr;
-		// put sounds a bit to left and right but slightly closer to Jeep to make a "cone" of sound 
-		// in front of it
-		vecSpot = vecStart + vecDir * (speed * 0.75f) - vecRight * speed * 0.5;
-		UTIL_TraceLine( vecStart, vecSpot, MASK_SHOT, this, COLLISION_GROUP_NONE, &tr );
-		CSoundEnt::InsertSound( SOUND_DANGER, vecSpot, 400, soundDuration, this, 1 );
-
-		vecSpot = vecStart + vecDir * (speed * 0.75f) + vecRight * speed * 0.5;
-		UTIL_TraceLine( vecStart, vecSpot, MASK_SHOT, this, COLLISION_GROUP_NONE, &tr );
-		CSoundEnt::InsertSound( SOUND_DANGER, vecSpot, 400, soundDuration, this, 2);
-#endif
 	}
 
 	// Make engine sounds even when we're not going fast.

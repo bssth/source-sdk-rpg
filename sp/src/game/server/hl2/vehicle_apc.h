@@ -55,10 +55,9 @@ public:
 	virtual void	CreateServerVehicle( void );
 	virtual void	DriveVehicle( float flFrameTime, CUserCmd *ucmd, int iButtonsDown, int iButtonsReleased );
 	virtual void	ProcessMovement( CBasePlayer *pPlayer, CMoveData *pMoveData );
-	virtual Class_T	ClassifyPassenger( CBaseCombatCharacter *pPassenger, Class_T defaultClassification );
 	virtual int		OnTakeDamage( const CTakeDamageInfo &info );
 	virtual float	PassengerDamageModifier( const CTakeDamageInfo &info );
-	virtual void	EnterVehicle(CBaseCombatCharacter* pPassenger);
+	virtual bool	CanExitVehicle(CBaseEntity* pEntity);
 
 	// Weaponry
 	const Vector	&GetPrimaryGunOrigin( void );
@@ -74,7 +73,6 @@ public:
 	void			DoImpactEffect( trace_t &tr, int nDamageType );
 	void			DoMuzzleFlash( void );
 
-	virtual Vector	EyePosition( );				// position of eyes
 	Vector			BodyTarget( const Vector &posSrc, bool bNoisy );
 
 	

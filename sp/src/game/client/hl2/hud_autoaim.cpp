@@ -23,8 +23,6 @@
 
 ConVar hud_draw_active_reticle("hud_draw_active_reticle", "0" );
 ConVar hud_draw_fixed_reticle("hud_draw_fixed_reticle", "0", FCVAR_ARCHIVE );
-ConVar hud_autoaim_scale_icon( "hud_autoaim_scale_icon", "0" );
-ConVar hud_autoaim_method( "hud_autoaim_method", "1" );
 
 ConVar hud_reticle_scale("hud_reticle_scale", "1.0" );
 ConVar hud_reticle_minalpha( "hud_reticle_minalpha", "125" );
@@ -210,176 +208,129 @@ void CHUDAutoAim::OnThink()
 	}
 
 	m_alphaFixed = Approach( flFixedAlphaGoal, m_alphaFixed, (hud_alpha_speed.GetFloat() * gpGlobals->frametime) );
-	
 
-	switch( hud_autoaim_method.GetInt() )
+	if (pLocalPlayer->m_HL2Local.m_hAutoAimTarget.Get() && pLocalPlayer->m_HL2Local.m_bStickyAutoAim)
 	{
-	case AUTOAIM_METHOD_RETICLE:
+		if (!pLocalPlayer->IsInAVehicle())
 		{
-			if( pLocalPlayer->m_HL2Local.m_hAutoAimTarget.Get() && pLocalPlayer->m_HL2Local.m_bStickyAutoAim )
-			{
-				if( !pLocalPlayer->IsInAVehicle() )
-				{
-					Vector vecLook;
-					pLocalPlayer->EyeVectors( &vecLook, NULL, NULL );
+			Vector vecLook;
+			pLocalPlayer->EyeVectors(&vecLook, NULL, NULL);
 
-					Vector vecMove = pLocalPlayer->GetAbsVelocity();
-					float flSpeed = VectorNormalize( vecMove );
-					float flDot = DotProduct( vecLook, vecMove );
+			Vector vecMove = pLocalPlayer->GetAbsVelocity();
+			float flSpeed = VectorNormalize(vecMove);
+			float flDot = DotProduct(vecLook, vecMove);
 
-					if( flSpeed >= 100 && fabs(flDot) <= 0.707f )
-					{
-						QAngle viewangles;
-						QAngle targetangles;
-						QAngle delta;
-
-						engine->GetViewAngles( viewangles );
-
-						Vector vecDir = pLocalPlayer->m_HL2Local.m_vecAutoAimPoint - pLocalPlayer->EyePosition();
-						VectorNormalize(vecDir);
-						VectorAngles( vecDir, targetangles );
-
-						float magnetism = hud_magnetism.GetFloat();
-
-						delta[0] = ApproachAngle( targetangles[0], viewangles[0], magnetism );
-						delta[1] = ApproachAngle( targetangles[1], viewangles[1], magnetism );
-						delta[2] = targetangles[2];
-
-						//viewangles[PITCH] = clamp( viewangles[ PITCH ], -cl_pitchup.GetFloat(), cl_pitchdown.GetFloat() );
-						engine->SetViewAngles( delta );
-					}
-				}
-			}
-
-#if 0
-			bool doScaling = hud_autoaim_scale_icon.GetBool();
-
-			// These are the X & Y coords of where the crosshair should be. Default to 
-			// returning to the center of the screen if there is no target.
-			int goalx = ScreenWidth() / 2;
-			int goaly = ScreenHeight() / 2;
-			int goalalpha = 0;
-			float goalscale = AUTOAIM_MIN_SCALE;
-			float speed = AUTOAIM_OFFTARGET_CROSSHAIR_SPEED;
-
-			if( pTarget )
-			{
-				// Get the autoaim crosshair onto the target.
-				Vector screen;
-
-				// Center the crosshair on the entity.
-				if( doScaling )
-				{
-					// Put the crosshair over the center of the target.
-					ScreenTransform( pTarget->WorldSpaceCenter(), screen );
-				}
-				else
-				{
-					// Put the crosshair exactly where the player is aiming.
-					ScreenTransform( pLocalPlayer->m_HL2Local.m_vecAutoAimPoint, screen );
-				}
-
-				// Set Goal Position and speed.
-				goalx += 0.5f * screen[0] * ScreenWidth() + 0.5f;
-				goaly -= 0.5f * screen[1] * ScreenHeight() + 0.5f;
-				speed = AUTOAIM_ONTARGET_CROSSHAIR_SPEED;
-
-				goalalpha = AUTOAIM_MAX_ALPHA;
-
-				if( doScaling )
-				{
-					// Scale the crosshair to envelope the entity's bounds on screen.
-					Vector vecMins, vecMaxs;
-					Vector vecScreenMins, vecScreenMaxs;
-
-					// Get mins and maxs in world space
-					vecMins = pTarget->GetAbsOrigin() + pTarget->WorldAlignMins();
-					vecMaxs = pTarget->GetAbsOrigin() + pTarget->WorldAlignMaxs();
-
-					// Project them to screen
-					ScreenTransform( vecMins, vecScreenMins );
-					ScreenTransform( vecMaxs, vecScreenMaxs );
-
-					vecScreenMins.y = (ScreenWidth()/2) - 0.5f * vecScreenMins.y * ScreenWidth() + 0.5f;
-					vecScreenMaxs.y = (ScreenWidth()/2) - 0.5f * vecScreenMaxs.y * ScreenWidth() + 0.5f;
-
-					float screenSize = vecScreenMins.y - vecScreenMaxs.y;
-
-					// Set goal scale
-					goalscale = screenSize / 64.0f; // 64 is the width of the crosshair art.
-				}
-				else
-				{
-					goalscale = 1.0f;
-				}
-			}
-
-			// Now approach the goal, alpha, and scale
-			Vector vecGoal( goalx, goaly, 0 );
-			Vector vecDir = vecGoal - m_vecPos;
-			float flDistRemaining = VectorNormalize( vecDir );
-			m_vecPos += vecDir * min(flDistRemaining, (speed * gpGlobals->frametime) );
-
-			// Lerp and Clamp scale
-			float scaleDelta = fabs( goalscale - m_scale );
-			float scaleMove = MIN( AUTOAIM_SCALE_SPEED * gpGlobals->frametime, scaleDelta );
-			if( m_scale < goalscale )
-			{
-				m_scale += scaleMove;
-			}
-			else if( m_scale > goalscale )
-			{
-				m_scale -= scaleMove;
-			}
-			if( m_scale > AUTOAIM_MAX_SCALE )
-			{
-				m_scale = AUTOAIM_MAX_SCALE;
-			}
-			else if( m_scale < AUTOAIM_MIN_SCALE )
-			{
-				m_scale = AUTOAIM_MIN_SCALE;
-			}
-
-			if( goalalpha > m_alpha )
-			{
-				m_alpha += AUTOAIM_ALPHA_UP_SPEED * gpGlobals->frametime;
-			}
-			else if( goalalpha < m_alpha )
-			{
-				m_alpha -= AUTOAIM_ALPHA_DOWN_SPEED * gpGlobals->frametime;
-			}
-
-			// Clamp alpha
-			if( m_alpha < 0 )
-			{
-				m_alpha = 0;
-			}
-			else if( m_alpha > AUTOAIM_MAX_ALPHA )
-			{
-				m_alpha = AUTOAIM_MAX_ALPHA;
-			}
-#endif
-		}
-		break;
-
-	case AUTOAIM_METHOD_DRIFT:
-		{
-			if( pLocalPlayer->m_HL2Local.m_hAutoAimTarget.Get() )
+			if (flSpeed >= 100 && fabs(flDot) <= 0.707f)
 			{
 				QAngle viewangles;
+				QAngle targetangles;
+				QAngle delta;
 
-				engine->GetViewAngles( viewangles );
-				
+				engine->GetViewAngles(viewangles);
+
 				Vector vecDir = pLocalPlayer->m_HL2Local.m_vecAutoAimPoint - pLocalPlayer->EyePosition();
 				VectorNormalize(vecDir);
+				VectorAngles(vecDir, targetangles);
 
-				VectorAngles( vecDir, viewangles );
+				float magnetism = hud_magnetism.GetFloat();
+
+				delta[0] = ApproachAngle(targetangles[0], viewangles[0], magnetism);
+				delta[1] = ApproachAngle(targetangles[1], viewangles[1], magnetism);
+				delta[2] = targetangles[2];
 
 				//viewangles[PITCH] = clamp( viewangles[ PITCH ], -cl_pitchup.GetFloat(), cl_pitchdown.GetFloat() );
-				engine->SetViewAngles( viewangles );
+				engine->SetViewAngles(delta);
 			}
 		}
-		break;
+	}
+
+	// These are the X & Y coords of where the crosshair should be. Default to 
+	// returning to the center of the screen if there is no target.
+	int goalx = ScreenWidth() / 2;
+	int goaly = ScreenHeight() / 2;
+	int goalalpha = 0;
+	float goalscale = AUTOAIM_MIN_SCALE;
+	float speed = AUTOAIM_OFFTARGET_CROSSHAIR_SPEED;
+
+	if (pTarget)
+	{
+		// Get the autoaim crosshair onto the target.
+		Vector screen;
+
+		ScreenTransform(pTarget->WorldSpaceCenter(), screen);
+
+		// Set Goal Position and speed.
+		goalx += 0.5f * screen[0] * ScreenWidth() + 0.5f;
+		goaly -= 0.5f * screen[1] * ScreenHeight() + 0.5f;
+		speed = AUTOAIM_ONTARGET_CROSSHAIR_SPEED;
+
+		goalalpha = AUTOAIM_MAX_ALPHA;
+
+		// Scale the crosshair to envelope the entity's bounds on screen.
+		Vector vecMins, vecMaxs;
+		Vector vecScreenMins, vecScreenMaxs;
+
+		// Get mins and maxs in world space
+		vecMins = pTarget->GetAbsOrigin() + pTarget->WorldAlignMins();
+		vecMaxs = pTarget->GetAbsOrigin() + pTarget->WorldAlignMaxs();
+
+		// Project them to screen
+		ScreenTransform(vecMins, vecScreenMins);
+		ScreenTransform(vecMaxs, vecScreenMaxs);
+
+		vecScreenMins.y = (ScreenWidth() / 2) - 0.5f * vecScreenMins.y * ScreenWidth() + 0.5f;
+		vecScreenMaxs.y = (ScreenWidth() / 2) - 0.5f * vecScreenMaxs.y * ScreenWidth() + 0.5f;
+
+		float screenSize = vecScreenMins.y - vecScreenMaxs.y;
+
+		// Set goal scale
+		goalscale = screenSize / 64.0f; // 64 is the width of the crosshair art.
+		// goalscale = 1.0f;
+	}
+
+	// Now approach the goal, alpha, and scale
+	Vector vecGoal(goalx, goaly, 0);
+	Vector vecDir = vecGoal - m_vecPos;
+	float flDistRemaining = VectorNormalize(vecDir);
+	m_vecPos += vecDir * min(flDistRemaining, (speed * gpGlobals->frametime));
+
+	// Lerp and Clamp scale
+	float scaleDelta = fabs(goalscale - m_scale);
+	float scaleMove = MIN(AUTOAIM_SCALE_SPEED * gpGlobals->frametime, scaleDelta);
+	if (m_scale < goalscale)
+	{
+		m_scale += scaleMove;
+	}
+	else if (m_scale > goalscale)
+	{
+		m_scale -= scaleMove;
+	}
+	if (m_scale > AUTOAIM_MAX_SCALE)
+	{
+		m_scale = AUTOAIM_MAX_SCALE;
+	}
+	else if (m_scale < AUTOAIM_MIN_SCALE)
+	{
+		m_scale = AUTOAIM_MIN_SCALE;
+	}
+
+	if (goalalpha > m_alpha)
+	{
+		m_alpha += AUTOAIM_ALPHA_UP_SPEED * gpGlobals->frametime;
+	}
+	else if (goalalpha < m_alpha)
+	{
+		m_alpha -= AUTOAIM_ALPHA_DOWN_SPEED * gpGlobals->frametime;
+	}
+
+	// Clamp alpha
+	if (m_alpha < 0)
+	{
+		m_alpha = 0;
+	}
+	else if (m_alpha > AUTOAIM_MAX_ALPHA)
+	{
+		m_alpha = AUTOAIM_MAX_ALPHA;
 	}
 }
 

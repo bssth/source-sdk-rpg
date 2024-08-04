@@ -208,6 +208,16 @@ void CPropAPC::Activate()
 	GetAttachment( m_nMachineGunMuzzleAttachment, vecWorldBarrelPos );
 	GetAttachment( nMachineGunRefAttachment, matRefToWorld );
 	VectorITransform( vecWorldBarrelPos, matRefToWorld, m_vecBarrelPos );
+
+	CBaseServerVehicle* pServerVehicle = dynamic_cast<CBaseServerVehicle*>(GetServerVehicle());
+	if (pServerVehicle)
+	{
+		if (pServerVehicle->GetPassenger())
+		{
+			// If a jeep comes back from a save game with a driver, make sure the engine rumble starts up.
+			pServerVehicle->StartEngineRumble();
+		}
+	}
 }
 
 
@@ -235,17 +245,6 @@ void CPropAPC::CreateServerVehicle( void )
 	m_pServerVehicle->SetVehicle( this );
 }
 
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *pMoveData - 
-//-----------------------------------------------------------------------------
-Class_T	CPropAPC::ClassifyPassenger( CBaseCombatCharacter *pPassenger, Class_T defaultClassification )
-{ 
-	return CLASS_COMBINE;	
-}
-
-
 //-----------------------------------------------------------------------------
 // Purpose: Damage events as modified for the passenger of the APC, not the APC itself
 //-----------------------------------------------------------------------------
@@ -262,17 +261,6 @@ float CPropAPC::PassengerDamageModifier( const CTakeDamageInfo &info )
 	return 1.0; 
 }
 
-
-//-----------------------------------------------------------------------------
-// position of eyes
-//-----------------------------------------------------------------------------
-Vector CPropAPC::EyePosition( )
-{
-	Vector vecEyePosition;
-	CollisionProp()->NormalizedToWorldSpace( Vector( 0.5, 0.5, 1.0 ), &vecEyePosition );
-	return vecEyePosition;
-}
-
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 Vector CPropAPC::BodyTarget( const Vector &posSrc, bool bNoisy ) 
@@ -283,11 +271,6 @@ Vector CPropAPC::BodyTarget( const Vector &posSrc, bool bNoisy )
 	}
 
 	return BaseClass::BodyTarget( posSrc, bNoisy );
-}
-
-void CPropAPC::EnterVehicle(CBaseCombatCharacter* pPassenger)
-{
-	BaseClass::EnterVehicle(pPassenger);
 }
 	
 //-----------------------------------------------------------------------------
@@ -555,23 +538,6 @@ int CPropAPC::OnTakeDamage( const CTakeDamageInfo &info )
 	{
 		int nPrevHealth = GetHealth();
 
-		m_iHealth -= dmgInfo.GetDamage();
-		if ( m_iHealth <= 0 )
-		{
-#ifdef MAPBASE_VSCRIPT
-			// False = Cheat death
-			if (ScriptDeathHook( const_cast<CTakeDamageInfo*>(&info) ) != false)
-#endif
-			{
-				m_iHealth = 0;
-				Event_Killed( dmgInfo );
-				return 0;
-			}
-		}
-
-		// Chain
-//		BaseClass::OnTakeDamage( dmgInfo );
-
 		// Spawn damage effects
 		if ( nPrevHealth != GetHealth() )
 		{
@@ -729,12 +695,10 @@ void CPropAPC::DriveVehicle( float flFrameTime, CUserCmd *ucmd, int iButtonsDown
 void CPropAPC::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value )
 {
 	BaseClass::Use( pActivator, pCaller, useType, value );
-#ifndef EZ // BREADMAN ^ commented this out
-	if ( pActivator->IsPlayer() )
+	if (m_bLocked)
 	{
 		 EmitSound ( "combine.door_lock" );
 	}
-#endif
 }
 
 
@@ -1041,6 +1005,11 @@ void CPropAPC::OnRestore( void )
 		// Restore the passenger information we're holding on to
 		pServerVehicle->RestorePassengerInfo();
 	}
+}
+
+bool CPropAPC::CanExitVehicle(CBaseEntity* pEntity)
+{
+	return (!m_bEnterAnimOn && !m_bExitAnimOn && (m_nSpeed <= m_flMinimumSpeedToEnterExit));
 }
 
 //========================================================================================================================================

@@ -187,7 +187,6 @@ void CBaseGrenade::Explode( trace_t *pTrace, int bitsDamageType )
 	AddEffects( EF_NODRAW );
 	SetAbsVelocity( vec3_origin );
 
-#if HL2_EPISODIC
 	// Because the grenade is zipped out of the world instantly, the EXPLOSION sound that it makes for
 	// the AI is also immediately destroyed. For this reason, we now make the grenade entity inert and
 	// throw it away in 1/10th of a second instead of right away. Removing the grenade instantly causes
@@ -195,9 +194,6 @@ void CBaseGrenade::Explode( trace_t *pTrace, int bitsDamageType )
 	// hear explosion sounds when the grenade is removed and the SoundEnt thinks (and removes the sound)
 	// before the env_microphone thinks and hears the sound.
 	SetNextThink( gpGlobals->curtime + 0.1 );
-#else
-	SetNextThink( gpGlobals->curtime );
-#endif//HL2_EPISODIC
 
 #if defined( HL2_DLL )
 	CBasePlayer *pPlayer = ToBasePlayer( m_hThrower.Get() );

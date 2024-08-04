@@ -133,9 +133,6 @@ public:
 			{
 				CIKTarget &target = m_pIk->m_target[i];
 				target.SetPos( m_vecIKTarget[i] );
-#if 0
-				debugoverlay->AddBoxOverlay( m_vecIKTarget[i], Vector( -2, -2, -2 ), Vector( 2, 2, 2), QAngle( 0, 0, 0 ), (int)255*m_pIk->m_target[i].est.latched, 0, 0, 0, 0 );
-#endif
 			}
 		}
 	}
@@ -704,6 +701,7 @@ void C_Strider::ClientThink()
 
 	ComputeEntitySpaceHitboxSurroundingBox( &m_vecRenderMins, &m_vecRenderMaxs );
 	// UNDONE: Disabled this until we can get closer to a final map and tune
+	// FIXME: maybe we should enable
 #if 0
 	// Cut ropes.
 	if ( gpGlobals->curtime >= m_flNextRopeCutTime )

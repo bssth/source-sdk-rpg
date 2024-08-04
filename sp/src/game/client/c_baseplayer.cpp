@@ -2314,13 +2314,6 @@ void C_BasePlayer::SetSuitUpdate(const char *name, int fgroup, int iNoRepeat)
 //-----------------------------------------------------------------------------
 void C_BasePlayer::ResetAutoaim( void )
 {
-#if 0
-	if (m_vecAutoAim.x != 0 || m_vecAutoAim.y != 0)
-	{
-		m_vecAutoAim = QAngle( 0, 0, 0 );
-		engine->CrosshairAngle( edict(), 0, 0 );
-	}
-#endif
 	m_fOnTarget = false;
 }
 
@@ -2585,39 +2578,6 @@ void C_BasePlayer::LeaveVehicle( void )
 {
 	if ( NULL == m_hVehicle.Get() )
 		return;
-
-// Let server do this for now
-#if 0
-	IClientVehicle *pVehicle = GetVehicle();
-	Assert( pVehicle );
-
-	int nRole = pVehicle->GetPassengerRole( this );
-	Assert( nRole != VEHICLE_ROLE_NONE );
-
-	SetParent( NULL );
-
-	// Find the first non-blocked exit point:
-	Vector vNewPos = GetAbsOrigin();
-	QAngle qAngles = GetAbsAngles();
-	pVehicle->GetPassengerExitPoint( nRole, &vNewPos, &qAngles );
-	OnVehicleEnd( vNewPos );
-	SetAbsOrigin( vNewPos );
-	SetAbsAngles( qAngles );
-
-	m_Local.m_iHideHUD &= ~HIDEHUD_WEAPONSELECTION;
-	RemoveEffects( EF_NODRAW );
-
-	SetMoveType( MOVETYPE_WALK );
-	SetCollisionGroup( COLLISION_GROUP_PLAYER );
-
-	qAngles[ROLL] = 0;
-	SnapEyeAngles( qAngles );
-
-	m_hVehicle = NULL;
-	pVehicle->SetPassenger(nRole, NULL);
-
-	Weapon_Switch( m_hLastWeapon );
-#endif
 }
 
 

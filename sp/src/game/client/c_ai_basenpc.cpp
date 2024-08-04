@@ -7,10 +7,7 @@
 #include "cbase.h"
 #include "c_ai_basenpc.h"
 #include "engine/ivdebugoverlay.h"
-
-#if defined( HL2_DLL ) || defined( HL2_EPISODIC )
 #include "c_basehlplayer.h"
-#endif
 
 #include "death_pose.h"
 
@@ -102,7 +99,6 @@ void C_AI_BaseNPC::ClientThink( void )
 	}
 #endif // HL2_DLL
 
-#ifdef HL2_EPISODIC
 	C_BaseHLPlayer *pPlayer = dynamic_cast<C_BaseHLPlayer*>( C_BasePlayer::GetLocalPlayer() );
 
 	if ( pPlayer && m_flTimePingEffect > gpGlobals->curtime )
@@ -140,7 +136,6 @@ void C_AI_BaseNPC::ClientThink( void )
 			debugoverlay->AddLineOverlay( p3, p1, r, g, b, true, 0.05f );
 		}
 	}
-#endif
 }
 
 void C_AI_BaseNPC::OnDataChanged( DataUpdateType_t type )

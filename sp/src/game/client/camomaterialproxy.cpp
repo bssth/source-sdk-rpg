@@ -47,13 +47,6 @@ public:
 	// Procedurally generates the camo texture...
 	void GenerateCamoTexture( ITexture* pTexture, IVTFTexture *pVTFTexture );
 
-protected:
-#if 0
-	virtual void SetInstanceDataSize( int size );
-	virtual void *FindInstanceData( C_BaseEntity *pEntity );
-	virtual void *AllocateInstanceData( C_BaseEntity *pEntity );
-#endif
-
 private:
 	void LoadCamoPattern( void );
 	void GenerateRandomPointsInNormalizedCube( void );
@@ -64,27 +57,7 @@ private:
 	// this needs to go in a base class
 
 private:
-#if 0
-	// stuff that needs to be in a base class.
-	struct InstanceData_t
-	{
-		C_BaseEntity *pEntity;
-		void *data;
-		struct InstanceData_s *next;
-	};
-	
-	struct CamoInstanceData_t
-	{
-		int dummy;
-	};
-#endif
-	
 	unsigned char *m_pCamoPatternImage;
-
-#if 0
-	int m_InstanceDataSize;
-	InstanceData_t *m_InstanceDataListHead;
-#endif
 
 	IMaterial *m_pMaterial;
 	IMaterialVar *m_pCamoTextureVar;
@@ -94,9 +67,6 @@ private:
 	int m_CamoPatternNumColors;
 	int m_CamoPatternWidth;
 	int m_CamoPatternHeight;
-#if 0
-	cache_user_t m_camoImageDataCache;
-#endif
 	unsigned char m_CamoPalette[256][3];
 	// these represent that part of the entitiy's bounding box that we 
 	// want to cast rays through to get colors for the camo
@@ -118,16 +88,6 @@ void CCamoTextureRegen::RegenerateTextureBits( ITexture *pTexture, IVTFTexture *
 
 CCamoMaterialProxy::CCamoMaterialProxy() : m_TextureRegen(this)
 {
-#if 0
-	m_InstanceDataSize = 0;
-#endif
-#if 0
-	memset( &m_camoImageDataCache, 0,sizeof( m_camoImageDataCache ) );
-#endif
-	m_pointsInNormalizedBox = NULL;
-#if 0
-	m_InstanceDataListHead = NULL;
-#endif
 	m_pCamoPatternImage = NULL;
 	m_pMaterial = NULL;
 	m_pCamoTextureVar = NULL;
@@ -140,18 +100,6 @@ CCamoMaterialProxy::CCamoMaterialProxy() : m_TextureRegen(this)
 
 CCamoMaterialProxy::~CCamoMaterialProxy()
 {
-#if 0
-	InstanceData_t *curr = m_InstanceDataListHead;
-	while( curr )
-	{
-		InstanceData_t *next;
-		next = curr->next;
-		delete curr;
-		curr = next;
-	}
-	m_InstanceDataListHead = NULL;
-#endif
-
 	// Disconnect the texture regenerator...
 	if (m_pCamoTextureVar)
 	{
@@ -164,51 +112,11 @@ CCamoMaterialProxy::~CCamoMaterialProxy()
 	delete m_pointsInNormalizedBox;
 }
 
-
-#if 0
-void CCamoMaterialProxy::SetInstanceDataSize( int size )
-{
-	m_InstanceDataSize = size;
-}
-#endif
-
-#if 0
-void *CCamoMaterialProxy::FindInstanceData( C_BaseEntity *pEntity )
-{
-	InstanceData_t *curr = m_InstanceDataListHead;
-	while( curr )
-	{
-		if( pEntity == curr->pEntity )
-		{
-			return curr->data;
-		}
-		curr = curr->next;
-	}
-	return NULL;
-}
-#endif
-
-#if 0
-void *CCamoMaterialProxy::AllocateInstanceData( C_BaseEntity *pEntity )
-{
-	InstanceData_t *newData = new InstanceData_t;
-	newData->pEntity = pEntity;
-	newData->next = m_InstanceDataListHead;
-	m_InstanceDataListHead = newData;
-	newData->data = new unsigned char[m_InstanceDataSize];
-	return newData->data;
-}
-#endif
-
 bool CCamoMaterialProxy::Init( IMaterial *pMaterial, KeyValues *pKeyValues )
 {
 	return false; // hack!  Need to make sure that the TGA loader has a valid filesystem before trying
 			// to load the camo pattern.
 
-#if 0
-	// set how big our instance data is.
-	SetInstanceDataSize( sizeof( CamoInstanceData_t ) );
-#endif
 	// remember what material we belong to.
 	m_pMaterial = pMaterial;
 	// get pointers to material vars.
