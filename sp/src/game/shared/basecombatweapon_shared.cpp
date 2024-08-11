@@ -12,6 +12,7 @@
 #include "physics_saverestore.h"
 #include "datacache/imdlcache.h"
 #include "activitylist.h"
+#include "hl2_shareddefs.h"
 
 // NVNT start extra includes
 #include "haptics/haptic_utils.h"
@@ -415,7 +416,7 @@ int CBaseCombatWeapon::GetWeight( void ) const
 //-----------------------------------------------------------------------------
 bool CBaseCombatWeapon::AllowsAutoSwitchTo( void ) const
 {
-	return GetWpnData().bAutoSwitchTo;
+	return GetSlot() == WEAPON_PRIMARY_SLOT;
 }
 
 //-----------------------------------------------------------------------------
@@ -424,7 +425,7 @@ bool CBaseCombatWeapon::AllowsAutoSwitchTo( void ) const
 //-----------------------------------------------------------------------------
 bool CBaseCombatWeapon::AllowsAutoSwitchFrom( void ) const
 {
-	return GetWpnData().bAutoSwitchFrom;
+	return GetSlot() != WEAPON_PRIMARY_SLOT;
 }
 
 //-----------------------------------------------------------------------------
@@ -2334,7 +2335,6 @@ void CBaseCombatWeapon::PrimaryAttack( void )
 	// Fire the bullets
 	info.m_vecSpread = pPlayer->GetAttackSpread( this );
 #else
-	//!!!HACKHACK - what does the client want this function for? 
 	info.m_vecSpread = GetActiveWeapon()->GetBulletSpread();
 #endif // CLIENT_DLL
 

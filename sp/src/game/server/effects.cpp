@@ -2019,9 +2019,6 @@ public:
 
 	CEnvGunfire()
 	{
-		// !!!HACKHACK
-		// These fields came along kind of late, so they get
-		// initialized in the constructor for now. (sjb)
 		m_flBias = 1.0f;
 		m_bCollide = false;
 	}

@@ -585,8 +585,7 @@ void CPropAirboat::InputExitVehicle( inputdata_t &inputdata )
 
 //-----------------------------------------------------------------------------
 // Purpose: Force the airboat to wake up. This was needed to fix a last-minute
-//			bug for the XBox -- the airboat didn't fall with the platform
-//			in d1_canals_10b.
+//			bug for the XBox -- the airboat didn't fall with the platform.
 //-----------------------------------------------------------------------------
 void CPropAirboat::InputWake( inputdata_t &inputdata )
 {

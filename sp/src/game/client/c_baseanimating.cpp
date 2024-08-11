@@ -939,29 +939,13 @@ void C_BaseAnimating::UnlockStudioHdr()
 		studiohdr_t *pStudioHdr = mdlcache->GetStudioHdr( m_hStudioHdr );
 		Assert( m_pStudioHdr && m_pStudioHdr->GetRenderHdr() == pStudioHdr );
 
-#if 0
-		// XXX need to figure out where to flush the queue on map change to not crash
-		if ( ICallQueue *pCallQueue = materials->GetRenderContext()->GetCallQueue() )
+		// Immediate-mode rendering, can unlock immediately
+		if (pStudioHdr->GetVirtualModel())
 		{
-			// Parallel rendering: don't unlock model data until end of rendering
-			if ( pStudioHdr->GetVirtualModel() )
-			{
-				MDLHandle_t hVirtualModel = (MDLHandle_t)(int)pStudioHdr->virtualModel&0xffff;
-				pCallQueue->QueueCall( mdlcache, &IMDLCache::UnlockStudioHdr, hVirtualModel );
-			}
-			pCallQueue->QueueCall( mdlcache, &IMDLCache::UnlockStudioHdr, m_hStudioHdr );
+			MDLHandle_t hVirtualModel = (MDLHandle_t)(int)pStudioHdr->virtualModel & 0xffff;
+			mdlcache->UnlockStudioHdr(hVirtualModel);
 		}
-		else
-#endif
-		{
-			// Immediate-mode rendering, can unlock immediately
-			if ( pStudioHdr->GetVirtualModel() )
-			{
-				MDLHandle_t hVirtualModel = (MDLHandle_t)(int)pStudioHdr->virtualModel&0xffff;
-				mdlcache->UnlockStudioHdr( hVirtualModel );
-			}
-			mdlcache->UnlockStudioHdr( m_hStudioHdr );
-		}
+		mdlcache->UnlockStudioHdr(m_hStudioHdr);
 		m_hStudioHdr = MDLHANDLE_INVALID;
 	}
 }
@@ -1363,22 +1347,6 @@ void C_BaseAnimating::GetPoseParameters( CStudioHdr *pStudioHdr, float poseParam
 	{
 		poseParameter[i] = m_flPoseParameter[i];
 	}
-
-
-#if 0 // _DEBUG
-	if (/* Q_stristr( pStudioHdr->pszName(), r_sequence_debug.GetString()) != NULL || */ r_sequence_debug.GetInt() == entindex())
-	{
-		DevMsgRT( "%s\n", pStudioHdr->pszName() );
-		DevMsgRT( "%6.2f : ", gpGlobals->curtime );
-		for( i=0; i < pStudioHdr->GetNumPoseParameters(); i++)
-		{
-			const mstudioposeparamdesc_t &Pose = pStudioHdr->pPoseParameter( i );
-
-			DevMsgRT( "%s %6.2f ", Pose.pszName(), poseParameter[i] * Pose.end + (1 - poseParameter[i]) * Pose.start );
-		}
-		DevMsgRT( "\n" );
-	}
-#endif
 }
 
 
@@ -5104,13 +5072,6 @@ void C_BaseAnimating::StudioFrameAdvance()
 	SetCycle( flNewCycle );
 
 	m_flGroundSpeed = GetSequenceGroundSpeed( hdr, GetSequence() ) * GetModelScale();
-
-#if 0
-	// I didn't have a test case for this, but it seems like the right thing to do.  Check multi-player!
-
-	// Msg("%s : %s : %5.1f\n", GetClassname(), GetSequenceName( GetSequence() ), GetCycle() );
-	InvalidatePhysicsRecursive( ANIMATION_CHANGED );
-#endif
 
 	if ( watch )
 	{

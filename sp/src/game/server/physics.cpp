@@ -1689,7 +1689,8 @@ void PhysFrame( float deltaTime )
 	float simRealTime = 0;
 
 	deltaTime *= phys_timescale.GetFloat();
-	// !!!HACKHACK -- hard limit scaled time to avoid spending too much time in here
+
+	// Hard limit scaled time to avoid spending too much time in here
 	// Limit to 100 ms
 	if ( deltaTime > 0.100f )
 		deltaTime = 0.100f;

@@ -5493,14 +5493,6 @@ void CBaseWorldView::SSAO_DepthPass()
 		DrawOpaqueRenderables( DEPTH_MODE_SSA0 );
 	}
 
-#if 0
-	if ( m_bRenderFlashlightDepthTranslucents || r_flashlightdepth_drawtranslucents.GetBool() )
-	{
-		VPROF_BUDGET( "DrawTranslucentRenderables", VPROF_BUDGETGROUP_SHADOW_DEPTH_TEXTURING );
-		DrawTranslucentRenderables( false, true );
-	}
-#endif
-
 	modelrender->ForcedMaterialOverride( 0 );
 
 	m_DrawFlags &= ~DF_SSAO_DEPTH_PASS;

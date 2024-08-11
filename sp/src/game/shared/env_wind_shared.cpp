@@ -266,7 +266,7 @@ float CEnvWindShared::WindThink( float flTime )
 			m_OnGustStart.FireOutput( NULL, NULL );
 #endif
 
-			// !!!HACKHACK - gust duration tied to the length of a particular wave file
+			// Gust duration tied to the length of a particular wave file
 			m_flSwitchTime += m_flGustDuration;
 		}
 	}

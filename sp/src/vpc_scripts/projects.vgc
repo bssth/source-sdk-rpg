@@ -133,6 +133,11 @@ $Project "vvis_launcher"
 	"utils\vvis_launcher\vvis_launcher.vpc" [$WIN32]
 }
 
+$Project "gamepadui"
+{
+	"game\gamepadui\gamepadui_bb.vpc"
+}
+
 $Project "togl"
 {
 	"togl\togl.vpc" [$POSIX]

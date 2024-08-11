@@ -4831,14 +4831,6 @@ int CNPC_MetroPolice::OnTakeDamage_Alive( const CTakeDamageInfo &inputInfo )
 		EnemyResistingArrest();
 	}
 
-#if 0
-	// Die instantly from a hit in idle/alert states
-	if( m_NPCState == NPC_STATE_IDLE || m_NPCState == NPC_STATE_ALERT )
-	{
-		info.SetDamage( m_iHealth );
-	}
-#endif //0
-
 	if (info.GetAttacker() == GetEnemy())
 	{
 		// Keep track of recent damage by my attacker. If it seems like we're

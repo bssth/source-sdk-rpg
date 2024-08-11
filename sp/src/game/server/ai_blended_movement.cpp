@@ -758,37 +758,6 @@ void CAI_BlendedMotor::BuildMoveScript( const AILocalMoveGoal_t &move, AIMoveTra
 
 	BuildVelocityScript( move );
 	BuildTurnScript( move );
-
-/*
-	if (GetOuter()->m_debugOverlays & OVERLAY_NPC_SELECTED_BIT)
-	{
-		int i;
-#if 1
-
-		for (i = 1; i < m_scriptMove.Count(); i++)
-		{
-			NDebugOverlay::Line( m_scriptMove[i-1].vecLocation, m_scriptMove[i].vecLocation, 255,255,255, true, 0.1 );
-
-			NDebugOverlay::Box( m_scriptMove[i].vecLocation, Vector( -2, -2, -2 ), Vector( 2, 2, 2 ), 0,255,255, 0, 0.1 );
-
-			//NDebugOverlay::Line( m_scriptMove[i].vecLocation, m_scriptMove[i].vecLocation + Vector( 0,0,m_scriptMove[i].flMaxVelocity), 0,255,255, true, 0.1 );
-
-			Vector vecMidway = m_scriptMove[i].vecLocation + ((m_scriptMove[i-1].vecLocation - m_scriptMove[i].vecLocation) * 0.5);
-			NDebugOverlay::Text( vecMidway, UTIL_VarArgs( "%d", i ), false, 0.1 );
-		}
-#endif
-#if 0
-		for (i = 1; i < m_scriptTurn.Count(); i++)
-		{
-			NDebugOverlay::Line( m_scriptTurn[i-1].vecLocation, m_scriptTurn[i].vecLocation, 255,255,255, true, 0.1 );
-
-			NDebugOverlay::Box( m_scriptTurn[i].vecLocation, Vector( -2, -2, -2 ), Vector( 2, 2, 2 ), 255,0,0, 0, 0.1 );
-
-			NDebugOverlay::Line( m_scriptTurn[i].vecLocation + Vector( 0,0,1), m_scriptTurn[i].vecLocation + Vector( 0,0,1) + UTIL_YawToVector( m_scriptTurn[i].flYaw ) * 32, 255,0,0, true, 0.1 );
-		}
-#endif
-	}
-*/
 }	
 
 
@@ -1774,46 +1743,6 @@ bool CAI_BlendedMotor::AddTurnGesture( float flYD )
 	}
 	return false;
 }
-
-
-//-------------------------------------
-
-
-
-#if 0
-Activity CAI_BlendedMotor::GetTransitionActivity( )
-{
-	AI_Waypoint_t *waypoint = GetNavigator()->GetPath()->GetTransitionWaypoint();
-
-	if ( waypoint->Flags() & bits_WP_TO_GOAL )
-	{
-		if ( waypoint->activity != ACT_INVALID)
-		{
-			return waypoint->activity;
-		}
-
-		return GetStoppedActivity( );
-	}
-
-	if (waypoint)
-		waypoint = waypoint->GetNext();
-
-	switch(waypoint->NavType() )
-	{
-	case NAV_JUMP:
-		return ACT_JUMP; // are jumps going to get a movement track added to them?
-
-	case NAV_GROUND:
-		return GetNavigator()->GetMovementActivity(); // yuck
-
-	case NAV_CLIMB:
-		return ACT_CLIMB_UP; // depends on specifics of climb node
-
-	default:
-		return ACT_IDLE;
-	}
-}
-#endif
 
 //-------------------------------------
 // Purpose:	return a velocity that should be hit at the end of the interval to match goal

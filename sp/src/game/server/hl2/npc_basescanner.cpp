@@ -450,10 +450,6 @@ void CNPC_BaseScanner::TakeDamageFromPhyscannon( CBasePlayer *pPlayer )
 	flFactor = clamp( flFactor, 0.0f, 2.0f );
 	float flDamage = m_iMaxHealth * flFactor;
 
-#if 0
-	Msg("Doing %f damage for %f speed!\n", flDamage, flSpeed );
-#endif
-
 	info.SetDamage( flDamage );
 	TakeDamage( info );
 }

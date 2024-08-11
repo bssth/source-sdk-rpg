@@ -42,8 +42,6 @@ extern Vector PointOnLineNearestPoint(const Vector& vStartPos, const Vector& vEn
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-bool g_HackOutland10DamageHack;
-
 int ACT_ALYX_DRAW_TOOL;
 int ACT_ALYX_IDLE_TOOL;
 int ACT_ALYX_ZAP_TOOL;
@@ -417,14 +415,6 @@ void CNPC_Alyx::Activate( void )
 	}
 
 	m_WeaponType = ComputeWeaponType();
-
-	// !!!HACKHACK for Overwatch, If we're in ep2_outland_10, do half damage to Combine
-	// Be advised, this will also happen in 10a, but this is not a problem.
-	g_HackOutland10DamageHack = false;
-	if( !Q_strnicmp( STRING(gpGlobals->mapname), "ep2_outland_10", 14) )
-	{
-		g_HackOutland10DamageHack = true;
-	}
 }
 
 //-----------------------------------------------------------------------------
@@ -936,10 +926,6 @@ bool CNPC_Alyx::IsValidEnemy( CBaseEntity *pEnemy )
 		if ( pBCC != NULL && !pBCC->FInViewCone(this) )
 		{
 			// Don't let turrets that can't shoot me distract me from my assault behavior.
-			// This fixes a very specific problem that appeared in Episode 2 map ep2_outland_09
-			// Where Alyx wouldn't terminate an assault while standing on an assault point because
-			// she was afraid of a turret that was visible from the assault point, but facing the 
-			// other direction and thus not a threat. 
 			return false;
 		}
 	}
@@ -1572,8 +1558,6 @@ Activity CNPC_Alyx::NPC_TranslateActivity( Activity activity )
 
 	switch ( activity )
 	{
-		// !!!HACK - Alyx doesn't have the required animations for shotguns, 
-		// so trick her into using the rifle counterparts for now (sjb)
 		case ACT_RUN_AIM_SHOTGUN:			return ACT_RUN_AIM_RIFLE;
 		case ACT_WALK_AIM_SHOTGUN:			return ACT_WALK_AIM_RIFLE;
 		case ACT_IDLE_ANGRY_SHOTGUN:		return ACT_IDLE_ANGRY_SMG1;
@@ -2210,13 +2194,6 @@ bool CNPC_Alyx::CanBeHitByMeleeAttack( CBaseEntity *pAttacker )
 //-----------------------------------------------------------------------------
 int CNPC_Alyx::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 {
-	//!!!HACKHACK - EP1 - Stop alyx taking all physics damage to prevent her dying
-	// in freak accidents resembling spontaneous stress damage death (which are now impossible)
-	// Also stop her taking damage from flames: Fixes her being burnt to death from entity flames
-	// attached to random debris chunks while inside scripted sequences.
-	if( info.GetDamageType() & (DMG_CRUSH | DMG_BURN) )
-		return 0;
-
 	// If we're in commentary mode, prevent her taking damage from other NPCs
 	if ( IsInCommentaryMode() && info.GetAttacker() && info.GetAttacker()->IsNPC() )
 		return 0;
@@ -2271,19 +2248,6 @@ bool CNPC_Alyx::FCanCheckAttacks()
 	}
 
 	return BaseClass::FCanCheckAttacks();
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Half damage against Combine Soldiers in outland_10
-//-----------------------------------------------------------------------------
-float CNPC_Alyx::GetAttackDamageScale( CBaseEntity *pVictim )
-{
-	if( g_HackOutland10DamageHack && pVictim->Classify() == CLASS_COMBINE )
-	{
-		return 0.75f;
-	}
-
-	return BaseClass::GetAttackDamageScale( pVictim );
 }
 
 //-----------------------------------------------------------------------------

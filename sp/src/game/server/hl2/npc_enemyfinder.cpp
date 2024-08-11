@@ -554,7 +554,7 @@ void CNPC_EnemyFinderCombineCannon::Spawn()
 
 		if( pSnapToEnt != NULL )
 		{
-			//!!!HACKHACK - this eight-inch offset puts this enemyfinder perfectly on-bore 
+			// This eight-inch offset puts this enemyfinder perfectly on-bore 
 			// with the prefab for a func_tank_combinecannon
 			UTIL_SetOrigin( this, pSnapToEnt->WorldSpaceCenter() + Vector( 0, 0, 8) );
 		}

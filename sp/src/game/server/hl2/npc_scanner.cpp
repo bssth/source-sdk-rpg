@@ -203,20 +203,11 @@ CNPC_CScanner::CNPC_CScanner()
 	m_bShouldInspect = true;
 	m_bOnlyInspectPlayers = false;
 	m_bNeverInspectPlayers = false;
+	m_bIsClawScanner = false;
 
 	char szMapName[256];
 	Q_strncpy(szMapName, STRING(gpGlobals->mapname), sizeof(szMapName) );
 	Q_strlower(szMapName);
-
-	if( !Q_strnicmp( szMapName, "d3_c17", 6 ) )
-	{
-		// Streetwar scanners are claw scanners
-		m_bIsClawScanner = true;
-	}
-	else
-	{
-		m_bIsClawScanner = false;
-	}
 }
 
 //-----------------------------------------------------------------------------

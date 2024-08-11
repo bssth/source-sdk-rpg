@@ -736,11 +736,7 @@ void CViewRender::SetUpViews()
 	float flFOVOffset = fDefaultFov - view.fov;
 
 	//Adjust the viewmodel's FOV to move with any FOV offsets on the viewer's end
-#ifdef SDK2013CE
 	view.fovViewmodel = fabs( g_pClientMode->GetViewModelFOV() - flFOVOffset );
-#else
-	view.fovViewmodel = g_pClientMode->GetViewModelFOV() - flFOVOffset;
-#endif
 
 	if ( UseVR() )
 	{
@@ -1083,50 +1079,6 @@ void CViewRender::Render( vrect_t *rect )
     for( StereoEye_t eEye = GetFirstEye(); eEye <= GetLastEye(); eEye = (StereoEye_t)(eEye+1) )
 	{
 		CViewSetup &view = GetView( eEye );
-
-		#if 0 && defined( CSTRIKE_DLL )
-			const bool bPlayingBackReplay = g_pEngineClientReplay && g_pEngineClientReplay->IsPlayingReplayDemo();
-			if ( pPlayer && !bPlayingBackReplay )
-			{
-				C_BasePlayer *pViewTarget = pPlayer;
-
-				if ( pPlayer->IsObserver() && pPlayer->GetObserverMode() == OBS_MODE_IN_EYE )
-				{
-					pViewTarget = dynamic_cast<C_BasePlayer*>( pPlayer->GetObserverTarget() );
-				}
-
-				if ( pViewTarget )
-				{
-					float targetFOV = (float)pViewTarget->m_iFOV;
-
-					if ( targetFOV == 0 )
-					{
-						// FOV of 0 means use the default FOV
-						targetFOV = g_pGameRules->DefaultFOV();
-					}
-
-					float deltaFOV = view.fov - m_flLastFOV;
-					float FOVDirection = targetFOV - pViewTarget->m_iFOVStart;
-
-					// Clamp FOV changes to stop FOV oscillation
-					if ( ( deltaFOV < 0.0f && FOVDirection > 0.0f ) ||
-						( deltaFOV > 0.0f && FOVDirection < 0.0f ) )
-					{
-						view.fov = m_flLastFOV;
-					}
-
-					// Catch case where FOV overshoots its target FOV
-					if ( ( view.fov < targetFOV && FOVDirection <= 0.0f ) ||
-						( view.fov > targetFOV && FOVDirection >= 0.0f ) )
-					{
-						view.fov = targetFOV;
-					}
-
-					m_flLastFOV = view.fov;
-				}
-			}
-		#endif
-
 	    static ConVarRef sv_restrict_aspect_ratio_fov( "sv_restrict_aspect_ratio_fov" );
 	    float aspectRatio = engine->GetScreenAspectRatio() * 0.75f;	 // / (4/3)
 	    float limitedAspectRatio = aspectRatio;
@@ -1157,18 +1109,10 @@ void CViewRender::Render( vrect_t *rect )
 		{
 			case STEREO_EYE_MONO:
 			{
-#if 0
-                // Good test mode for debugging viewports that are not full-size.
-	            view.width			= vr.width * flViewportScale * 0.75f;
-	            view.height			= vr.height * flViewportScale * 0.75f;
-	            view.x				= vr.x + view.width * 0.10f;
-	            view.y				= vr.y + view.height * 0.20f;
-#else
-	            view.x				= vr.x * flViewportScale;
-				view.y				= vr.y * flViewportScale;
-				view.width			= vr.width * flViewportScale;
-				view.height			= vr.height * flViewportScale;
-#endif
+				view.x = vr.x * flViewportScale;
+				view.y = vr.y * flViewportScale;
+				view.width = vr.width * flViewportScale;
+				view.height = vr.height * flViewportScale;
 			    float engineAspectRatio = engine->GetScreenAspectRatio();
 			    view.m_flAspectRatio	= ( engineAspectRatio > 0.0f ) ? engineAspectRatio : ( (float)view.width / (float)view.height );
 			}

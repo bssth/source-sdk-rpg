@@ -1144,8 +1144,7 @@ void CBounceBomb::CloseHooks()
 //---------------------------------------------------------
 void CBounceBomb::InputDisarm( inputdata_t &inputdata )
 {
-	// Only affect a mine that's armed and not placed by player.
-	if( !m_bPlacedByPlayer && m_iMineState == MINE_STATE_ARMED )
+	if( m_iMineState == MINE_STATE_ARMED )
 	{
 		if( m_pConstraint )
 		{
@@ -1181,7 +1180,6 @@ void CBounceBomb::OnPhysGunDrop( CBasePlayer *pPhysGunUser, PhysGunDrop_t Reason
 	if( Reason == DROPPED_BY_CANNON )
 	{
 		// Set to lock down to ground again.
-		m_bPlacedByPlayer = true;
 		OpenHooks( true );
 		SetMineState( MINE_STATE_DEPLOY );
 	}
@@ -1258,7 +1256,6 @@ void CBounceBomb::OnPhysGunPickup( CBasePlayer *pPhysGunUser, PhysGunPickup_t re
 		}
 
 		m_bDisarmed = false;
-		m_bPlacedByPlayer = true;
 		SetTouch( NULL );
 		SetThink( &CBounceBomb::SettleThink );
 		SetNextThink( gpGlobals->curtime + 0.1);

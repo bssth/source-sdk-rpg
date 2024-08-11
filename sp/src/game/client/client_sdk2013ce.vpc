@@ -29,6 +29,13 @@ $Project "Client"
 
 		$Folder	"SDK2013CE DLL"
 		{
+			$File	"hudhealthbar.cpp"
+			$File	"hudhealthbar.h"
+			$File	"hudsuitbar.cpp"
+			$File	"hudsuitbar.h"
+			$File	"vgui_keypad.cpp"
+			$File	"vgui_keypad.h"
+			$File	"hud_objectinfo.cpp"
 		}
 
 		$Folder	"HL2 DLL"
@@ -121,20 +128,12 @@ $Project "Client"
 			$File	"hl2\hud_quickinfo.cpp"
 			$File	"hl2\hud_radar.cpp"
 			$File	"hl2\hud_radar.h"
-			$File	"hudhealthbar.cpp"
-			$File	"hudhealthbar.h"
-			$File	"hudsuitbar.cpp"
-			$File	"hudsuitbar.h"
 			$File	"hud_squadstatus.cpp"
-			$File	"hl2\hud_suitpower.cpp"
-			$File	"hl2\hud_suitpower.h"
 			$File	"hl2\hud_weaponselection.cpp"
 			$File	"hl2\hud_zoom.cpp"
 			$File	"hl2\shieldproxy.cpp"
 			$File	"hl2\vgui_rootpanel_hl2.cpp"
 			$File	"episodic\c_npc_puppet.cpp"
-			$File "vgui_keypad.cpp"
-			$File "vgui_keypad.h"
 		}
 	}
 

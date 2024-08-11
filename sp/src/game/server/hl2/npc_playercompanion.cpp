@@ -1796,27 +1796,12 @@ void CNPC_PlayerCompanion::SetAimTarget( CBaseEntity *pTarget )
 	{
 		SetIdealActivity( NewActivity );
 	}
-
-#if 0
-	if( m_hAimTarget )
-	{
-		Msg("New Aim Target: %s\n", m_hAimTarget->GetClassname() );
-		NDebugOverlay::Line(EyePosition(), m_hAimTarget->WorldSpaceCenter(), 255, 255, 0, false, 0.1 );
-	}
-#endif
 }
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 void CNPC_PlayerCompanion::StopAiming( char *pszReason )
 {
-#if 0
-	if( pszReason )
-	{	
-		Msg("Stopped aiming because %s\n", pszReason );
-	}
-#endif
-
 	SetAimTarget(NULL);
 
 	Activity NewActivity = NPC_TranslateActivity(GetActivity());
@@ -2209,16 +2194,10 @@ bool CNPC_PlayerCompanion::IsSafeFromFloorTurret( const Vector &vecLocation, CBa
 	{
 		if ( !pTurret->MyNPCPointer()->FInViewCone( vecLocation ) )
 		{
-#if 0 // Draws a green line to turrets I'm safe from
-			NDebugOverlay::Line( vecLocation, pTurret->WorldSpaceCenter(), 0, 255, 0, false, 0.1 );
-#endif 
 			return true;
 		}
 	}
 
-#if 0 // Draws a red lines to ones I'm not safe from.
-	NDebugOverlay::Line( vecLocation, pTurret->WorldSpaceCenter(), 255, 0, 0, false, 0.1 );
-#endif
 	return false;
 }
 

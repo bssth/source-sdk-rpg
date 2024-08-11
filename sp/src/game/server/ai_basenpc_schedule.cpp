@@ -3140,7 +3140,7 @@ void CAI_BaseNPC::RunDieTask()
 //					SetSolid( SOLID_NOT );
 			UTIL_SetSize ( this, Vector ( -4, -4, 0 ), Vector ( 4, 4, 1 ) );
 		}
-		else // !!!HACKHACK - put NPC in a thin, wide bounding box until we fix the solid type/bounding volume problem
+		else // Put NPC in a thin, wide bounding box until we fix the solid type/bounding volume problem
 			UTIL_SetSize ( this, WorldAlignMins(), Vector ( WorldAlignMaxs().x, WorldAlignMaxs().y, WorldAlignMins().z + 1 ) );
 	}
 }

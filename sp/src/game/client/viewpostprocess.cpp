@@ -2159,42 +2159,6 @@ static void DrawPyroPost( IMaterial *pMaterial,
 	meshBuilder.TexCoord2f( 0, flLeftU   + (float) (xSegments - 1) * flUWidth, flTopV + (float)(ySegments - 1) * flVHeight);
 	meshBuilder.AdvanceVertex();
 
-
-
-#if 0
-
-	for ( int x=0; x < xSegments; x++ )
-	{
-		for ( int y=0; y < ySegments; y++ )
-		{
-			if ( ( x == 1 || x == 2 ) && ( y == 1 || y == 2 ) )
-			{	// skip the center 4 segments
-				continue;
-			}
-
-			// Top left
-			meshBuilder.Position3f( flLeftX   + (float) x * flWidth, flTopY - (float) y * flHeight, 0.0f );
-			meshBuilder.TexCoord2f( 0, flLeftU   + (float) x * flUWidth, flTopV + (float) y * flVHeight);
-			meshBuilder.AdvanceVertex();
-
-			// Top right (x+1)
-			meshBuilder.Position3f( flLeftX   + (float) (x+1) * flWidth, flTopY - (float) y * flHeight, 0.0f );
-			meshBuilder.TexCoord2f( 0, flLeftU   + (float) (x+1) * flUWidth, flTopV + (float) y * flVHeight);
-			meshBuilder.AdvanceVertex();
-
-			// Bottom right (x+1), (y+1)
-			meshBuilder.Position3f( flLeftX   + (float) (x+1) * flWidth, flTopY - (float) (y+1) * flHeight, 0.0f );
-			meshBuilder.TexCoord2f( 0, flLeftU   + (float) (x+1) * flUWidth, flTopV + (float)(y+1) * flVHeight);
-			meshBuilder.AdvanceVertex();
-
-			// Bottom left (y+1)
-			meshBuilder.Position3f( flLeftX   + (float) x * flWidth, flTopY - (float) (y+1) * flHeight, 0.0f );
-			meshBuilder.TexCoord2f( 0, flLeftU   + (float) x * flUWidth, flTopV + (float)(y+1) * flVHeight);
-			meshBuilder.AdvanceVertex();
-		}
-	}
-#endif
-
 	meshBuilder.End();
 	pMesh->Draw();
 

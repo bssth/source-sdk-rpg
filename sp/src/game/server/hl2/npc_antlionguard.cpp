@@ -1177,16 +1177,6 @@ int CNPC_AntlionGuard::SelectSchedule( void )
 	if ( m_bIsBurrowed )
 		return SCHED_IDLE_STAND;
 
-#if 0
-	// Debug physics object finding
-	if ( 0 ) //g_debug_antlionguard.GetInt() == 3 )
-	{
-		m_flPhysicsCheckTime = 0;
-		UpdatePhysicsTarget( false );
-		return SCHED_IDLE_STAND;
-	}
-#endif
-
 	// Flinch on heavy damage, but not if we've flinched too recently.
 	// This is done to prevent stun-locks from grenades.
 	if ( !m_bInCavern && HasCondition( COND_HEAVY_DAMAGE ) && m_flNextHeavyFlinchTime < gpGlobals->curtime )
@@ -2409,7 +2399,7 @@ void CNPC_AntlionGuard::StartTask( const Task_t *pTask )
 				break;
 			}
 
-			//!!!HACKHACK - this is a hack that covers a bug in antlion guard physics target selection! (Tracker #77601)
+			// Hack that covers a bug in antlion guard physics target selection! (Tracker #77601)
 			// This piece of code (combined with some code in GatherConditions) COVERS THE BUG by escaping the schedule
 			// if 30 seconds have passed (it should never take this long for the guard to get to an object and hit it).
 			// It's too scary to figure out why this particular antlion guard can't get to its object, but we're shipping

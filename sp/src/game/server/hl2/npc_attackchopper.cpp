@@ -239,7 +239,6 @@ public:
 	bool IsThrownByPlayer();
 
 	virtual bool	ShouldPuntUseLaunchForces( PhysGunForce_t reason ) { return ( reason == PHYSGUN_FORCE_LAUNCHED ); }
-	virtual Vector  PhysGunLaunchVelocity( const Vector &forward, float flMass );
 
 	void InputExplodeIn( inputdata_t &inputdata );
 #endif // HL2_EPISODIC
@@ -1705,14 +1704,6 @@ bool CNPC_AttackHelicopter::FVisible( CBaseEntity *pEntity, int traceMask, CBase
 {
 	if ( pEntity->GetFlags() & FL_NOTARGET )
 		return false;
-
-#if 0
-	// FIXME: only block LOS through opaque water
-	// don't look through water
-	if ((m_nWaterLevel != 3 && pEntity->m_nWaterLevel == 3) 
-		|| (m_nWaterLevel == 3 && pEntity->m_nWaterLevel == 0))
-		return false;
-#endif
 
 	Vector vecLookerOrigin = EyePosition();//look through the caller's 'eyes'
 	Vector vecTargetOrigin = pEntity->EyePosition();
@@ -4709,7 +4700,7 @@ void CNPC_AttackHelicopter::Hunt( void )
 
 	if ( !(m_fHelicopterFlags & BITS_HELICOPTER_GUN_ON) )
 	{
-		// !!!HACKHACK This is a fairly unsavoury hack that allows the attack
+		// This is a fairly unsavoury hack that allows the attack
 		// chopper to continue to carpet bomb even with the gun turned off
 		// (Normally the chopper will carpet bomb inside FireGun(), but FireGun()
 		// doesn't get called by the above call to FireWeapons() if the gun is turned off)
@@ -5210,20 +5201,6 @@ void CGrenadeHelicopter::VPhysicsCollision( int index, gamevcollisionevent_t *pE
 		EmitSound("NPC_AttackHelicopterGrenade.HardImpact");
 	}
 }
-
-
-#if HL2_EPISODIC
-//------------------------------------------------------------------------------
-// double launch velocity for ep2_outland_08
-//------------------------------------------------------------------------------
-Vector CGrenadeHelicopter::PhysGunLaunchVelocity( const Vector &forward, float flMass )
-{
-	// return ( striderbuster_shot_velocity.GetFloat() * forward );
-
-	return BaseClass::PhysGunLaunchVelocity(forward,flMass) * sk_helicopter_grenaderadius.GetFloat();
-}
-#endif
-
 
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------

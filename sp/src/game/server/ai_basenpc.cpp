@@ -748,16 +748,6 @@ int CAI_BaseNPC::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 		m_iHealth = 1;
 	}
 
-#if 0
-	// HACKHACK Don't kill npcs in a script.  Let them break their scripts first
-	// THIS is a Half-Life 1 hack that's not cutting the mustard in the scripts
-	// that have been authored for Half-Life 2 thus far. (sjb)
-	if ( m_NPCState == NPC_STATE_SCRIPT )
-	{
-		SetCondition( COND_LIGHT_DAMAGE );
-	}
-#endif
-
 	// -----------------------------------
 	//  Fire outputs
  	// -----------------------------------
@@ -935,19 +925,6 @@ int CAI_BaseNPC::OnTakeDamage_Dead( const CTakeDamageInfo &info )
 		VectorNormalize( vecDir );
 		g_vecAttackDir = vecDir;
 	}
-
-#if 0// turn this back on when the bounding box issues are resolved.
-
-	SetGroundEntity( NULL );
-	GetLocalOrigin().z += 1;
-
-	// let the damage scoot the corpse around a bit.
-	if ( info.GetInflictor() && (info.GetAttacker()->GetSolid() != SOLID_TRIGGER) )
-	{
-		ApplyAbsVelocityImpulse( vecDir * -DamageForce( flDamage ) );
-	}
-
-#endif
 
 	// kill the corpse if enough damage was done to destroy the corpse and the damage is of a type that is allowed to destroy the corpse.
 	if ( g_pGameRules->Damage_ShouldGibCorpse( info.GetDamageType() ) )
@@ -2723,19 +2700,6 @@ void CAI_BaseNPC::MaintainLookTargets ( float flInterval )
 			return;
 		}
 	}
-
-#if 0
-	// --------------------------------------------------------
-	// First check if I've been assigned to look at an entity
-	// --------------------------------------------------------
-	CBaseEntity *lookTarget = EyeLookTarget();
-	if (lookTarget && ValidEyeTarget(lookTarget->EyePosition()))
-	{
-		SetHeadDirection(lookTarget->EyePosition(),flInterval);
-		SetViewtarget( lookTarget->EyePosition() );
-		return;
-	}
-#endif
 
 	// --------------------------------------------------------
 	// If I'm moving, look at my target position
@@ -5243,35 +5207,6 @@ bool CAI_BaseNPC::Weapon_IsBetterAvailable()
 //-----------------------------------------------------------------------------
 bool CAI_BaseNPC::WeaponLOSCondition(const Vector &ownerPos, const Vector &targetPos, bool bSetConditions )
 {
-#if 0
-	// @TODO (toml 03-07-04): this code might be better (not tested)
-	Vector vecLocalRelativePosition;
-	VectorITransform( npcOwner->Weapon_ShootPosition(), npcOwner->EntityToWorldTransform(), vecLocalRelativePosition );
-
-	// Compute desired test transform
-
-	// Compute desired x axis
-	Vector xaxis;
-	VectorSubtract( targetPos, ownerPos, xaxis );
-
-	// FIXME: Insert angle test here?
-	float flAngle = acos( xaxis.z / xaxis.Length() );
-
-	xaxis.z = 0.0f;
-	float flLength = VectorNormalize( xaxis );
-	if ( flLength < 1e-3 )
-	return false;
-
-	Vector yaxis( -xaxis.y, xaxis.x, 0.0f );
-
-	matrix3x4_t losTestToWorld;
-	MatrixInitialize( losTestToWorld, ownerPos, xaxis, yaxis, zaxis );
-
-	Vector barrelPos;
-	VectorTransform( vecLocalRelativePosition, losTestToWorld, barrelPos );
-
-#endif
-
 	bool bHaveLOS = true;
 
 	if (GetActiveWeapon())
@@ -5931,9 +5866,6 @@ Activity CAI_BaseNPC::NPC_TranslateActivity( Activity eNewActivity )
 			eNewActivity = ACT_CROUCHIDLE;
 		}
 	}
-	// ====
-	// HACK : LEIPZIG 06 -	The underlying problem is that the AR2 and SMG1 cannot map IDLE_ANGRY to a crouched equivalent automatically
-	//						which causes the character to pop up and down in their idle state of firing while crouched. -- jdw
 	else if ( eNewActivity == ACT_IDLE_ANGRY_SMG1 )
 	{
 		if ( IsCrouching() )
@@ -6557,15 +6489,11 @@ float CAI_BaseNPC::ThrowLimit(	const Vector &vecStart,
 //-----------------------------------------------------------------------------
 void CAI_BaseNPC::SetupVPhysicsHull()
 {
-	#ifdef SDK2013CE
-	
 	if ( GetModelPtr() == NULL )
 	{
 		UTIL_Remove(this);
 		return;
 	}
-
-	#endif
 
 	if ( GetMoveType() == MOVETYPE_VPHYSICS || GetMoveType() == MOVETYPE_NONE )
 		return;
@@ -7256,9 +7184,6 @@ void CAI_BaseNPC::AddRelationship( const char *pszRelationship, CBaseEntity *pAc
 //-----------------------------------------------------------------------------
 void CAI_BaseNPC::AddEntityRelationship( CBaseEntity *pEntity, Disposition_t nDisposition, int nPriority )
 {
-#if 0
-	ForceGatherConditions();
-#endif
 	BaseClass::AddEntityRelationship( pEntity, nDisposition, nPriority );
 }
 
@@ -7266,9 +7191,6 @@ void CAI_BaseNPC::AddEntityRelationship( CBaseEntity *pEntity, Disposition_t nDi
 //-----------------------------------------------------------------------------
 void CAI_BaseNPC::AddClassRelationship( Class_T nClass, Disposition_t nDisposition, int nPriority )
 {
-#if 0
-	ForceGatherConditions();
-#endif
 	BaseClass::AddClassRelationship( nClass, nDisposition, nPriority );
 }
 
@@ -8205,11 +8127,6 @@ void CAI_BaseNPC::HandleAnimEvent( animevent_t *pEvent )
 			m_hCine->AllowInterrupt( true );
 		break;
 
-#if 0
-	case SCRIPT_EVENT_INAIR:			// Don't engine->DropToFloor()
-	case SCRIPT_EVENT_ENDANIMATION:		// Set ending animation sequence to
-		break;
-#endif
 	case SCRIPT_EVENT_BODYGROUPON:
 	case SCRIPT_EVENT_BODYGROUPOFF:
 	case SCRIPT_EVENT_BODYGROUPTEMP:
@@ -11884,7 +11801,7 @@ bool CAI_BaseNPC::CineCleanup()
 			// cases where the root bone is in a different relative position to the entity's origin
 			// before/after the sequence plays.  So we are stuck doing this:
 
-			// !!!HACKHACK: Float the origin up and drop to floor because some sequences have
+			// Float the origin up and drop to floor because some sequences have
 			// irregular motion that can't be properly accounted for.
 
 			// UNDONE: THIS SHOULD ONLY HAPPEN IF WE ACTUALLY PLAYED THE SEQUENCE.

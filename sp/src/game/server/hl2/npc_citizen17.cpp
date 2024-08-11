@@ -1031,13 +1031,6 @@ void CNPC_Citizen::BuildScheduleTestBits()
 //-----------------------------------------------------------------------------
 bool CNPC_Citizen::FInViewCone( CBaseEntity *pEntity )
 {
-#if 0
-	if ( IsMortar( pEntity ) )
-	{
-		// @TODO (toml 11-20-03): do this only if have heard mortar shell recently and it's active
-		return true;
-	}
-#endif
 	return BaseClass::FInViewCone( pEntity );
 }
 
@@ -1283,11 +1276,6 @@ int CNPC_Citizen::SelectScheduleCombat()
 //-----------------------------------------------------------------------------
 bool CNPC_Citizen::ShouldDeferToFollowBehavior()
 {
-#if 0
-	if ( HaveCommandGoal() )
-		return false;
-#endif
-		
 	return BaseClass::ShouldDeferToFollowBehavior();
 }
 
@@ -1677,8 +1665,6 @@ Activity CNPC_Citizen::NPC_TranslateActivity( Activity activity )
 		return ACT_MELEE_ATTACK_SWING;
 	}
 
-	// !!!HACK - Citizens don't have the required animations for shotguns, 
-	// so trick them into using the rifle counterparts for now (sjb)
 	if ( activity == ACT_RUN_AIM_SHOTGUN )
 		return ACT_RUN_AIM_RIFLE;
 	if ( activity == ACT_WALK_AIM_SHOTGUN )
@@ -2358,16 +2344,6 @@ void CNPC_Citizen::MoveOrder( const Vector &vecDest, CAI_BaseNPC **Allies, int n
 	if( m_FollowBehavior.GetFollowTarget() && !IsFollowingCommandPoint() )
 	{
 		ClearFollowTarget();
-#if 0
-		if ( ( pPlayer->GetAbsOrigin() - GetAbsOrigin() ).LengthSqr() < Square( 180 ) &&
-			 ( ( vecDest - pPlayer->GetAbsOrigin() ).LengthSqr() < Square( 120 ) || 
-			   ( vecDest - GetAbsOrigin() ).LengthSqr() < Square( 120 ) ) )
-		{
-			if ( pClosest == this )
-				SpeakIfAllowed( TLK_STOPFOLLOW );
-			spoke = true;
-		}
-#endif
 	}
 
 	if ( !spoke && pClosest == this )

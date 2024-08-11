@@ -215,18 +215,6 @@ void CCrossbowBolt::BoltTouch( CBaseEntity *pOther )
 		ClearMultiDamage();
 		VectorNormalize( vecNormalizedVel );
 
-#if defined(HL2_EPISODIC)
-		//!!!HACKHACK - specific hack for ep2_outland_10 to allow crossbow bolts to pass through her bounding box when she's crouched in front of the player
-		// (the player thinks they have clear line of sight because Alyx is crouching, but her BBOx is still full-height and blocks crossbow bolts.
-		if( GetOwnerEntity() && GetOwnerEntity()->IsPlayer() && pOther->Classify() == CLASS_PLAYER_ALLY_VITAL && FStrEq(STRING(gpGlobals->mapname), "ep2_outland_10") )
-		{
-			// Change the owner to stop further collisions with Alyx. We do this by making her the owner.
-			// The player won't get credit for this kill but at least the bolt won't magically disappear!
-			SetOwnerEntity( pOther );
-			return;
-		}
-#endif//HL2_EPISODIC
-
 		if( GetOwnerEntity() && GetOwnerEntity()->IsPlayer() && pOther->IsNPC() )
 		{
 			CTakeDamageInfo	dmgInfo( this, GetOwnerEntity(), sk_plr_dmg_crossbow.GetFloat(), DMG_NEVERGIB );
@@ -664,23 +652,6 @@ void CWeaponCrossbow::FireBolt( void )
 
 	QAngle angAiming;
 	VectorAngles( vecAiming, angAiming );
-
-#if defined(HL2_EPISODIC)
-	// !!!HACK - the other piece of the Alyx crossbow bolt hack for Outland_10 (see ::BoltTouch() for more detail)
-	if( FStrEq(STRING(gpGlobals->mapname), "ep2_outland_10") )
-	{
-		trace_t tr;
-		UTIL_TraceLine( vecSrc, vecSrc + vecAiming * 24.0f, MASK_SOLID, pOwner, COLLISION_GROUP_NONE, &tr );
-
-		if( tr.m_pEnt != NULL && tr.m_pEnt->Classify() == CLASS_PLAYER_ALLY_VITAL )
-		{
-			// If Alyx is right in front of the player, make sure the bolt starts outside of the player's BBOX, or the bolt
-			// will instantly collide with the player after the owner of the bolt is switched to Alyx in ::BoltTouch(). We 
-			// avoid this altogether by making it impossible for the bolt to collide with the player.
-			vecSrc += vecAiming * 24.0f;
-		}
-	}
-#endif
 
 	CCrossbowBolt *pBolt = CCrossbowBolt::BoltCreate( vecSrc, angAiming, pOwner );
 

@@ -32,10 +32,6 @@
 
 void ExpandBBox(Vector &vecMins, Vector &vecMaxs);
 
-#if 0
-virtual void NullThink( void );
-#endif //0
-
 #define HELICOPTER_THINK_INTERVAL 0.1
 #define HELICOPTER_ROTORWASH_THINK_INTERVAL 0.01
 #define	BASECHOPPER_DEBUG_WASH		1

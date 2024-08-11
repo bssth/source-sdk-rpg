@@ -53,7 +53,6 @@ public:
 	Activity	NPC_TranslateActivity( Activity eNewActivity );
 
 protected:
-	/// whether to use the more casual march anim in ep2_outland_05
 	int			m_iUseMarch;
 #endif
 

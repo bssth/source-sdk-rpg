@@ -263,14 +263,6 @@ void CNPC_CombineS::OnListened()
 			ClearCondition( COND_HEAR_PHYSICS_DANGER );
 		}
 	}
-
-	// debugging to find missed schedules
-#if 0
-	if ( HasCondition( COND_HEAR_DANGER ) && !HasInterruptCondition( COND_HEAR_DANGER ) )
-	{
-		DevMsg("Ignore danger in %s\n", GetCurSchedule()->GetName() );
-	}
-#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -396,7 +388,7 @@ bool CNPC_CombineS::IsHeavyDamage( const CTakeDamageInfo &info )
 //-----------------------------------------------------------------------------
 Activity CNPC_CombineS::NPC_TranslateActivity( Activity eNewActivity )
 {
-	// If the special ep2_outland_05 "use march" flag is set, use the more casual marching anim.
+	// If the special "use march" flag is set, use the more casual marching anim.
 	if ( m_iUseMarch && eNewActivity == ACT_WALK )
 	{
 		eNewActivity = ACT_WALK_MARCH;

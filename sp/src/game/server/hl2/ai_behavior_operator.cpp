@@ -163,7 +163,6 @@ void CAI_OperatorBehavior::StartTask( const Task_t *pTask )
 				break;
 
 			default:
-				//!!!HACKHACK
 				Assert(0);
 				break;
 			}

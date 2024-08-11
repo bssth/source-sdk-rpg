@@ -582,8 +582,6 @@ void CNPC_CombineGunship::Spawn( void )
 		m_iAmmoType = GetAmmoDef()->Index("CombineCannon"); 
 	}
 
-	//!!!HACKHACK
-	// This tricks the AI code that constantly complains that the gunship has no schedule.
 	SetSchedule( SCHED_IDLE_STAND );
 
 	AddRelationship( "env_flare D_LI 9",	NULL );
@@ -2762,17 +2760,6 @@ Vector CNPC_CombineGunship::GetEnemyTarget( void )
 void CNPC_CombineGunship::DoImpactEffect( trace_t &tr, int nDamageType )
 {
 	UTIL_ImpactTrace( &tr, nDamageType, "ImpactGunship" );
-
-	// These glow effects don't sort properly, so they're cut for E3 2003 (sjb)
-#if 0 
-	CEffectData data;
-
-	data.m_vOrigin = tr.endpos;
-	data.m_vNormal = vec3_origin;
-	data.m_vAngles = vec3_angle;
-
-	DispatchEffect( "GunshipImpact", data );
-#endif
 }
 
 //-----------------------------------------------------------------------------

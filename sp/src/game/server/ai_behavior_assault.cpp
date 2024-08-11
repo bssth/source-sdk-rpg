@@ -1269,7 +1269,7 @@ int CAI_AssaultBehavior::TranslateSchedule( int scheduleType )
 //-----------------------------------------------------------------------------
 void CAI_AssaultBehavior::OnStartSchedule( int scheduleType )
 {
-	if ( scheduleType == SCHED_HIDE_AND_RELOAD ) //!!!HACKHACK
+	if ( scheduleType == SCHED_HIDE_AND_RELOAD )
 	{
 		// Dirty the assault point flag so that we return to assault point
 		m_bHitAssaultPoint = false;
@@ -1282,12 +1282,6 @@ void CAI_AssaultBehavior::OnStartSchedule( int scheduleType )
 //-----------------------------------------------------------------------------
 void CAI_AssaultBehavior::ClearSchedule( const char *szReason )
 {
-	// HACKHACK: In reality, we shouldn't be clearing the schedule ever if the assault
-	// behavior isn't actually in charge of the NPC. Fix after ship. For now, hacking
-	// a fix to Grigori failing to make it over the fence of the graveyard in d1_town_02a
-	if ( GetOuter()->ClassMatches( "npc_monk" ) && GetOuter()->GetState() == NPC_STATE_SCRIPT )
-		return;
-
 	// Don't allow it if we're in a vehicle
 	if ( GetOuter()->IsInAVehicle() )
 		return;

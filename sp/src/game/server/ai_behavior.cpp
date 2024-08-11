@@ -436,8 +436,6 @@ bool CAI_BehaviorBase::NotifyChangeBehaviorStatus( bool fCanFinishSchedule )
 			GetOuter()->m_hCine->CancelScript();
 		}
 
-		//!!!HACKHACK
-		// this is dirty, but it forces NPC to pick a new schedule next time through.
 		GetOuter()->ClearSchedule( "Changed behavior status" );
 	}
 

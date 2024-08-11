@@ -595,9 +595,8 @@ void CHL2_Player::PreThink(void)
 
 				if( tr.fraction == 1.0 && !tr.startsolid )
 				{
-					// !!!HACKHACK
-					// I KNOW, I KNOW, this is definitely not the right way to do this,
-					// but I'm prototyping! (sjb)
+					// It said: "This is definitely not the right way to do this, but I'm prototyping!"
+					// Nothing has changed since then...
 					Vector vecNewVelocity = GetAbsVelocity();
 					vecNewVelocity.z += 250;
 					SetAbsVelocity( vecNewVelocity );
@@ -829,7 +828,6 @@ void CHL2_Player::PreThink(void)
 			SetAbsVelocity( vec3_origin );
 		}
 	}
-	// StudioFrameAdvance( );//!!!HACKHACK!!! Can't be hit by traceline when not animating?
 
 	// Update weapon's ready status
 	UpdateWeaponPosture();
@@ -1793,32 +1791,6 @@ void CHL2_Player::CheatImpulseCommands( int iImpulse )
 	case 50:
 	{
 		CommanderMode();
-		break;
-	}
-
-	case 51:
-	{
-	#ifdef SDK2013CE
-		if ( sv_cheats->GetBool() )
-		{
-	#endif
-			// Cheat to create a dynamic resupply item
-			Vector vecForward;
-			AngleVectors( EyeAngles(), &vecForward );
-			CBaseEntity *pItem = (CBaseEntity *)CreateEntityByName( "item_dynamic_resupply" );
-			if ( pItem )
-			{
-				Vector vecOrigin = GetAbsOrigin() + vecForward * 256 + Vector(0,0,64);
-				QAngle vecAngles( 0, GetAbsAngles().y - 90, 0 );
-				pItem->SetAbsOrigin( vecOrigin );
-				pItem->SetAbsAngles( vecAngles );
-				pItem->KeyValue( "targetname", "resupply" );
-				pItem->Spawn();
-				pItem->Activate();
-			}
-	#ifdef SDK2013CE
-		}
-	#endif
 		break;
 	}
 

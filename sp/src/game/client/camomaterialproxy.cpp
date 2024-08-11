@@ -198,47 +198,6 @@ void CCamoMaterialProxy::GetColors( Vector &diffuseColor, Vector &baseColor, int
 	diffuseColor[0] = pow( diffuseColor[0], 1.0f / 2.2f );
 	diffuseColor[1] = pow( diffuseColor[1], 1.0f / 2.2f );
 	diffuseColor[2] = pow( diffuseColor[2], 1.0f / 2.2f );
-
-#if 0
-	Msg( "%f %f %f\n", 
-		diffuseColor[0], 
-		diffuseColor[1], 
-		diffuseColor[2] );
-#endif
-	
-#if 0
-	float max;
-	max = diffuseColor[0];
-	if( diffuseColor[1] > max )
-	{
-		max = diffuseColor[1];
-	}
-	if( diffuseColor[2] > max )
-	{
-		max = diffuseColor[2];
-	}
-	if( max > 1.0f )
-	{
-		max = 1.0f / max;
-		diffuseColor = diffuseColor * max;
-	}
-#else
-	if( diffuseColor[0] > 1.0f )
-	{
-		diffuseColor[0] = 1.0f;
-	}
-	if( diffuseColor[1] > 1.0f )
-	{
-		diffuseColor[1] = 1.0f;
-	}
-	if( diffuseColor[2] > 1.0f )
-	{
-		diffuseColor[2] = 1.0f;
-	}
-#endif
-	// hack
-	//baseColor = Vector( 1.0f, 1.0f, 1.0f );
-	//diffuseColor = Vector( 1.0f, 1.0f, 1.0f );
 }
 
 
@@ -249,20 +208,6 @@ void CCamoMaterialProxy::GenerateCamoTexture( ITexture* pTexture, IVTFTexture *p
 {
 	if (!m_pEnt)
 		return;
-
-#if 0
-	CamoInstanceData_t *pInstanceData;
-	pInstanceData = ( CamoInstanceData_t * )FindInstanceData( pEnt );
-	if( !pInstanceData )
-	{
-		pInstanceData = ( CamoInstanceData_t * )AllocateInstanceData( pEnt );
-		if( !pInstanceData )
-		{
-			return;
-		}
-		// init the instance data
-	}
-#endif
 
 	Vector entityPosition;
 	entityPosition = m_pEnt->GetAbsOrigin();
@@ -296,21 +241,9 @@ void CCamoMaterialProxy::GenerateCamoTexture( ITexture* pTexture, IVTFTexture *p
 	{
 		GetColors( diffuseColor[i], baseColor, i,
 			mins, maxsMinusMins, forward, right, up, entityPosition );
-#if 1
 		camoPalette[i][0] = diffuseColor[i][0] * baseColor[0] * 255.0f;
 		camoPalette[i][1] = diffuseColor[i][1] * baseColor[1] * 255.0f;
 		camoPalette[i][2] = diffuseColor[i][2] * baseColor[2] * 255.0f;
-#endif
-#if 0
-		camoPalette[i][0] = baseColor[0] * 255.0f;
-		camoPalette[i][1] = baseColor[1] * 255.0f;
-		camoPalette[i][2] = baseColor[2] * 255.0f;
-#endif
-#if 0
-		camoPalette[i][0] = diffuseColor[i][0] * 255.0f;
-		camoPalette[i][1] = diffuseColor[i][1] * 255.0f;
-		camoPalette[i][2] = diffuseColor[i][2] * 255.0f;
-#endif
 	}
 	
 	int width = pVTFTexture->Width();
@@ -372,18 +305,6 @@ void CCamoMaterialProxy::OnBind( C_BaseEntity *pEntity )
 
 void CCamoMaterialProxy::LoadCamoPattern( void )
 {
-#if 0
-	// hack - need to figure out a name to attach that isn't too long.
-	m_pCamoPatternImage = 
-		( unsigned char * )datacache->FindByName( &m_camoImageDataCache, "camopattern" );
-	
-	if( m_pCamoPatternImage )
-	{
-		// is already in the cache.
-		return m_pCamoPatternImage;
-	}
-#endif
-	
 	enum ImageFormat indexImageFormat;
 	int indexImageSize;
 #ifndef _XBOX
@@ -410,10 +331,6 @@ void CCamoMaterialProxy::LoadCamoPattern( void )
 	}
 	
 	indexImageSize = ImageLoader::GetMemRequired( m_CamoPatternWidth, m_CamoPatternHeight, 1, indexImageFormat, false );
-#if 0
-	m_pCamoPatternImage = ( unsigned char * )
-		datacache->Alloc( &m_camoImageDataCache, indexImageSize, "camopattern" );
-#endif
 	m_pCamoPatternImage = ( unsigned char * )new unsigned char[indexImageSize];
 	if( !m_pCamoPatternImage )
 	{

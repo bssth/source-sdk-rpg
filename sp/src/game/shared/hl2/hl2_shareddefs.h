@@ -47,3 +47,12 @@ enum
 
 
 #endif // HL2_SHAREDDEFS_H
+
+//----------------------------------------------------
+// Definitions for weapon slots
+//----------------------------------------------------
+#define	WEAPON_MELEE_SLOT			0
+#define	WEAPON_SECONDARY_SLOT		1
+#define	WEAPON_PRIMARY_SLOT			2
+#define	WEAPON_EXPLOSIVE_SLOT		3
+#define	WEAPON_TOOL_SLOT			4

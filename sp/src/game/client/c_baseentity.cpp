@@ -2147,15 +2147,6 @@ void C_BaseEntity::PreDataUpdate( DataUpdateType_t updateType )
 		Spawn();
 	}
 
-#if 0 // Yahn suggesting commenting this out as a fix to demo recording not working
-	// If the entity moves itself every FRAME on the server but doesn't update animtime,
-	// then use the current server time as the time for interpolation.
-	if ( IsSelfAnimating() )
-	{
-		m_flAnimTime = engine->GetLastTimeStamp();
-	}
-#endif
-
 	m_vecOldOrigin = GetNetworkOrigin();
 	m_vecOldAngRotation = GetNetworkAngles();
 
@@ -2829,10 +2820,6 @@ int CBaseEntity::BaseInterpolatePart1( float &currentTime, Vector &oldOrigin, QA
 	return INTERPOLATE_CONTINUE;
 }
 
-#if 0
-static ConVar cl_watchplayer( "cl_watchplayer", "-1", 0 );
-#endif
-
 void C_BaseEntity::BaseInterpolatePart2( Vector &oldOrigin, QAngle &oldAngles, Vector &oldVel, int nChangeFlags )
 {
 	if ( m_vecOrigin != oldOrigin )
@@ -2854,13 +2841,6 @@ void C_BaseEntity::BaseInterpolatePart2( Vector &oldOrigin, QAngle &oldAngles, V
 	{
 		InvalidatePhysicsRecursive( nChangeFlags );
 	}
-
-#if 0
-	if ( index == 1 )
-	{
-		SpewInterpolatedVar( &m_iv_vecOrigin, gpGlobals->curtime, GetInterpolationAmount( LATCH_SIMULATION_VAR ), true );
-	}
-#endif
 }
 
 
@@ -4740,16 +4720,6 @@ C_BaseEntity *C_BaseEntity::Instance( int iEnt )
 	return ClientEntityList().GetBaseEntity( iEnt );
 }
 
-#ifndef SDK2013CE
-
-#ifdef WIN32
-#pragma warning( push )
-#include <typeinfo.h>
-#pragma warning( pop )
-#endif
-
-#endif // !SDK2013CE
-
 //-----------------------------------------------------------------------------
 // Purpose: 
 // Output : char const
@@ -5060,18 +5030,7 @@ void C_BaseEntity::SetPredictionEligible( bool canpredict )
 //-----------------------------------------------------------------------------
 float C_BaseEntity::GetAttackDamageScale( void )
 {
-	float flScale = 1;
-// Not hooked up to prediction yet
-#if 0
-	FOR_EACH_LL( m_DamageModifiers, i )
-	{
-		if ( !m_DamageModifiers[i]->IsDamageDoneToMe() )
-		{
-			flScale *= m_DamageModifiers[i]->GetModifier();
-		}
-	}
-#endif
-	return flScale;
+	return 1;
 }
 
 #if !defined( NO_ENTITY_PREDICTION )
@@ -5095,14 +5054,6 @@ void C_BaseEntity::SetDormantPredictable( bool dormant )
 
 	m_bDormantPredictable = true;
 	m_nIncomingPacketEntityBecameDormant = prediction->GetIncomingPacketNumber();
-
-// Do we need to do the following kinds of things?
-#if 0
-	// Remove from collisions
-	SetSolid( SOLID_NOT );
-	// Don't render
-	AddEffects( EF_NODRAW );
-#endif
 #endif
 }
 

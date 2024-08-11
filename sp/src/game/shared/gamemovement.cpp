@@ -1136,8 +1136,7 @@ void CGameMovement::ProcessMovement( CBasePlayer *pPlayer, CMoveData *pMove )
 
 	float flStoreFrametime = gpGlobals->frametime;
 
-	//!!HACK HACK: Adrian - slow down all player movement by this factor.
-	//!!Blame Yahn for this one.
+	// Slow down all player movement by this factor.
 	gpGlobals->frametime *= pPlayer->GetLaggedMovementValue();
 
 	ResetGetPointContentsCache();
@@ -4191,11 +4190,6 @@ void CGameMovement::FinishUnDuckJump( trace_t &trace )
 //-----------------------------------------------------------------------------
 void CGameMovement::FinishDuck( void )
 {
-#ifndef SDK2013CE
-	if ( player->GetFlags() & FL_DUCKING )
-		return;
-#endif
-
 	player->AddFlag( FL_DUCKING );
 	player->m_Local.m_bDucked = true;
 	player->m_Local.m_bDucking = false;

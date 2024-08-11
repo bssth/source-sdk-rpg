@@ -1965,22 +1965,6 @@ int CNPC_Combine::SelectScheduleAttack()
 	// Can I shoot?
 	if ( HasCondition(COND_CAN_RANGE_ATTACK1) )
 	{
-
-		// JAY: HL1 behavior missing?
-#if 0
-		if ( m_pSquad )
-		{
-			// if the enemy has eluded the squad and a squad member has just located the enemy
-			// and the enemy does not see the squad member, issue a call to the squad to waste a 
-			// little time and give the player a chance to turn.
-			if ( MySquadLeader()->m_fEnemyEluded && !HasConditions ( bits_COND_ENEMY_FACING_ME ) )
-			{
-				MySquadLeader()->m_fEnemyEluded = FALSE;
-				return SCHED_GRUNT_FOUND_ENEMY;
-			}
-		}
-#endif
-
 		// Engage if allowed
 		if ( OccupyStrategySlotRange( SQUAD_SLOT_ATTACK1, SQUAD_SLOT_ATTACK2 ) )
 		{
@@ -2334,7 +2318,7 @@ void CNPC_Combine::HandleAnimEvent( animevent_t *pEvent )
 				// as having 0 grenades. By disabling this decrementor, yet enabling the code
 				// that makes sure the elite has grenades in order to fire a combine ball, we
 				// preserve the legacy behavior while making it possible for a designer to prevent
-				// elites from shooting combine balls by setting grenades to '0' in hammer. (sjb) EP2_OUTLAND_10
+				// elites from shooting combine balls by setting grenades to '0' in hammer.
 				// m_iNumGrenades--;
 			}
 
@@ -2557,11 +2541,7 @@ void CNPC_Combine::SpeakSentence( int sentenceType )
 //=========================================================
 // PainSound
 //=========================================================
-#ifdef SDK2013CE
 void CNPC_Combine::PainSound( const CTakeDamageInfo &info )
-#else
-void CNPC_Combine::PainSound ( void )
-#endif
 {
 	// NOTE: The response system deals with this at the moment
 	if ( GetFlags() & FL_DISSOLVING )
@@ -2776,17 +2756,6 @@ bool CNPC_Combine::CanThrowGrenade( const Vector &vecTarget )
 	if ( m_flGroundSpeed != 0 )
 		return false;
 
-#if 0
-	Vector vecEnemyLKP = GetEnemyLKP();
-	if ( !( GetEnemy()->GetFlags() & FL_ONGROUND ) && GetEnemy()->GetWaterLevel() == 0 && vecEnemyLKP.z > (GetAbsOrigin().z + WorldAlignMaxs().z)  )
-	{
-		//!!!BUGBUG - we should make this check movetype and make sure it isn't FLY? Players who jump a lot are unlikely to 
-		// be grenaded.
-		// don't throw grenades at anything that isn't on the ground!
-		return COND_NONE;
-	}
-#endif
-
 	// ---------------------------------------------------------------------
 	// Are any of my squad members near the intended grenade impact area?
 	// ---------------------------------------------------------------------
@@ -2874,7 +2843,6 @@ bool CNPC_Combine::CanAltFireEnemy( bool bUseFreeKnowledge )
 	if (gpGlobals->curtime < m_flNextGrenadeCheck )
 		return false;
 
-	// See Steve Bond if you plan on changing this next piece of code!! (SJB) EP2_OUTLAND_10
 	if (m_iNumGrenades < 1)
 		return false;
 

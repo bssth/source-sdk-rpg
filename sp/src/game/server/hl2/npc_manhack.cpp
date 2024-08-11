@@ -456,10 +456,6 @@ void CNPC_Manhack::TakeDamageFromPhyscannon( CBasePlayer *pPlayer )
 	flFactor = clamp( flFactor, 0.0f, 2.0f );
 	float flDamage = m_iMaxHealth * flFactor;
 
-#if 0
-	Msg("Doing %f damage for %f speed!\n", flDamage, flSpeed );
-#endif
-
 	info.SetDamage( flDamage );
 	TakeDamage( info );
 }
@@ -1998,28 +1994,6 @@ void CNPC_Manhack::MoveExecute_Alive(float flInterval)
 		angles.x = m_vCurrentBanking.x;
 		angles.z = m_vCurrentBanking.z;
 		angles.y = 0;
-
-#if 0
-		// Using our steering if we're not otherwise affecting our panels
-		if ( m_flEngineStallTime < gpGlobals->curtime && m_flBurstDuration < gpGlobals->curtime )
-		{
-			Vector delta( 10 * AngleDiff( m_vTargetBanking.x, m_vCurrentBanking.x ), -10 * AngleDiff( m_vTargetBanking.z, m_vCurrentBanking.z ), 0 );
-			//Vector delta( 3 * AngleNormalize( m_vCurrentBanking.x ), -4 * AngleNormalize( m_vCurrentBanking.z ), 0 );
-			VectorYawRotate( delta, -m_fHeadYaw, delta );
-
-			// DevMsg("%.0f %.0f\n", delta.x, delta.y );
-
-			SetPoseParameter( m_iPanel1, -delta.x - delta.y * 2);
-			SetPoseParameter( m_iPanel2, -delta.x + delta.y * 2);
-			SetPoseParameter( m_iPanel3,  delta.x + delta.y * 2);
-			SetPoseParameter( m_iPanel4,  delta.x - delta.y * 2);
-
-			//SetPoseParameter( m_iPanel1, -delta.x );
-			//SetPoseParameter( m_iPanel2, -delta.x );
-			//SetPoseParameter( m_iPanel3, delta.x );
-			//SetPoseParameter( m_iPanel4, delta.x );
-		}
-#endif
 	}
 
 	// SetLocalAngles( angles );

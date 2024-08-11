@@ -169,7 +169,7 @@ int AE_FASTZOMBIE_CLIMB_RIGHT;
 //=========================================================
 enum 
 {
-	TASK_FASTZOMBIE_DO_ATTACK = LAST_SHARED_TASK + 100,	// again, my !!!HACKHACK
+	TASK_FASTZOMBIE_DO_ATTACK = LAST_SHARED_TASK + 100,
 	TASK_FASTZOMBIE_LAND_RECOVER,
 	TASK_FASTZOMBIE_UNSTICK_JUMP,
 	TASK_FASTZOMBIE_JUMP_BACK,
@@ -572,7 +572,6 @@ void CFastZombie::SoundInit( void )
 {
 	if( !m_pMoanSound )
 	{
-		// !!!HACKHACK - kickstart the moan sound. (sjb)
 		MoanSound( envFastZombieMoanVolume, ARRAYSIZE( envFastZombieMoanVolume ) );
 
 		// Clear the commands that the base class gave the moaning sound channel.
@@ -1782,7 +1781,7 @@ void CFastZombie::OnStateChange( NPC_STATE OldState, NPC_STATE NewState )
 	{
 		SetAngrySoundState();
 	}
-	else if( (m_pMoanSound) && ( NewState == NPC_STATE_IDLE || NewState == NPC_STATE_ALERT ) ) ///!!!HACKHACK - sjb
+	else if( (m_pMoanSound) && ( NewState == NPC_STATE_IDLE || NewState == NPC_STATE_ALERT ) )
 	{
 		// Don't make this sound while we're slumped
 		if ( IsSlumped() == false )
@@ -1805,40 +1804,6 @@ void CFastZombie::Event_Killed( const CTakeDamageInfo &info )
 	EmitSound( filter, entindex(), "NPC_FastZombie.NoSound" );
 
 	CTakeDamageInfo dInfo = info;
-
-#if 0
-
-	// Become a server-side ragdoll and create a constraint at the hand
-	if ( m_PassengerBehavior.GetPassengerState() == PASSENGER_STATE_INSIDE )
-	{
-		IPhysicsObject *pVehiclePhys = m_PassengerBehavior.GetTargetVehicle()->GetServerVehicle()->GetVehicleEnt()->VPhysicsGetObject();
-		CBaseAnimating *pVehicleAnimating = m_PassengerBehavior.GetTargetVehicle()->GetServerVehicle()->GetVehicleEnt()->GetBaseAnimating();
-		int nRightHandBone = 31;//GetBaseAnimating()->LookupBone( "ValveBiped.Bip01_R_Finger2" );
-		Vector vecRightHandPos;
-		QAngle vecRightHandAngle;
-		GetAttachment( LookupAttachment( "Blood_Right" ), vecRightHandPos, vecRightHandAngle );
-		//CTakeDamageInfo dInfo( GetEnemy(), GetEnemy(), RandomVector( -200, 200 ), WorldSpaceCenter(), 50.0f, DMG_CRUSH );
-		dInfo.SetDamageType( info.GetDamageType() | DMG_REMOVENORAGDOLL );
-		dInfo.ScaleDamageForce( 10.0f );
-		CBaseEntity *pRagdoll = CreateServerRagdoll( GetBaseAnimating(), 0, info, COLLISION_GROUP_DEBRIS );
-
-		/*
-		GetBaseAnimating()->GetBonePosition( nRightHandBone, vecRightHandPos, vecRightHandAngle );
-
-		CBaseEntity *pRagdoll = CreateServerRagdollAttached(	GetBaseAnimating(), 
-																vec3_origin, 
-																-1, 
-																COLLISION_GROUP_DEBRIS, 
-																pVehiclePhys,
-																pVehicleAnimating, 
-																0, 
-																vecRightHandPos,
-																nRightHandBone,	
-																vec3_origin );*/
-
-	}
-#endif
-
 	BaseClass::Event_Killed( dInfo );
 }
 

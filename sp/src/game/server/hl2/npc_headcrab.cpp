@@ -904,17 +904,6 @@ bool CBaseHeadcrab::HasHeadroom()
 	trace_t tr;
 	UTIL_TraceEntity( this, GetAbsOrigin(), GetAbsOrigin() + Vector( 0, 0, 1 ), MASK_NPCSOLID, this, GetCollisionGroup(), &tr );
 
-#if 0
-	if( tr.fraction == 1.0f )
-	{
-		Msg("Headroom\n");
-	}
-	else
-	{
-		Msg("NO Headroom\n");
-	}
-#endif
-
 	return (tr.fraction == 1.0);
 }
 
@@ -2589,7 +2578,6 @@ void CFastHeadcrab::DeathSound( const CTakeDamageInfo &info )
 //-----------------------------------------------------------------------------
 void CFastHeadcrab::PrescheduleThink( void )
 {
-#if 1 // #IF 0 this to stop the accelrating/decelerating movement.
 #define HEADCRAB_ACCELERATION 0.1
 	if( IsAlive() && GetNavigator()->IsGoalActive() )
 	{
@@ -2666,7 +2654,6 @@ void CFastHeadcrab::PrescheduleThink( void )
 	{
 		m_flPauseTime = gpGlobals->curtime - 1;
 	}
-#endif
 
 	BaseClass::PrescheduleThink();
 }

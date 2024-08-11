@@ -494,9 +494,6 @@ CAI_Hint *CAI_ActBusyBehavior::FindActBusyHintNode()
 
 //-----------------------------------------------------------------------------
 // Purpose: Find a node for me to combat act busy.
-//
-// Right now, all of this work assumes the actbusier is a player ally and
-// wants to fight near the player a'la Alyx in ep2_outland_10.
 //-----------------------------------------------------------------------------
 CAI_Hint *CAI_ActBusyBehavior::FindCombatActBusyHintNode()
 {
@@ -1173,8 +1170,7 @@ int CAI_ActBusyBehavior::SelectScheduleWhileNotBusy( int iBase )
 					// Looks like I've tried several times to find a path to a valid hint node and
 					// haven't been able to. This means I'm on a patch of node graph that simply
 					// does not connect to any hint nodes that match my criteria. So try to find
-					// a node that's safe to teleport to. (sjb) ep2_outland_10 (Alyx)
-					// (Also, I must not be in the player's viewcone)
+					// a node that's safe to teleport to.
 					pNode = FindCombatActBusyTeleportHintNode();
 					bForceTeleport = true;
 				}

@@ -2614,40 +2614,10 @@ void CNPC_Vortigaunt::SetScriptedScheduleIgnoreConditions( Interruptability_t in
  		SetIgnoreConditions( g_VortConditions, ARRAYSIZE(g_VortConditions) );
 }
 
-//-----------------------------------------------------------------------------
-// !!!HACKHACK - EP2 - Stop vortigaunt taking all physics damage to prevent it dying
-// in freak accidents resembling spontaneous stress damage death (which are now impossible)
-// Also stop it taking damage from flames: Fixes it being burnt to death from entity flames
-// attached to random debris chunks while inside scripted sequences.
-//-----------------------------------------------------------------------------
 int CNPC_Vortigaunt::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 {
 	if( info.GetDamageType() & (DMG_CRUSH | DMG_BURN) )
 		return 0;
-
-	// vital vortigaunts (eg the vortigoth in ep2) take less damage from explosions
-	// so that zombines don't blow them up disappointingly. They take less damage
-	// still from antlion workers.
-	if ( Classify() == CLASS_PLAYER_ALLY_VITAL )
-	{
-		// half damage
-		CTakeDamageInfo subInfo = info;
-
-		// take less damage from antlion worker acid/poison
-		if ( info.GetAttacker()->Classify() == CLASS_ANTLION          &&
-			 (info.GetDamageType() & ( DMG_ACID | DMG_POISON ))!=0
-			)
-		{
-			subInfo.ScaleDamage( sk_vortigaunt_vital_antlion_worker_dmg.GetFloat() );
-		}
-
-		else if ( info.GetDamageType() & DMG_BLAST )
-		{
-			subInfo.ScaleDamage( 0.5f );
-		}
-
-		return BaseClass::OnTakeDamage_Alive( subInfo );
-	}
 
 	return BaseClass::OnTakeDamage_Alive( info );
 }

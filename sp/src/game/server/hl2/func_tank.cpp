@@ -82,12 +82,9 @@ BEGIN_DATADESC( CFuncTank )
 	DEFINE_FIELD( m_iAmmoType, FIELD_INTEGER ),
 #endif // HL2_EPISODIC
 
-//Hl2 fix
-#ifdef SDK2013CE
 	DEFINE_FIELD( m_iSmallAmmoType, FIELD_INTEGER ),
 	DEFINE_FIELD( m_iMediumAmmoType, FIELD_INTEGER ),
 	DEFINE_FIELD( m_iLargeAmmoType, FIELD_INTEGER ),
-#endif
 
 	DEFINE_KEYFIELD( m_soundStartRotate, FIELD_SOUNDNAME, "rotatestartsound" ),
 	DEFINE_KEYFIELD( m_soundStopRotate, FIELD_SOUNDNAME, "rotatestopsound" ),
@@ -2474,7 +2471,6 @@ void CFuncTankGun::Fire( int bulletCount, const Vector &barrelEnd, const Vector 
 #endif // HL2_EPISODIC
 
 //HL2 base fix
-#ifdef SDK2013CE
 	else
 	{
 		for (i = 0; i < bulletCount; i++)
@@ -2502,8 +2498,6 @@ void CFuncTankGun::Fire( int bulletCount, const Vector &barrelEnd, const Vector 
 			}
 		}
 	}
-	
-#endif // HL2_EPISODIC
 
 	CFuncTank::Fire( bulletCount, barrelEnd, forward, pAttacker, bIgnoreSpread );
 }

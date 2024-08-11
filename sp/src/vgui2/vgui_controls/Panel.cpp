@@ -864,10 +864,6 @@ const char *Panel::GetClassName()
 //-----------------------------------------------------------------------------
 void Panel::SetPos(int x, int y)
 {
-	if (!CommandLine()->FindParm("-hushasserts"))
-	{
-		Assert( abs(x) < 32768 && abs(y) < 32768 );
-	}
 	ipanel()->SetPos(GetVPanel(), x, y);
 }
 

@@ -152,17 +152,6 @@ int CNPC_Monk::GetSoundInterests()
 //-----------------------------------------------------------------------------
 void CNPC_Monk::BuildScheduleTestBits( void )
 {
-	// FIXME: we need a way to make scenes non-interruptible
-#if 0
-	if ( IsCurSchedule( SCHED_RANGE_ATTACK1 ) || IsCurSchedule( SCHED_SCENE_GENERIC ) )
-	{
-		ClearCustomInterruptCondition( COND_LIGHT_DAMAGE );
-		ClearCustomInterruptCondition( COND_HEAVY_DAMAGE );
-		ClearCustomInterruptCondition( COND_NEW_ENEMY );
-		ClearCustomInterruptCondition( COND_HEAR_DANGER );
-	}
-#endif
-
 	// Don't interrupt while shooting the gun
 	const Task_t* pTask = GetTask();
 	if ( pTask && (pTask->iTask == TASK_RANGE_ATTACK1) )

@@ -22,6 +22,7 @@ $Group "game"
 	"server"
 	"tier1"
 	"vgui_controls"
+	"gamepadui"
 }
 
 $Group "shaders"
@@ -56,6 +57,7 @@ $Group "everything"
 	"vvis_dll"
 	"vvis_launcher"
 	"togl"
+	"gamepadui"
 }
 
 $Group "dedicated"
@@ -64,4 +66,3 @@ $Group "dedicated"
 	"server"
 	"tier1"
 }
-

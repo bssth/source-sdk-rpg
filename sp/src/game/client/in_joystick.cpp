@@ -25,9 +25,6 @@
 #include "tier0/icommandline.h"
 #include "inputsystem/iinputsystem.h"
 #include "inputsystem/ButtonCode.h"
-#ifndef SDK2013CE
-#include "math.h"
-#endif // !SDK2013CE
 #include "tier1/convar_serverbounded.h"
 #include "cam_thirdperson.h"
 

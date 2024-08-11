@@ -911,8 +911,6 @@ int CNPC_BaseZombie::OnTakeDamage_Alive( const CTakeDamageInfo &inputInfo )
 
 	if( tookDamage > 0 && (info.GetDamageType() & (DMG_BURN|DMG_DIRECT)) && m_ActBusyBehavior.IsActive() ) 
 	{
-		//!!!HACKHACK- Stuff a light_damage condition if an actbusying zombie takes direct burn damage. This will cause an
-		// ignited zombie to 'wake up' and rise out of its actbusy slump. (sjb)
 		SetCondition( COND_LIGHT_DAMAGE );
 	}
 
@@ -2003,21 +2001,6 @@ void CNPC_BaseZombie::GatherConditions( void )
 void CNPC_BaseZombie::PrescheduleThink( void )
 {
 	BaseClass::PrescheduleThink();
-	
-#if 0
-	DevMsg(" ** %d Angry Zombies **\n", s_iAngryZombies );
-#endif
-
-#if 0
-	if( m_NPCState == NPC_STATE_COMBAT )
-	{
-		// Zombies should make idle sounds in combat
-		if( random->RandomInt( 0, 30 ) == 0 )
-		{
-			IdleSound();
-		}
-	}	
-#endif 
 
 	//
 	// Cool off if we aren't burned for five seconds or so. 

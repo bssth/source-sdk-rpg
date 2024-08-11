@@ -15,6 +15,7 @@
 #include "simtimer.h"
 #include "soundenvelope.h"
 #include "singleplayer_animstate.h"
+#include "hl2_shareddefs.h"
 
 class CAI_Squad;
 class CPropCombineBall;
@@ -42,15 +43,6 @@ struct commandgoal_t
 
 // Time between checks to determine whether NPCs are illuminated by the flashlight
 #define FLASHLIGHT_NPC_CHECK_INTERVAL	0.4
-
-//----------------------------------------------------
-// Definitions for weapon slots
-//----------------------------------------------------
-#define	WEAPON_MELEE_SLOT			0
-#define	WEAPON_SECONDARY_SLOT		1
-#define	WEAPON_PRIMARY_SLOT			2
-#define	WEAPON_EXPLOSIVE_SLOT		3
-#define	WEAPON_TOOL_SLOT			4
 
 //=============================================================================
 //=============================================================================

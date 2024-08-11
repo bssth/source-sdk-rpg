@@ -1515,7 +1515,6 @@ private:
 	DECLARE_DATADESC();
 
 	friend class CAI_HunterEscortBehavior;
-	friend class CHunterMaker;
 
 	bool	m_bInLargeOutdoorMap;
 	float	m_flTimeSawEnemyAgain;
@@ -1723,11 +1722,6 @@ void CNPC_Hunter::Precache()
 	UTIL_PrecacheOther( "sparktrail" );
 
 	m_bInLargeOutdoorMap = false;
-	if( !Q_strnicmp( STRING(gpGlobals->mapname), "ep2_outland_12", 14) )
-	{
-		m_bInLargeOutdoorMap = true;
-	}
-
 	BaseClass::Precache();
 }
 
@@ -6239,7 +6233,7 @@ bool CNPC_Hunter::ShootFlechette( CBaseEntity *pTargetEntity, bool bSingleShot )
 	if( IsUsingSiegeTargets() && nShotNum >= 2 && (nShotNum % 2) == 0 )
 	{
 		// Near perfect accuracy for these three shots, so they are likely to fly right into the windows.
-		// NOTE! In siege behavior in the map that this behavior was designed for (ep2_outland_10), the
+		// NOTE! In siege behavior in the map that this behavior was designed for, the
 		// Hunters will only ever shoot at siege targets in siege mode. If you allow Hunters in siege mode
 		// to attack players or other NPCs, this accuracy bonus will apply unless we apply a bit more logic to it.
 		vecShoot = manipulator.ApplySpread( VECTOR_CONE_1DEGREES * 0.5, 1.0f );
@@ -7084,61 +7078,6 @@ void Hunter_StriderBusterDetached( CBaseEntity *pHunter, CBaseEntity *pAttached 
 
 	static_cast<CNPC_Hunter *>(pHunter)->StriderBusterDetached(pAttached);
 }
-
-//-------------------------------------------------------------------------------------------------
-//
-// ep2_outland_12 custom npc makers
-//
-//-------------------------------------------------------------------------------------------------
-
-class CHunterMaker : public CTemplateNPCMaker
-{
-	typedef CTemplateNPCMaker BaseClass;
-public:
-	void MakeMultipleNPCS( int nNPCs )
-	{
-		const float MIN_HEALTH_PCT = 0.2;
-
-		CUtlVector<CNPC_Hunter *> candidates;
-		CUtlVectorFixed<CNPC_Hunter *, 3> freeHunters;
-		CAI_HunterEscortBehavior::FindFreeHunters( &candidates );
-
-		freeHunters.EnsureCapacity( 3 );
-		int i;
-
-		for ( i = 0; i < candidates.Count() && freeHunters.Count() < 3; i++ )
-		{
-			if ( candidates[i]->GetHealth() > candidates[i]->GetMaxHealth() * MIN_HEALTH_PCT )
-			{
-				freeHunters.AddToTail( candidates[i] );
-			}
-		}
-
-		int nRequested = nNPCs;
-		if ( nNPCs < 3 )
-		{
-			nNPCs = MIN( 3, nNPCs + freeHunters.Count() );
-		}
-
-		int nSummoned = 0;
-		for ( i = 0; i < freeHunters.Count() && nNPCs; i++ )
-		{
-			freeHunters[i]->m_EscortBehavior.SetFollowTarget( this ); // this will make them not "free"
-			freeHunters[i]->SetName( m_iszTemplateName ); // this will force the hunter to get the FollowStrider input
-			nNPCs--;
-			nSummoned++;
-		}
-
-		DevMsg( "Requested %d to spawn, Summoning %d free hunters, spawning %d new hunters\n", nRequested, nSummoned, nNPCs );
-		if ( nNPCs )
-		{
-			BaseClass::MakeMultipleNPCS( nNPCs );
-		}
-	}
-};
-
-LINK_ENTITY_TO_CLASS( npc_hunter_maker, CHunterMaker );
-
 
 //-------------------------------------------------------------------------------------------------
 //
