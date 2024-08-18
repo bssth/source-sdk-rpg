@@ -58,7 +58,7 @@ void CHudWeapon::ApplySchemeSettings( IScheme *scheme )
 
 	SetPaintBackgroundEnabled( false );
 
-	m_pCrosshair = GET_HUDELEMENT( CHudCrosshair );
+	// m_pCrosshair = GET_HUDELEMENT( CHudCrosshair );
 	//Assert( m_pCrosshair );
 }
 

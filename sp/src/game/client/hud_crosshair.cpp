@@ -36,11 +36,7 @@ using namespace vgui;
 
 int ScreenTransform( const Vector& point, Vector& screen );
 
-#ifdef TF_CLIENT_DLL
-// If running TF, we use CHudTFCrosshair instead (which is derived from CHudCrosshair)
-#else
 DECLARE_HUDELEMENT( CHudCrosshair );
-#endif
 
 CHudCrosshair::CHudCrosshair( const char *pElementName ) :
 		CHudElement( pElementName ), BaseClass( NULL, "HudCrosshair" )
