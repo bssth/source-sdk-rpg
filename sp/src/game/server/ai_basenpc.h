@@ -1617,6 +1617,7 @@ public:
 	virtual bool		IsSilentSquadMember() const 	{ return false; }
 
 	int					NumWeaponsInSquad( const char *pszWeaponClassname );
+	void				MakeSquadRevenge(CBaseEntity* pEntity);
 
 	string_t			GetHintGroup( void )			{ return m_strHintGroup;		}
 	void				ClearHintGroup( void )			{ SetHintGroup( NULL_STRING );	}

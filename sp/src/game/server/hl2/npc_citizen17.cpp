@@ -2139,8 +2139,12 @@ int CNPC_Citizen::OnTakeDamage_Alive(const CTakeDamageInfo& info)
 				// FIXME: add timer
 				DevMsg("Citizen %s is now angry with player\n", GetDebugName());
 				m_isAngryToPlayer = true;
-				AddEntityRelationship(attacker, D_HT, 1);
-				SetEnemy(attacker);
+				AddEntityRelationship(pPlayer, D_HT, 1);
+				if (IsInSquad())
+				{
+					MakeSquadRevenge(pPlayer);
+				}
+				SetEnemy(pPlayer);
 				SetState(NPC_STATE_COMBAT);
 			}
 		}

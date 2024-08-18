@@ -290,3 +290,20 @@ int CAI_BaseNPC::NumWeaponsInSquad( const char *pszWeaponClassname )
 
 	return count;
 }
+
+// If player damaged a squadmate, add the player to the hate list
+void CAI_BaseNPC::MakeSquadRevenge(CBaseEntity* pEntity)
+{
+	if (!GetSquad())
+	{
+		return;
+	}
+
+	AISquadIter_t iter;
+	CAI_BaseNPC* pSquadmate = m_pSquad->GetFirstMember(&iter);
+	while (pSquadmate)
+	{
+		pSquadmate->AddEntityRelationship(pEntity, D_HT, 1);
+		pSquadmate = m_pSquad->GetNextMember(&iter);
+	}
+}
