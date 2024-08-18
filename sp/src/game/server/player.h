@@ -802,6 +802,11 @@ public:
 		}
 	}
 
+	// For the player to react to events (usually speak some lines)
+	virtual void PlayerReactSpeak(int eventType) {
+		return;
+	}
+
 private:
 	// How much of a movement time buffer can we process from this user?
 	float				m_flMovementTimeForUserCmdProcessingRemaining;
@@ -906,8 +911,6 @@ protected:
 	void					CalcViewModelView( const Vector& eyeOrigin, const QAngle& eyeAngles);
 
 	virtual	void			Internal_HandleMapEvent( inputdata_t &inputdata ){}
-
-	// FIXME: Make these private! (tf_player uses them)
 
 	// Secondary point to derive PVS from when zoomed in with binoculars/sniper rifle.  The PVS is 
 	//  a merge of the standing origin and this additional origin
@@ -1548,6 +1551,13 @@ enum
 	VEHICLE_ANALOG_BIAS_NONE = 0,
 	VEHICLE_ANALOG_BIAS_FORWARD,
 	VEHICLE_ANALOG_BIAS_REVERSE,
+};
+
+enum
+{
+	PLAYER_REACTION_NONE = 0,
+	PLAYER_REACTION_WEAPON,
+	PLAYER_REACTION_DIE
 };
 
 #endif // PLAYER_H

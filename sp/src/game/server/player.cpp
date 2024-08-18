@@ -185,8 +185,8 @@ ConVar	sk_player_stomach( "sk_player_stomach","1" );
 ConVar	sk_player_arm( "sk_player_arm","1" );
 ConVar	sk_player_leg( "sk_player_leg","1" );
 
+// TODO: base values on items in inventory
 // player regeneration
-ConVar sv_regeneration("sv_regeneration", "1", FCVAR_REPLICATED);
 ConVar sv_regeneration_wait_time("sv_regeneration_wait_time", "1.0", FCVAR_REPLICATED);
 ConVar sv_regeneration_rate("sv_regeneration_rate", "0.5", FCVAR_REPLICATED);
 ConVar sv_hev_sounds("sv_hev_sounds", "0", FCVAR_REPLICATED);
@@ -829,8 +829,6 @@ int TrainSpeed(int iSpeed, int iMax)
 
 void CBasePlayer::DeathSound( const CTakeDamageInfo &info )
 {
-	// temporarily using pain sounds for death sounds
-
 	// Did we die from falling?
 	if ( m_bitsDamageType & DMG_FALL )
 	{
@@ -839,7 +837,7 @@ void CBasePlayer::DeathSound( const CTakeDamageInfo &info )
 	}
 	else
 	{
-		EmitSound( "Player.Death" );
+		PlayerReactSpeak(PLAYER_REACTION_DIE);
 	}
 
 	// play one of the suit death alarms
@@ -1016,6 +1014,7 @@ void CBasePlayer::DamageEffect(float flDamage, int fDamageType)
 	}
 	else if ( fDamageType & DMG_BULLET )
 	{
+		// add ArmorFlesh.BulletImpact for armored?
 		EmitSound( "Flesh.BulletImpact" );
 	}
 }
@@ -4562,7 +4561,6 @@ void CBasePlayer::PostThink()
 				if (m_Local.m_flFallVelocity > 64 && !g_pGameRules->IsMultiplayer())
 				{
 					CSoundEnt::InsertSound ( SOUND_PLAYER, GetAbsOrigin(), m_Local.m_flFallVelocity, 0.2, this );
-					// Msg( "fall %f\n", m_Local.m_flFallVelocity );
 				}
 				m_Local.m_flFallVelocity = 0;
 			}
@@ -4624,10 +4622,11 @@ void CBasePlayer::PostThink()
 #endif
 
 	// Regenerate heath
-	if (IsAlive() && GetHealth() < GetMaxHealth() && (sv_regeneration.GetInt() == 1))
+	if (IsAlive() && GetHealth() < (GetMaxHealth()/3))
 	{
 		// Color to overlay on the screen while the player is taking damage
-		color32 hurtScreenOverlay = { 80,0,0,64 };
+		color32 hurtScreenOverlay = { 255,0,0,128 };
+		color32 regenerateScreenOverlay = { 80,150,0,10 };
 
 		if (gpGlobals->curtime > m_fTimeLastHurt + sv_regeneration_wait_time.GetFloat())
 		{
@@ -4636,13 +4635,16 @@ void CBasePlayer::PostThink()
 
 			if (m_fRegenRemander >= 1)
 			{
+				// Show green overlay when regenerating health
+				UTIL_ScreenFade(this, regenerateScreenOverlay, sv_regeneration_wait_time.GetFloat(), 0.1f, FFADE_IN | FFADE_PURGE);
 				TakeHealth(m_fRegenRemander, DMG_GENERIC);
 				m_fRegenRemander = 0;
 			}
 		}
 		else
 		{
-			UTIL_ScreenFade(this, hurtScreenOverlay, 1.0f, 0.1f, FFADE_IN | FFADE_PURGE);
+			// Show red overlay when taking damage
+			UTIL_ScreenFade(this, hurtScreenOverlay, 3.0f, 1.0f, FFADE_IN | FFADE_PURGE);
 		}
 	}
 }
@@ -5095,7 +5097,6 @@ void CBasePlayer::Precache( void )
 
 
 	PrecacheScriptSound( "Player.FallGib" );
-	PrecacheScriptSound( "Player.Death" );
 	PrecacheScriptSound( "Player.PlasmaDamage" );
 	PrecacheScriptSound( "Player.SonicDamage" );
 	PrecacheScriptSound( "Player.DrownStart" );
@@ -5110,24 +5111,6 @@ void CBasePlayer::Precache( void )
 	PrecacheParticleSystem( "slime_splash_02" );
 	PrecacheParticleSystem( "slime_splash_03" );
 #endif
-
-	// in the event that the player JUST spawned, and the level node graph
-	// was loaded, fix all of the node graph pointers before the game starts.
-	
-	// !!!BUGBUG - now that we have multiplayer, this needs to be moved!
-	/* todo - put in better spot and use new ainetowrk stuff
-	if ( WorldGraph.m_fGraphPresent && !WorldGraph.m_fGraphPointersSet )
-	{
-		if ( !WorldGraph.FSetGraphPointers() )
-		{
-			Msg( "**Graph pointers were not set!\n");
-		}
-		else
-		{
-			Msg( "**Graph Pointers Set!\n" );
-		} 
-	}
-	*/
 
 	// SOUNDS / MODELS ARE PRECACHED in ClientPrecache() (game specific)
 	// because they need to precache before any clients have connected

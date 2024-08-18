@@ -311,18 +311,17 @@ void ClientPrecache( void )
 	CBaseEntity::PrecacheModel( "sprites/purpleglow1.vmt" );	
 	CBaseEntity::PrecacheModel( "sprites/purplelaser1.vmt" );	
 	
-#ifndef HL2MP
-	CBaseEntity::PrecacheScriptSound( "Hud.Hint" );
-#endif // HL2MP
+	CBaseEntity::PrecacheScriptSound( "HUDQuickInfo.LowHealth" );
 	CBaseEntity::PrecacheScriptSound( "Player.FallDamage" );
 	CBaseEntity::PrecacheScriptSound( "Player.Swim" );
 
-	// General HUD sounds
-	CBaseEntity::PrecacheScriptSound( "Player.PickupWeapon" );
+	// General HUD sounds and speeches
+	CBaseEntity::PrecacheScriptSound( "npc_citizen.finally" );
 	CBaseEntity::PrecacheScriptSound( "Player.DenyWeaponSelection" );
 	CBaseEntity::PrecacheScriptSound( "Player.WeaponSelected" );
 	CBaseEntity::PrecacheScriptSound( "Player.WeaponSelectionClose" );
 	CBaseEntity::PrecacheScriptSound( "Player.WeaponSelectionMoveSlot" );
+	CBaseEntity::PrecacheScriptSound( "npc_citizen.die" );
 
 	// General legacy temp ents sounds
 	CBaseEntity::PrecacheScriptSound( "Bounce.Glass" );
@@ -988,6 +987,15 @@ void CC_Player_Use( const CCommand &args )
 }
 static ConCommand use("use", CC_Player_Use, "Use a particular weapon\t\nArguments: <weapon_name>");
 
+void CC_Player_Speak(const CCommand& args)
+{
+	CBasePlayer* pPlayer = ToBasePlayer(UTIL_GetCommandClient());
+	if (pPlayer)
+	{
+		pPlayer->PlayerReactSpeak(atoi(args[1]));
+	}
+}
+static ConCommand player_speakuse("player_speak", CC_Player_Speak, "Send speak event");
 
 //------------------------------------------------------------------------------
 // A small wrapper around SV_Move that never clips against the supplied entity.

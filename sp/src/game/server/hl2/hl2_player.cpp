@@ -287,6 +287,7 @@ BEGIN_DATADESC( CHL2_Player )
 	DEFINE_FIELD( m_flTimeAllSuitDevicesOff, FIELD_TIME ),
 	DEFINE_FIELD( m_fIsSprinting, FIELD_BOOLEAN ),
 	DEFINE_FIELD( m_fIsWalking, FIELD_BOOLEAN ),
+	DEFINE_FIELD(m_flLastWeaponReaction, FIELD_TIME),
 
 	/*
 	// These are initialized every time the player calls Activate()
@@ -3693,6 +3694,38 @@ const impactdamagetable_t &CHL2_Player::GetPhysicsImpactDamageTable()
 		return gCappedPlayerImpactDamageTable;
 	
 	return BaseClass::GetPhysicsImpactDamageTable();
+}
+
+// Speeches for player reactions to events
+void CHL2_Player::PlayerReactSpeak(int eventType)
+{
+	Assert(eventType > 0);
+
+	if (eventType <= 0) {
+		DevMsg("PlayerReactSpeak: Bad event [<= 0]\n");
+		return;
+	}
+
+	DevMsg("[Player] Speak event: %d\n", eventType);
+
+	//npc_citizen.fantastic01
+	switch (eventType)
+	{
+		case PLAYER_REACTION_WEAPON:
+			if (gpGlobals->curtime > m_flLastWeaponReaction + 5.0f)
+			{
+				DevMsg("Player: finally [new gun]\n");
+				EmitSound("npc_citizen.finally");
+				m_flLastWeaponReaction = gpGlobals->curtime;
+			}
+			break;
+		case PLAYER_REACTION_DIE:
+			DevMsg("Player: I'm dead :(\n");
+			EmitSound("npc_citizen.die");
+			break;
+		default:
+			DevMsg("PlayerReactSpeak: Bad event\n");
+	}
 }
 
 

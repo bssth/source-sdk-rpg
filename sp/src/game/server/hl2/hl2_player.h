@@ -104,6 +104,9 @@ public:
 
 	virtual bool		ClientCommand( const CCommand &args );
 
+	virtual void		PlayerReactSpeak(int eventType);
+	float				m_flLastWeaponReaction = 0;
+
 	// from cbasecombatcharacter
 	void				InitVCollision( const Vector &vecAbsOrigin, const Vector &vecAbsVelocity );
 	WeaponProficiency_t CalcWeaponProficiency( CBaseCombatWeapon *pWeapon );
