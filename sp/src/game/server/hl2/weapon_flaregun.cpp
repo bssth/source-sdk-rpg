@@ -154,6 +154,7 @@ void CFlare::Precache( void )
 	PrecacheModel("models/weapons/flare.mdl" );
 
 	PrecacheScriptSound( "Weapon_FlareGun.Burn" );
+	PrecacheScriptSound( "Weapon_FlareGun.Single" );
 
   	// FIXME: needed to precache the fire model.  Shouldn't have to do this.
   	UTIL_PrecacheOther( "_firesmoke" );
@@ -385,26 +386,9 @@ void CFlare::FlareTouch( CBaseEntity *pOther )
 		g_pEffects->Sparks( GetAbsOrigin() );
 	}
 
-	//If the flare hit a person or NPC, do damage here.
+	// If the flare hit a person or NPC, do damage here.
 	if ( pOther && pOther->m_takedamage )
 	{
-		/*
-			The Flare is the iRifle round right now. No damage, just ignite. (sjb)
-
-		//Damage is a function of how fast the flare is flying.
-		int iDamage = GetAbsVelocity().Length() / 50.0f;
-
-		if ( iDamage < 5 )
-		{
-			//Clamp minimum damage
-			iDamage = 5;
-		}
-
-		//Use m_pOwner, not GetOwnerEntity()
-		pOther->TakeDamage( CTakeDamageInfo( this, m_pOwner, iDamage, (DMG_BULLET|DMG_BURN) ) );
-		m_flNextDamage = gpGlobals->curtime + 1.0f;
-		*/
-
 		CBaseAnimating *pAnim;
 
 		pAnim = dynamic_cast<CBaseAnimating*>(pOther);
@@ -419,61 +403,45 @@ void CFlare::FlareTouch( CBaseEntity *pOther )
 
 		SetMoveType( MOVETYPE_FLYGRAVITY, MOVECOLLIDE_FLY_BOUNCE );
 		SetGravity(1.0f);
-
-
 		Die( 0.5 );
-
 		return;
 	}
 	else
 	{
-		// hit the world, check the material type here, see if the flare should stick.
+		// Hit the world, check the material type here, see if the flare should stick.
 		trace_t tr;
 		tr = CBaseEntity::GetTouchTrace();
 
-		//Only do this on the first bounce
+		// Only do this on the first bounce
 		if ( m_nBounces == 0 )
 		{
 			const surfacedata_t *pdata = physprops->GetSurfaceData( tr.surface.surfaceProps );	
 
 			if ( pdata != NULL )
 			{
-				//Only embed into concrete and wood (jdw: too obscure for players?)
-				//if ( ( pdata->gameMaterial == 'C' ) || ( pdata->gameMaterial == 'W' ) )
+				RemoveSolidFlags(FSOLID_NOT_SOLID);
+				AddSolidFlags(FSOLID_TRIGGER);
+				UTIL_SetOrigin(this, tr.endpos + (tr.plane.normal * 2.0f));
+				SetAbsVelocity(vec3_origin);
+				SetMoveType(MOVETYPE_NONE);
+
+				SetTouch(&CFlare::FlareBurnTouch);
+
+				int index = decalsystem->GetDecalIndexForName("SmallScorch");
+				if (index >= 0)
 				{
-					Vector	impactDir = ( tr.endpos - tr.startpos );
-					VectorNormalize( impactDir );
-
-					float	surfDot = tr.plane.normal.Dot( impactDir );
-
-					//Do not stick to ceilings or on shallow impacts
-					if ( ( tr.plane.normal.z > -0.5f ) && ( surfDot < -0.9f ) )
-					{
-						RemoveSolidFlags( FSOLID_NOT_SOLID );
-						AddSolidFlags( FSOLID_TRIGGER );
-						UTIL_SetOrigin( this, tr.endpos + ( tr.plane.normal * 2.0f ) );
-						SetAbsVelocity( vec3_origin );
-						SetMoveType( MOVETYPE_NONE );
-						
-						SetTouch( &CFlare::FlareBurnTouch );
-						
-						int index = decalsystem->GetDecalIndexForName( "SmallScorch" );
-						if ( index >= 0 )
-						{
-							CBroadcastRecipientFilter filter;
-							te->Decal( filter, 0.0, &tr.endpos, &tr.startpos, ENTINDEX( tr.m_pEnt ), tr.hitbox, index );
-						}
-						
-						CPASAttenuationFilter filter2( this, "Flare.Touch" );
-						EmitSound( filter2, entindex(), "Flare.Touch" );
-
-						return;
-					}
+					CBroadcastRecipientFilter filter;
+					te->Decal(filter, 0.0, &tr.endpos, &tr.startpos, ENTINDEX(tr.m_pEnt), tr.hitbox, index);
 				}
+
+				CPASAttenuationFilter filter2(this, "Flare.Touch");
+				EmitSound(filter2, entindex(), "Flare.Touch");
+
+				return;
 			}
 		}
 
-		//Scorch decal
+		// Scorch decal
 		if ( GetAbsVelocity().LengthSqr() > (250*250) )
 		{
 			int index = decalsystem->GetDecalIndexForName( "FadingScorch" );
@@ -490,7 +458,7 @@ void CFlare::FlareTouch( CBaseEntity *pOther )
 		
 		m_nBounces++;
 
-		//After the first bounce, smacking into whoever fired the flare is fair game
+		// After the first bounce, smacking into whoever fired the flare is fair game
 		SetOwnerEntity( this );	
 
 		// Slow down
@@ -499,7 +467,7 @@ void CFlare::FlareTouch( CBaseEntity *pOther )
 		vecNewVelocity.y *= 0.8f;
 		SetAbsVelocity( vecNewVelocity );
 
-		//Stopped?
+		// Stopped?
 		if ( GetAbsVelocity().Length() < 64.0f )
 		{
 			SetAbsVelocity( vec3_origin );
@@ -657,8 +625,6 @@ void CFlare::AddToActiveFlares( void )
 	}
 }
 
-#if 0
-
 IMPLEMENT_SERVERCLASS_ST(CFlaregun, DT_Flaregun)
 END_SEND_TABLE()
 
@@ -719,37 +685,5 @@ void CFlaregun::PrimaryAttack( void )
 //-----------------------------------------------------------------------------
 void CFlaregun::SecondaryAttack( void )
 {
-	CBasePlayer *pOwner = ToBasePlayer( GetOwner() );
-	
-	if ( pOwner == NULL )
-		return;
 
-	if ( m_iClip1 <= 0 )
-	{
-		SendWeaponAnim( ACT_VM_DRYFIRE );
-		pOwner->m_flNextAttack = gpGlobals->curtime + SequenceDuration();
-		return;
-	}
-
-	m_iClip1 = m_iClip1 - 1;
-
-	SendWeaponAnim( ACT_VM_PRIMARYATTACK );
-	pOwner->m_flNextAttack = gpGlobals->curtime + 1;
-
-	CFlare *pFlare = CFlare::Create( pOwner->Weapon_ShootPosition(), pOwner->EyeAngles(), pOwner, FLARE_DURATION );
-
-	if ( pFlare == NULL )
-		return;
-
-	Vector forward;
-	pOwner->EyeVectors( &forward );
-
-	pFlare->SetAbsVelocity( forward * 500 );
-	pFlare->SetGravity(1.0f);
-	pFlare->SetFriction( 0.85f );
-	pFlare->SetMoveType( MOVETYPE_FLYGRAVITY, MOVECOLLIDE_FLY_BOUNCE );
-
-	WeaponSound( SINGLE );
 }
-
-#endif

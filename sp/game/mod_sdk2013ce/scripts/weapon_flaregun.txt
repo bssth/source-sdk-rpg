@@ -1,0 +1,64 @@
+// Pistol
+
+WeaponData
+{
+	"printname"	"#HL2_Pistol"
+	"viewmodel"			"models/weapons/v_flaregun.mdl"
+	"playermodel"		"models/weapons/w_flaregun.mdl"
+	"anim_prefix"		"pistol"
+	"bucket"			"2"
+
+	"clip_size"			"1"
+	"primary_ammo"		"Pistol"
+	"secondary_ammo"	"None"
+
+	"weight"		"2"
+	"rumble"		"1"
+	"item_flags"		"0"
+
+	// Sounds for the weapon. There is a max of 16 sounds per category (i.e. max 16 "single_shot" sounds)
+	SoundData
+	{
+		"reload"      "Weapon_FlareGun.Reload"
+		"empty"			  "Weapon_Pistol.Empty"
+		"single_shot"	"Weapon_FlareGun.Single"
+	}
+
+	// Weapon Sprite data is loaded by the Client DLL.
+	TextureData
+	{
+		"weapon"
+		{
+				"font"		"WeaponIcons"
+				"character"	"d"
+		}
+		"weapon_s"
+		{
+				"font"		"WeaponIconsSelected"
+				"character"	"d"
+		}
+		"weapon_small"
+		{
+				"font"		"WeaponIconsSmall"
+				"character"	"d"
+		}
+		"ammo"
+		{
+				"font"		"WeaponIconsSmall"
+				"character"	"p"
+		}
+		"crosshair"
+		{
+				"font"		"Crosshairs"
+				"character"	"Q"
+		}
+		"autoaim"
+		{
+				"file"		"sprites/crosshairs"
+				"x"			"0"
+				"y"			"48"
+				"width"		"24"
+				"height"	"24"
+		}
+	}
+}
