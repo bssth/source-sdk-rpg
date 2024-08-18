@@ -5,6 +5,7 @@
 //=============================================================================//
 
 #include "cbase.h"
+#include "globalstate.h"
 #include "ai_hull.h"
 #include "ai_navigator.h"
 #include "ai_motor.h"
@@ -1865,6 +1866,25 @@ int CNPC_Combine::SelectSchedule( void )
 
 	// no special cases here, call the base class
 	return BaseClass::SelectSchedule();
+}
+
+Disposition_t CNPC_Combine::IRelationType(CBaseEntity* pTarget)
+{
+	Disposition_t disp = BaseClass::IRelationType(pTarget);
+
+	if (pTarget == NULL)
+		return disp;
+
+	// If the player's not a criminal, then we don't necessary hate him
+	if (pTarget->Classify() == CLASS_PLAYER)
+	{
+		if (GlobalEntity_GetState("gordon_precriminal") != GLOBAL_ON)
+		{
+			return D_NU;
+		}
+	}
+
+	return disp;
 }
 
 //-----------------------------------------------------------------------------

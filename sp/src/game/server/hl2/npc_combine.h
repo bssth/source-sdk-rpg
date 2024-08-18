@@ -121,6 +121,7 @@ public:
 	bool			IsUsingPathfindingVariant( int variant ) { return m_iPathfindingVariant == variant; }
 
 	bool			IsRunningApproachEnemySchedule();
+	Disposition_t	IRelationType(CBaseEntity* pTarget);
 
 	// -------------
 	// Sounds
