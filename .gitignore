@@ -92,6 +92,18 @@ scene.cache
 modelsounds.cache
 DownloadLists
 ep1_gamestats.dat
+*.ain
+
+# HL2-Specific files (we don't want redunant include in mod)
+HL2-MapPack
+HL2-MapPack - Copy
+HL2EP1-MapPack
+HL2EP2-MapPack
+prefabs
+maps/soundcache/*.cache
+quick*.tga
+sp/game/mod_sdk2013ce/ep1_gamestats.dat
+sp/game/mod_sdk2013ce/modelsounds.cache
 
 # shader files
 *.tmp

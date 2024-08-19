@@ -1,0 +1,10 @@
+"chapters"
+{
+	1	"bb_bg"
+	2	"bb_bg"
+	3	"bb_bg"
+	4	"bb_bg"
+	5	"bb_bg"
+	6	"bb_bg"
+	7	"bb_bg"
+}
