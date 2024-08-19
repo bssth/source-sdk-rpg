@@ -16,6 +16,7 @@
 #include "soundenvelope.h"
 #include "singleplayer_animstate.h"
 #include "hl2_shareddefs.h"
+#include "bb_inventory.h"
 
 class CAI_Squad;
 class CPropCombineBall;
@@ -85,7 +86,6 @@ public:
 	virtual void		Precache( void );
 	virtual void		Spawn(void);
 	virtual void		Activate( void );
-	virtual void		CheatImpulseCommands( int iImpulse );
 	virtual void		PlayerRunCommand( CUserCmd *ucmd, IMoveHelper *moveHelper);
 	virtual void		PlayerUse ( void );
 	virtual void		SuspendUse( float flDuration ) { m_flTimeUseSuspended = gpGlobals->curtime + flDuration; }
@@ -194,8 +194,6 @@ public:
 	virtual void		OnDamagedByExplosion( const CTakeDamageInfo &info );
 	bool				ShouldShootMissTarget( CBaseCombatCharacter *pAttacker );
 
-	void				CombineBallSocketed( CPropCombineBall *pCombineBall );
-
 	virtual void		Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &info );
 
 	virtual void		GetAutoaimVector( autoaim_params_t &params );
@@ -261,10 +259,6 @@ public:
 	void StopWaterDeathSounds( void );
 
 	bool IsWeaponLowered( void ) { return m_HL2Local.m_bWeaponLowered; }
-	void HandleArmorReduction( void );
-	void StartArmorReduction( void ) { m_flArmorReductionTime = gpGlobals->curtime + ARMOR_DECAY_TIME; 
-									   m_iArmorReductionFrom = ArmorValue(); 
-									 }
 
 	void MissedAR2AltFire();
 
@@ -277,6 +271,10 @@ public:
 	CSoundPatch *m_sndLeeches;
 	CSoundPatch *m_sndWaterSplashes;
 
+	CBBInventory m_inventory;
+	CBBInventory* GetInventory() { return &m_inventory; }
+	bool UseItem(const char* name);
+
 protected:
 	virtual void		PreThink( void );
 	virtual	void		PostThink( void );
@@ -285,7 +283,6 @@ protected:
 	virtual void		UpdateWeaponPosture( void );
 
 	virtual void		ItemPostFrame();
-	virtual void		PlayUseDenySound();
 
 private:
 	bool				CommanderExecuteOne( CAI_BaseNPC *pNpc, const commandgoal_t &goal, CAI_BaseNPC **Allies, int numAllies );
@@ -305,9 +302,6 @@ private:
 
 	CNetworkVar( bool, m_fIsSprinting );
 	CNetworkVarForDerived( bool, m_fIsWalking );
-
-protected:	// Jeep: Portal_Player needs access to this variable to overload PlayerUse for picking up objects through portals
-	bool				m_bPlayUseDenySound;		// Signaled by PlayerUse, but can be unset by HL2 ladder code...
 
 private:
 

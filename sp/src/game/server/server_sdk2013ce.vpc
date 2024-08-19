@@ -53,9 +53,6 @@ $Project "Server"
 
 		$Folder	"HL2 DLL"
 		{
-			$File	"$SRCDIR\game\shared\episodic\achievements_ep1.cpp"
-			$File	"$SRCDIR\game\shared\episodic\achievements_ep2.cpp"
-			$File	"$SRCDIR\game\shared\episodic\achievements_epx.cpp"
 			$File	"hl2\ai_allymanager.cpp"
 			$File	"hl2\ai_behavior_actbusy.cpp"
 			$File	"hl2\ai_behavior_actbusy.h"
@@ -123,8 +120,6 @@ $Project "Server"
 			$File	"hl2\hl2_ai_network.cpp"
 			$File	"hl2\hl2_client.cpp"
 			$File	"hl2\hl2_eventlog.cpp"
-			$File	"$SRCDIR\game\shared\hl2\bb_gamerules.cpp"
-			$File	"$SRCDIR\game\shared\hl2\bb_gamerules.h"
 			$File	"hl2\hl2_player.cpp"
 			$File	"hl2\hl2_player.h"
 			$File	"$SRCDIR\game\shared\hl2\hl2_player_shared.h"
@@ -267,6 +262,8 @@ $Project "Server"
 			$File	"hl2\weapon_rpg.h"
 			$File	"hl2\weapon_shotgun.cpp"
 			$File	"hl2\weapon_smg1.cpp"
+			$File	"hl2\weapon_flaregun.cpp"
+			$File	"hl2\weapon_flaregun.h"
 			$File	"episodic\weapon_striderbuster.cpp"
 			$File	"episodic\weapon_striderbuster.h"
 			$File	"hl2\weapon_stunstick.cpp"
@@ -290,6 +287,13 @@ $Project "Server"
 			$File	"hl2\func_bulletshield.h"
 			$File	"episodic\npc_puppet.cpp"
 
+			$Folder	"bb"
+			{
+				$File	"$SRCDIR\game\shared\hl2\bb_gamerules.cpp"
+				$File	"$SRCDIR\game\shared\hl2\bb_gamerules.h"
+				$File	"$SRCDIR\game\server\bb_inventory.cpp"
+				$File	"$SRCDIR\game\server\bb_inventory.h"
+			}
 
 			$Folder	"unused"
 			{
@@ -302,8 +306,6 @@ $Project "Server"
 				$File	"hl2\npc_missiledefense.cpp"
 				$File	"hl2\vehicle_apc.cpp"
 				$File	"hl2\weapon_cguard.cpp"
-				$File	"hl2\weapon_flaregun.cpp"
-				$File	"hl2\weapon_flaregun.h"
 			}
 		}
 	}

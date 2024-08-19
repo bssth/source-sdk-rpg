@@ -14,9 +14,7 @@
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
-
-ConVar	sk_healthkit( "sk_healthkit","0" );		
-ConVar	sk_healthvial( "sk_healthvial","0" );		
+		
 ConVar	sk_healthcharger( "sk_healthcharger","0" );		
 
 //-----------------------------------------------------------------------------
@@ -29,7 +27,7 @@ public:
 
 	void Spawn( void );
 	void Precache( void );
-	bool MyTouch( CBasePlayer *pPlayer );
+	void Use(CBaseEntity* pActivator, CBaseEntity* pCaller, USE_TYPE useType, float value);
 };
 
 LINK_ENTITY_TO_CLASS( item_healthkit, CHealthKit );
@@ -64,33 +62,28 @@ void CHealthKit::Precache( void )
 // Input  : *pPlayer - 
 // Output : 
 //-----------------------------------------------------------------------------
-bool CHealthKit::MyTouch( CBasePlayer *pPlayer )
+void CHealthKit::Use(CBaseEntity* pActivator, CBaseEntity* pCaller, USE_TYPE useType, float value)
 {
-	if ( pPlayer->TakeHealth( sk_healthkit.GetFloat(), DMG_GENERIC ) )
-	{
-		CSingleUserRecipientFilter user( pPlayer );
-		user.MakeReliable();
+	if (!pActivator->IsPlayer())
+		return;
 
-		UserMessageBegin( user, "ItemPickup" );
-			WRITE_STRING( GetClassname() );
-		MessageEnd();
+	CBasePlayer* pPlayer = dynamic_cast<CBasePlayer*>(pActivator);
+	if (!pPlayer)
+		return;
+	if (!pPlayer->GetInventory())
+		return;
+	if (!pPlayer->GetInventory()->AddItem("item_healthkit"))
+		return;
 
-		CPASAttenuationFilter filter( pPlayer, "HealthKit.Touch" );
-		EmitSound( filter, pPlayer->entindex(), "HealthKit.Touch" );
+	CSingleUserRecipientFilter user(pPlayer);
+	user.MakeReliable();
 
-		if ( g_pGameRules->ItemShouldRespawn( this ) )
-		{
-			Respawn();
-		}
-		else
-		{
-			UTIL_Remove(this);	
-		}
+	UserMessageBegin(user, "ItemPickup");
+	WRITE_STRING(GetClassname());
+	MessageEnd();
 
-		return true;
-	}
-
-	return false;
+	UTIL_Remove(this);
+	return;
 }
 
 //-----------------------------------------------------------------------------
@@ -117,33 +110,28 @@ public:
 		PrecacheScriptSound( "HealthVial.Touch" );
 	}
 
-	bool MyTouch( CBasePlayer *pPlayer )
+	void Use(CBaseEntity* pActivator, CBaseEntity* pCaller, USE_TYPE useType, float value)
 	{
-		if ( pPlayer->TakeHealth( sk_healthvial.GetFloat(), DMG_GENERIC ) )
-		{
-			CSingleUserRecipientFilter user( pPlayer );
-			user.MakeReliable();
+		if (!pActivator->IsPlayer())
+			return;
 
-			UserMessageBegin( user, "ItemPickup" );
-				WRITE_STRING( GetClassname() );
-			MessageEnd();
+		CBasePlayer* pPlayer = dynamic_cast<CBasePlayer*>(pActivator);
+		if (!pPlayer)
+			return;
+		if (!pPlayer->GetInventory())
+			return;
+		if (!pPlayer->GetInventory()->AddItem("item_healthvial"))
+			return;
 
-			CPASAttenuationFilter filter( pPlayer, "HealthVial.Touch" );
-			EmitSound( filter, pPlayer->entindex(), "HealthVial.Touch" );
+		CSingleUserRecipientFilter user(pPlayer);
+		user.MakeReliable();
 
-			if ( g_pGameRules->ItemShouldRespawn( this ) )
-			{
-				Respawn();
-			}
-			else
-			{
-				UTIL_Remove(this);	
-			}
+		UserMessageBegin(user, "ItemPickup");
+		WRITE_STRING(GetClassname());
+		MessageEnd();
 
-			return true;
-		}
-
-		return false;
+		UTIL_Remove(this);
+		return;
 	}
 };
 

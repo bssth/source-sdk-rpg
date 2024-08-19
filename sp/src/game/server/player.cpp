@@ -4237,6 +4237,11 @@ void CBasePlayer::PostThink()
 			UTIL_ScreenFade(this, hurtScreenOverlay, 3.0f, 1.0f, FFADE_IN | FFADE_PURGE);
 		}
 	}
+
+	CBBInventory* pInventory = GetInventory();
+	if (pInventory) {
+		pInventory->Think();
+	}
 }
 
 // handles touching physics objects

@@ -46,19 +46,12 @@
 #include "gamestats.h"
 #include "filters.h"
 #include "tier0/icommandline.h"
-
-#ifdef HL2_EPISODIC
 #include "npc_alyx_episodic.h"
-#endif
-
-#ifdef PORTAL
-#include "portal_player.h"
-#endif // PORTAL
+#include "bb_inventory.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-extern ConVar weapon_showproficiency;
 extern ConVar autoaim_max_dist;
 
 // Do not touch with without seeing me, please! (sjb)
@@ -72,31 +65,24 @@ extern ConVar autoaim_max_dist;
 
 #define TIME_IGNORE_FALL_DAMAGE 10.0
 
-extern int gEvilImpulse101;
+ConVar hl2_walkspeed( "hl2_walkspeed", "130" );
+ConVar hl2_normspeed( "hl2_normspeed", "170" );
+ConVar hl2_sprintspeed( "hl2_sprintspeed", "290" );
 
-ConVar sv_autojump( "sv_autojump", "0" );
-
-ConVar hl2_walkspeed( "hl2_walkspeed", "150" );
-ConVar hl2_normspeed( "hl2_normspeed", "190" );
-ConVar hl2_sprintspeed( "hl2_sprintspeed", "320" );
+ConVar	sk_healthkit("sk_healthkit", "0");
+ConVar	sk_healthvial("sk_healthvial", "0");
 
 #define	HL2_WALK_SPEED hl2_walkspeed.GetFloat()
 #define	HL2_NORM_SPEED hl2_normspeed.GetFloat()
 #define	HL2_SPRINT_SPEED hl2_sprintspeed.GetFloat()
 
-ConVar player_squad_double_tap_time( "player_squad_double_tap_time", "0.25" );
-
-ConVar sv_infinite_aux_power( "sv_infinite_aux_power", "0", FCVAR_CHEAT );
-
 ConVar autoaim_unlock_target( "autoaim_unlock_target", "0.8666" );
-
 ConVar sv_stickysprint("sv_stickysprint", "0", FCVAR_ARCHIVE | FCVAR_ARCHIVE_XBOX);
-
 ConVar weapon_frag_tutorial("weapon_frag_tutorial", "1", FCVAR_REPLICATED, "Enable/Disable the weapon tutorial for the frag grenade");
 
 #define	FLASH_DRAIN_TIME	 1.1111	// 100 units / 90 secs
 #define	FLASH_CHARGE_TIME	 50.0f	// 100 units / 2 secs
-#define PLAYER_MODEL "models/humans/group01/male_01.mdl"
+#define PLAYER_MODEL "models/humans/group01/female_01.mdl"
 
 
 //==============================================================================================
@@ -174,9 +160,6 @@ public:
 	void InputEnableCappedPhysicsDamage( inputdata_t &inputdata );
 	void InputDisableCappedPhysicsDamage( inputdata_t &inputdata );
 	void InputSetLocatorTargetEntity( inputdata_t &inputdata );
-#ifdef PORTAL
-	void InputSuppressCrosshair( inputdata_t &inputdata );
-#endif // PORTAL2
 
 	void Activate ( void );
 
@@ -205,7 +188,6 @@ void CC_ToggleZoom( void )
 
 static ConCommand toggle_zoom("toggle_zoom", CC_ToggleZoom, "Toggles zoom display" );
 
-// ConVar cl_forwardspeed( "cl_forwardspeed", "400", FCVAR_CHEAT ); // Links us to the client's version
 ConVar xc_crouch_range( "xc_crouch_range", "0.85", FCVAR_ARCHIVE, "Percentarge [1..0] of joystick range to allow ducking within" );	// Only 1/2 of the range is used
 ConVar xc_use_crouch_limiter( "xc_use_crouch_limiter", "0", FCVAR_ARCHIVE, "Use the crouch limiting logic on the controller" );
 
@@ -256,54 +238,37 @@ void CC_ToggleDuck( void )
 
 static ConCommand toggle_duck("toggle_duck", CC_ToggleDuck, "Toggles duck" );
 
-#ifndef HL2MP
-#ifndef PORTAL
-LINK_ENTITY_TO_CLASS( player, CHL2_Player );
-#endif
-#endif
+LINK_ENTITY_TO_CLASS(player, CHL2_Player);
 
 PRECACHE_REGISTER(player);
 
 CBaseEntity *FindEntityForward( CBasePlayer *pMe, bool fHull );
 
-BEGIN_SIMPLE_DATADESC( LadderMove_t )
-	DEFINE_FIELD( m_bForceLadderMove, FIELD_BOOLEAN ),
-	DEFINE_FIELD( m_bForceMount, FIELD_BOOLEAN ),
-	DEFINE_FIELD( m_flStartTime, FIELD_TIME ),
-	DEFINE_FIELD( m_flArrivalTime, FIELD_TIME ),
-	DEFINE_FIELD( m_vecGoalPosition, FIELD_POSITION_VECTOR ),
-	DEFINE_FIELD( m_vecStartPosition, FIELD_POSITION_VECTOR ),
-	DEFINE_FIELD( m_hForceLadder, FIELD_EHANDLE ),
-	DEFINE_FIELD( m_hReservedSpot, FIELD_EHANDLE ),
-END_DATADESC()
+	BEGIN_SIMPLE_DATADESC(LadderMove_t)
+	DEFINE_FIELD(m_bForceLadderMove, FIELD_BOOLEAN),
+	DEFINE_FIELD(m_bForceMount, FIELD_BOOLEAN),
+	DEFINE_FIELD(m_flStartTime, FIELD_TIME),
+	DEFINE_FIELD(m_flArrivalTime, FIELD_TIME),
+	DEFINE_FIELD(m_vecGoalPosition, FIELD_POSITION_VECTOR),
+	DEFINE_FIELD(m_vecStartPosition, FIELD_POSITION_VECTOR),
+	DEFINE_FIELD(m_hForceLadder, FIELD_EHANDLE),
+	DEFINE_FIELD(m_hReservedSpot, FIELD_EHANDLE),
+	END_DATADESC()
 
-// Global Savedata for HL2 player
-BEGIN_DATADESC( CHL2_Player )
+	// Global Savedata for HL2 player
+	BEGIN_DATADESC(CHL2_Player)
 
-	DEFINE_FIELD( m_nControlClass, FIELD_INTEGER ),
-	DEFINE_EMBEDDED( m_HL2Local ),
+	DEFINE_FIELD(m_nControlClass, FIELD_INTEGER),
+	DEFINE_EMBEDDED(m_HL2Local),
+	DEFINE_EMBEDDED(m_inventory),
 
 	DEFINE_FIELD( m_bSprintEnabled, FIELD_BOOLEAN ),
 	DEFINE_FIELD( m_flTimeAllSuitDevicesOff, FIELD_TIME ),
 	DEFINE_FIELD( m_fIsSprinting, FIELD_BOOLEAN ),
 	DEFINE_FIELD( m_fIsWalking, FIELD_BOOLEAN ),
 	DEFINE_FIELD(m_flLastWeaponReaction, FIELD_TIME),
-
-	/*
-	// These are initialized every time the player calls Activate()
-	DEFINE_FIELD( m_bIsAutoSprinting, FIELD_BOOLEAN ),
-	DEFINE_FIELD( m_fAutoSprintMinTime, FIELD_TIME ),
-	*/
-
-	// 	Field is used within a single tick, no need to save restore
-	// DEFINE_FIELD( m_bPlayUseDenySound, FIELD_BOOLEAN ),  
-	//							m_pPlayerAISquad reacquired on load
-
 	DEFINE_AUTO_ARRAY( m_vecMissPositions, FIELD_POSITION_VECTOR ),
 	DEFINE_FIELD( m_nNumMissPositions, FIELD_INTEGER ),
-
-	//					m_pPlayerAISquad
-	//					m_RealTimeLastSquadCommand
 	DEFINE_FIELD( m_QueuedCommand, FIELD_INTEGER ),
 
 	DEFINE_FIELD( m_flTimeIgnoreFallDamage, FIELD_TIME ),
@@ -348,8 +313,6 @@ BEGIN_DATADESC( CHL2_Player )
 
 	DEFINE_FIELD( m_flTimeNextLadderHint, FIELD_TIME ),
 
-	//DEFINE_FIELD( m_hPlayerProxy, FIELD_EHANDLE ), //Shut up class check!
-
 END_DATADESC()
 
 CHL2_Player::CHL2_Player()
@@ -371,17 +334,8 @@ CHL2_Player::CHL2_Player()
 //
 #define SUITPOWER_CHARGE_RATE	12.5											// 100 units in 8 seconds
 
-#ifdef HL2MP
-	CSuitPowerDevice SuitDeviceSprint( bits_SUIT_DEVICE_SPRINT, 25.0f );				// 100 units in 4 seconds
-#else
-	CSuitPowerDevice SuitDeviceSprint( bits_SUIT_DEVICE_SPRINT, 12.5f );				// 100 units in 8 seconds
-#endif
-
-#ifdef HL2_EPISODIC
-	CSuitPowerDevice SuitDeviceFlashlight( bits_SUIT_DEVICE_FLASHLIGHT, 1.111 );	// 100 units in 90 second
-#else
-	CSuitPowerDevice SuitDeviceFlashlight( bits_SUIT_DEVICE_FLASHLIGHT, 2.222 );	// 100 units in 45 second
-#endif
+CSuitPowerDevice SuitDeviceSprint(bits_SUIT_DEVICE_SPRINT, 12.5f);				// 100 units in 8 seconds
+CSuitPowerDevice SuitDeviceFlashlight(bits_SUIT_DEVICE_FLASHLIGHT, 1.111);
 CSuitPowerDevice SuitDeviceBreather( bits_SUIT_DEVICE_BREATHER, 6.7f );		// 100 units in 15 seconds (plus three padded seconds)
 
 
@@ -396,14 +350,12 @@ void CHL2_Player::Precache( void )
 	BaseClass::Precache();
 
 	PrecacheScriptSound( "k_lab.teleport_breathing" );
-	PrecacheScriptSound( "HL2Player.SprintStart" );
-	PrecacheScriptSound( "HL2Player.UseDeny" );
 	PrecacheScriptSound( "HL2Player.FlashLightOn" );
 	PrecacheScriptSound( "HL2Player.FlashLightOff" );
-	PrecacheScriptSound( "HL2Player.PickupWeapon" );
 	PrecacheScriptSound( "HL2Player.TrainUse" );
-	PrecacheScriptSound( "HL2Player.Use" );
-	PrecacheScriptSound( "HL2Player.BurnPain" );
+	PrecacheScriptSound( "npc_citizen.pain08" );
+	PrecacheScriptSound( "npc_citizen.fantastic01" );
+	PrecacheScriptSound( "Weapon_PhysCannon.Pickup" );
 
 	PrecacheModel(PLAYER_MODEL);
 }
@@ -513,29 +465,10 @@ void CHL2_Player::HandleSpeedChanges( void )
 }
 
 //-----------------------------------------------------------------------------
-// This happens when we powerdown from the mega physcannon to the regular one
-//-----------------------------------------------------------------------------
-void CHL2_Player::HandleArmorReduction( void )
-{
-	if ( m_flArmorReductionTime < gpGlobals->curtime )
-		return;
-
-	if ( ArmorValue() <= 0 )
-		return;
-
-	float flPercent = 1.0f - (( m_flArmorReductionTime - gpGlobals->curtime ) / ARMOR_DECAY_TIME );
-
-	int iArmor = Lerp( flPercent, m_iArmorReductionFrom, 0 );
-
-	SetArmorValue( iArmor );
-}
-
-//-----------------------------------------------------------------------------
 // Purpose: Allow pre-frame adjustments on the player
 //-----------------------------------------------------------------------------
 void CHL2_Player::PreThink(void)
 {
-#ifdef HL2_EPISODIC
 	if( m_hLocatorTargetEntity != NULL )
 	{
 		// Keep track of the entity here, the client will pick up the rest of the work
@@ -545,7 +478,6 @@ void CHL2_Player::PreThink(void)
 	{
 		m_HL2Local.m_vecLocatorOrigin = vec3_invalid; // This tells the client we have no locator target.
 	}
-#endif//HL2_EPISODIC
 
 	// Riding a vehicle?
 	if ( IsInAVehicle() )	
@@ -564,53 +496,8 @@ void CHL2_Player::PreThink(void)
 		return;
 	}
 
-	// This is an experiment of mine- autojumping! 
-	// only affects you if sv_autojump is nonzero.
-	if( (GetFlags() & FL_ONGROUND) && sv_autojump.GetFloat() != 0 )
-	{
-		VPROF( "CHL2_Player::PreThink-Autojump" );
-		// check autojump
-		Vector vecCheckDir;
-
-		vecCheckDir = GetAbsVelocity();
-
-		float flVelocity = VectorNormalize( vecCheckDir );
-
-		if( flVelocity > 200 )
-		{
-			// Going fast enough to autojump
-			vecCheckDir = WorldSpaceCenter() + vecCheckDir * 34 - Vector( 0, 0, 16 );
-
-			trace_t tr;
-
-			UTIL_TraceHull( WorldSpaceCenter() - Vector( 0, 0, 16 ), vecCheckDir, NAI_Hull::Mins(HULL_TINY_CENTERED),NAI_Hull::Maxs(HULL_TINY_CENTERED), MASK_PLAYERSOLID, this, COLLISION_GROUP_PLAYER, &tr );
-			
-			//NDebugOverlay::Line( tr.startpos, tr.endpos, 0,255,0, true, 10 );
-
-			if( tr.fraction == 1.0 && !tr.startsolid )
-			{
-				// Now trace down!
-				UTIL_TraceLine( vecCheckDir, vecCheckDir - Vector( 0, 0, 64 ), MASK_PLAYERSOLID, this, COLLISION_GROUP_NONE, &tr );
-
-				//NDebugOverlay::Line( tr.startpos, tr.endpos, 0,255,0, true, 10 );
-
-				if( tr.fraction == 1.0 && !tr.startsolid )
-				{
-					// It said: "This is definitely not the right way to do this, but I'm prototyping!"
-					// Nothing has changed since then...
-					Vector vecNewVelocity = GetAbsVelocity();
-					vecNewVelocity.z += 250;
-					SetAbsVelocity( vecNewVelocity );
-				}
-			}
-		}
-	}
-
 	VPROF_SCOPE_BEGIN( "CHL2_Player::PreThink-Speed" );
 	HandleSpeedChanges();
-#ifdef HL2_EPISODIC
-	HandleArmorReduction();
-#endif
 
 	if( sv_stickysprint.GetBool() && m_bIsAutoSprinting )
 	{
@@ -645,7 +532,7 @@ void CHL2_Player::PreThink(void)
 	VPROF_SCOPE_END();
 
 	if ( g_fGameOver || IsPlayerLockedInPlace() )
-		return;         // finale
+		return;
 
 	VPROF_SCOPE_BEGIN( "CHL2_Player::PreThink-ItemPreFrame" );
 	ItemPreFrame( );
@@ -697,9 +584,7 @@ void CHL2_Player::PreThink(void)
 		return;
 	}
 
-#ifdef HL2_EPISODIC
 	CheckFlashlight();
-#endif	// HL2_EPISODIC
 
 	// So the correct flags get sent to client asap.
 	//
@@ -975,9 +860,8 @@ bool CHL2_Player::HandleInteraction(int interactionType, void *data, CBaseCombat
 		SetMoveType( MOVETYPE_WALK );
 		return true;
 	}
-	else if (interactionType ==	g_interactionBarnacleVictimGrab)
+	/*else if (interactionType == g_interactionBarnacleVictimGrab)
 	{
-#ifdef HL2_EPISODIC
 		CNPC_Alyx *pAlyx = CNPC_Alyx::GetAlyx();
 		if ( pAlyx )
 		{
@@ -987,12 +871,11 @@ bool CHL2_Player::HandleInteraction(int interactionType, void *data, CBaseCombat
 			priority = pAlyx->IRelationPriority(sourceEnt);
 			pAlyx->AddEntityRelationship( sourceEnt, D_HT, priority + 5 );
 		}
-#endif//HL2_EPISODIC
 
 		m_afPhysicsFlags |= PFLAG_ONBARNACLE;
 		ClearUseEntity();
 		return true;
-	}
+	}*/
 	return false;
 }
 
@@ -1014,7 +897,7 @@ void CHL2_Player::PlayerRunCommand(CUserCmd *ucmd, IMoveHelper *moveHelper)
 		ucmd->buttons &= ~IN_USE;
 	}
 
-	//Update our movement information
+	// Update our movement information
 	if ( ( ucmd->forwardmove != 0 ) || ( ucmd->sidemove != 0 ) || ( ucmd->upmove != 0 ) )
 	{
 		m_flIdleTime -= TICK_INTERVAL * 2.0f;
@@ -1048,8 +931,6 @@ void CHL2_Player::PlayerRunCommand(CUserCmd *ucmd, IMoveHelper *moveHelper)
 		}
 	}
 
-	//Msg("Player time: [ACTIVE: %f]\t[IDLE: %f]\n", m_flMoveTime, m_flIdleTime );
-
 	BaseClass::PlayerRunCommand( ucmd, moveHelper );
 }
 
@@ -1058,12 +939,7 @@ void CHL2_Player::PlayerRunCommand(CUserCmd *ucmd, IMoveHelper *moveHelper)
 //-----------------------------------------------------------------------------
 void CHL2_Player::Spawn(void)
 {
-
-#ifndef HL2MP
-#ifndef PORTAL
 	SetModel(PLAYER_MODEL);
-#endif
-#endif
 
 	BaseClass::Spawn();
 
@@ -1078,9 +954,7 @@ void CHL2_Player::Spawn(void)
 	InitSprinting();
 
 	// Setup our flashlight values
-#ifdef HL2_EPISODIC
 	m_HL2Local.m_flFlashBattery = 100.0f;
-#endif 
 
 	GetPlayerProxy();
 
@@ -1091,9 +965,7 @@ void CHL2_Player::Spawn(void)
 //-----------------------------------------------------------------------------
 void CHL2_Player::UpdateLocatorPosition( const Vector &vecPosition )
 {
-#ifdef HL2_EPISODIC
 	m_HL2Local.m_vecLocatorOrigin = vecPosition;
-#endif//HL2_EPISODIC 
 }
 
 //-----------------------------------------------------------------------------
@@ -1140,12 +1012,6 @@ void CHL2_Player::StartSprinting( void )
 	{
 		// Don't sprint unless there's a reasonable
 		// amount of suit power.
-		
-		// debounce the button for sound playing
-		if ( m_afButtonPressed & IN_SPEED )
-		{
-			EmitSound("k_lab.teleport_breathing");
-		}
 		return;
 	}
 
@@ -1220,9 +1086,46 @@ bool CHL2_Player::CanZoom( CBaseEntity *pRequester )
 	if ( IsZooming() )
 		return false;
 
-	//Check our weapon
+	// TODO: attach to inventory items
 
 	return true;
+}
+
+bool CHL2_Player::UseItem(const char* name)
+{
+	CBBItemType* pItem = CBBInventory::GetItemData(name);
+	if (!pItem) {
+		return false;
+	}
+	if (!pItem->isUsable) {
+		return false;
+	}
+
+	// Health kit usage
+	if (pItem->isHealthKit()) {
+		if (GetInventory()->CanUseItem(pItem->szClassName))
+		{
+			if (TakeHealth(sk_healthkit.GetFloat(), DMG_GENERIC))
+			{
+				PlayerReactSpeak(PLAYER_REACTION_HEAL);
+				GetInventory()->UseItem(pItem->szClassName);
+				return true;
+			}
+		}
+	}
+
+	// Health vial usage
+	if (pItem->isHealthVial())
+	{
+		if (TakeHealth(sk_healthvial.GetFloat(), DMG_GENERIC))
+		{
+			PlayerReactSpeak(PLAYER_REACTION_HEAL);
+			GetInventory()->UseItem(pItem->szClassName);
+			return true;
+		}
+	}
+
+	return false;
 }
 
 //-----------------------------------------------------------------------------
@@ -1650,7 +1553,7 @@ void CHL2_Player::CommanderUpdate()
 		m_HL2Local.m_fSquadInFollowMode = true;
 	}
 
-	if ( m_QueuedCommand != CC_NONE && ( m_QueuedCommand == CC_FOLLOW || gpGlobals->realtime - m_RealTimeLastSquadCommand >= player_squad_double_tap_time.GetFloat() ) )
+	if ( m_QueuedCommand != CC_NONE && ( m_QueuedCommand == CC_FOLLOW || gpGlobals->realtime - m_RealTimeLastSquadCommand >= 0.25f ) )
 	{
 		CommanderExecute( m_QueuedCommand );
 		m_QueuedCommand = CC_NONE;
@@ -1687,7 +1590,6 @@ void CHL2_Player::CommanderExecute( CommanderCommand_t command )
 
 	if ( !pPlayerSquadLeader )
 	{
-		EmitSound( "HL2Player.UseDeny" );
 		return;
 	}
 
@@ -1721,7 +1623,6 @@ void CHL2_Player::CommanderExecute( CommanderCommand_t command )
 		// Find a goal for ourselves.
 		if( !CommanderFindGoal( &goal ) )
 		{
-			EmitSound( "HL2Player.UseDeny" );
 			return; // just keep following
 		}
 	}
@@ -1771,49 +1672,13 @@ void CHL2_Player::CommanderMode()
 {
 	float commandInterval = gpGlobals->realtime - m_RealTimeLastSquadCommand;
 	m_RealTimeLastSquadCommand = gpGlobals->realtime;
-	if ( commandInterval < player_squad_double_tap_time.GetFloat() )
+	if ( commandInterval < 0.25f )
 	{
 		m_QueuedCommand = CC_FOLLOW;
 	}
 	else
 	{
 		m_QueuedCommand = CC_SEND;
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : iImpulse - 
-//-----------------------------------------------------------------------------
-void CHL2_Player::CheatImpulseCommands( int iImpulse )
-{
-	switch( iImpulse )
-	{
-	case 50:
-	{
-		CommanderMode();
-		break;
-	}
-
-	case 52:
-	{
-		// Rangefinder
-		trace_t tr;
-		UTIL_TraceLine( EyePosition(), EyePosition() + EyeDirection3D() * MAX_COORD_RANGE, MASK_SHOT, this, COLLISION_GROUP_NONE, &tr );
-
-		if( tr.fraction != 1.0 )
-		{
-			float flDist = (tr.startpos - tr.endpos).Length();
-			float flDist2D = (tr.startpos - tr.endpos).Length2D();
-			DevMsg( 1,"\nStartPos: %.4f %.4f %.4f --- EndPos: %.4f %.4f %.4f\n", tr.startpos.x,tr.startpos.y,tr.startpos.z,tr.endpos.x,tr.endpos.y,tr.endpos.z );
-			DevMsg( 1,"3D Distance: %.4f units  (%.2f feet) --- 2D Distance: %.4f units  (%.2f feet)\n", flDist, flDist / 12.0, flDist2D, flDist2D / 12.0 );
-		}
-
-		break;
-	}
-
-	default:
-		BaseClass::CheatImpulseCommands( iImpulse );
 	}
 }
 
@@ -1910,10 +1775,6 @@ void CHL2_Player::SuitPower_Initialize( void )
 //-----------------------------------------------------------------------------
 bool CHL2_Player::SuitPower_Drain( float flPower )
 {
-	// Suitpower cheat on?
-	if ( sv_infinite_aux_power.GetBool() )
-		return true;
-
 	m_HL2Local.m_flSuitPower -= flPower;
 
 	if( m_HL2Local.m_flSuitPower < 0.0 )
@@ -2030,9 +1891,6 @@ bool CHL2_Player::ApplyBattery( float powerMultiplier )
 		char szcharge[64];
 
 		IncrementArmorValue( sk_battery.GetFloat() * powerMultiplier, MAX_NORMAL_BATTERY );
-
-		CPASAttenuationFilter filter( this, "HL2Player.PickupWeapon" );
-		EmitSound( filter, entindex(), "HL2Player.PickupWeapon" );
 
 		CSingleUserRecipientFilter user( this );
 		user.MakeReliable();
@@ -2404,7 +2262,7 @@ int CHL2_Player::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 	// Burnt
 	if ( info.GetDamageType() & DMG_BURN )
 	{
-		EmitSound( "HL2Player.BurnPain" );
+		EmitSound( "npc_citizen.pain08" );
 	}
 
 
@@ -2451,27 +2309,10 @@ bool CHL2_Player::ShouldShootMissTarget( CBaseCombatCharacter *pAttacker )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: Notifies Alyx that player has put a combine ball into a socket so she can comment on it.
-// Input  : pCombineBall - ball the was socketed
-//-----------------------------------------------------------------------------
-void CHL2_Player::CombineBallSocketed( CPropCombineBall *pCombineBall )
-{
-#ifdef HL2_EPISODIC
-	CNPC_Alyx *pAlyx = CNPC_Alyx::GetAlyx();
-	if ( pAlyx )
-	{
-		pAlyx->CombineBallSocketed( pCombineBall->NumBounces() );
-	}
-#endif
-}
-
-//-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 void CHL2_Player::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &info )
 {
 	BaseClass::Event_KilledOther( pVictim, info );
-
-#ifdef HL2_EPISODIC
 
 	CAI_BaseNPC **ppAIs = g_AI_Manager.AccessAIs();
 
@@ -2482,8 +2323,6 @@ void CHL2_Player::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo
 			ppAIs[i]->OnPlayerKilledOther( pVictim, info );
 		}
 	}
-
-#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -2658,6 +2497,7 @@ int CHL2_Player::GiveAmmo( int nCount, int nAmmoIndex, bool bSuppressSound)
 //-----------------------------------------------------------------------------
 bool CHL2_Player::Weapon_CanUse( CBaseCombatWeapon *pWeapon )
 {
+	// FIXME: definitely not the right place for this
 	if (pWeapon->ClassMatches("weapon_frag") && weapon_frag_tutorial.GetBool())
 	{
 		UTIL_HudHintText(this, "#Valve_Hint_Grenade");
@@ -2697,10 +2537,6 @@ bool CHL2_Player::BumpWeapon( CBaseCombatWeapon *pWeapon )
 
 	if ( pOwner || !Weapon_CanUse( pWeapon ) || !g_pGameRules->CanHavePlayerItem( this, pWeapon ) )
 	{
-		if ( gEvilImpulse101 )
-		{
-			UTIL_Remove( pWeapon );
-		}
 		return false;
 	}
 
@@ -2753,8 +2589,6 @@ bool CHL2_Player::BumpWeapon( CBaseCombatWeapon *pWeapon )
 
 		Weapon_Equip( pWeapon );
 
-		EmitSound( "HL2Player.PickupWeapon" );
-		
 		return true;
 	}
 }
@@ -2829,7 +2663,6 @@ void CHL2_Player::PlayerUse ( void )
 			}
 		}
 
-		// Tracker 3926:  We can't +USE something if we're climbing a ladder
 		if ( GetMoveType() == MOVETYPE_LADDER )
 		{
 			return;
@@ -2850,18 +2683,9 @@ void CHL2_Player::PlayerUse ( void )
 	// Found an object
 	if ( pUseEntity )
 	{
-		//!!!UNDONE: traceline here to prevent +USEing buttons through walls			
+		// Traceline here to prevent +USEing buttons through walls			
 		int caps = pUseEntity->ObjectCaps();
 		variant_t emptyVariant;
-
-		if ( m_afButtonPressed & IN_USE )
-		{
-			// Robin: Don't play sounds for NPCs, because NPCs will allow respond with speech.
-			if ( !pUseEntity->MyNPCPointer() )
-			{
-				EmitSound( "HL2Player.Use" );
-			}
-		}
 
 		if ( ( (m_nButtons & IN_USE) && (caps & FCAP_CONTINUOUS_USE) ) ||
 			 ( (m_afButtonPressed & IN_USE) && (caps & (FCAP_IMPULSE_USE|FCAP_ONOFF_USE)) ) )
@@ -2902,13 +2726,6 @@ void CHL2_Player::PlayerUse ( void )
 				usedSomething = true;
 			}
 		}
-	}
-	else if ( m_afButtonPressed & IN_USE )
-	{
-		// Signal that we want to play the deny sound, unless the user is +USEing on a ladder!
-		// The sound is emitted in ItemPostFrame, since that occurs after GameMovement::ProcessMove which
-		// lets the ladder code unset this flag.
-		m_bPlayUseDenySound = true;
 	}
 
 	// Debounce the use key
@@ -3103,21 +2920,7 @@ bool CHL2_Player::Weapon_CanSwitchTo( CBaseCombatWeapon *pWeapon )
 	if ( !pWeapon->CanDeploy() )
 		return false;
 
-	/*
-	if ( GetActiveWeapon() )
-	{
-		if ( PhysCannonGetHeldEntity( GetActiveWeapon() ) == pWeapon && 
-			Weapon_OwnsThisType( pWeapon->GetClassname(), pWeapon->GetSubType()) )
-		{
-			return true;
-		}
-
-		if ( !GetActiveWeapon()->CanHolster() )
-			return false;
-	}*/
-
 	// Only primary weapons are allowed to be switched to. Grenades use the secondary slot and are thrown in a different way.
-
 	if (pWeapon->GetSlot() == WEAPON_EXPLOSIVE_SLOT && m_afButtonPressed & IN_GRENADE1)
 		return true;
 
@@ -3139,6 +2942,18 @@ void CHL2_Player::PickupObject( CBaseEntity *pObject, bool bLimitMassAndSize )
 	// Can't be picked up if NPCs are on me
 	if ( pObject->HasNPCsOnIt() )
 		return;
+
+
+	// If this object can be associated with inventory item type then pick it up
+	string_t matchingModel = CBBInventory::GetItemByModel(pObject->GetModelName());
+	if (matchingModel != NULL_STRING)
+	{
+		if (GetInventory()->AddItem(STRING(matchingModel)))
+		{
+			UTIL_Remove(pObject);
+			return;
+		}
+	}
 
 	PlayerPickupObject( this, pObject );
 }
@@ -3241,7 +3056,7 @@ void CHL2_Player::UpdateClientData( void )
 	}
 
 	// Update Flashlight
-	if (FlashlightIsOn() && sv_infinite_aux_power.GetBool() == false)
+	if (FlashlightIsOn())
 	{
 		m_HL2Local.m_flFlashBattery -= FLASH_DRAIN_TIME * gpGlobals->frametime;
 		if (m_HL2Local.m_flFlashBattery < 0.0f)
@@ -3326,12 +3141,6 @@ WeaponProficiency_t CHL2_Player::CalcWeaponProficiency( CBaseCombatWeapon *pWeap
 	WeaponProficiency_t proficiency;
 
 	proficiency = WEAPON_PROFICIENCY_PERFECT;
-
-	if( weapon_showproficiency.GetBool() != 0 )
-	{
-		Msg("Player switched to %s, proficiency is %s\n", pWeapon->GetClassname(), GetWeaponProficiencyName( proficiency ) );
-	}
-
 	return proficiency;
 }
 
@@ -3565,24 +3374,9 @@ surfacedata_t *CHL2_Player::GetLadderSurface( const Vector &origin )
 	return BaseClass::GetLadderSurface(origin);
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: Queues up a use deny sound, played in ItemPostFrame.
-//-----------------------------------------------------------------------------
-void CHL2_Player::PlayUseDenySound()
-{
-	m_bPlayUseDenySound = true;
-}
-
-
 void CHL2_Player::ItemPostFrame()
 {
 	BaseClass::ItemPostFrame();
-
-	if ( m_bPlayUseDenySound )
-	{
-		m_bPlayUseDenySound = false;
-		EmitSound( "HL2Player.UseDeny" );
-	}
 }
 
 
@@ -3708,9 +3502,9 @@ void CHL2_Player::PlayerReactSpeak(int eventType)
 
 	DevMsg("[Player] Speak event: %d\n", eventType);
 
-	//npc_citizen.fantastic01
 	switch (eventType)
 	{
+		// TODO: react in this way only on weapon bump, not equiping from inventory
 		case PLAYER_REACTION_WEAPON:
 			if (gpGlobals->curtime > m_flLastWeaponReaction + 5.0f)
 			{
@@ -3722,6 +3516,10 @@ void CHL2_Player::PlayerReactSpeak(int eventType)
 		case PLAYER_REACTION_DIE:
 			DevMsg("Player: I'm dead :(\n");
 			EmitSound("npc_citizen.die");
+			break;
+		case PLAYER_REACTION_HEAL:
+			DevMsg("Player: I'm healed\n");
+			EmitSound("npc_citizen.fantastic01");
 			break;
 		default:
 			DevMsg("PlayerReactSpeak: Bad event\n");
@@ -3803,9 +3601,6 @@ BEGIN_DATADESC( CLogicPlayerProxy )
 	DEFINE_INPUTFUNC( FIELD_VOID,	"EnableCappedPhysicsDamage", InputEnableCappedPhysicsDamage ),
 	DEFINE_INPUTFUNC( FIELD_VOID,	"DisableCappedPhysicsDamage", InputDisableCappedPhysicsDamage ),
 	DEFINE_INPUTFUNC( FIELD_STRING,	"SetLocatorTargetEntity", InputSetLocatorTargetEntity ),
-#ifdef PORTAL
-	DEFINE_INPUTFUNC( FIELD_VOID,	"SuppressCrosshair", InputSuppressCrosshair ),
-#endif // PORTAL
 	DEFINE_FIELD( m_hPlayer, FIELD_EHANDLE ),
 END_DATADESC()
 
@@ -3937,14 +3732,3 @@ void CLogicPlayerProxy::InputSetLocatorTargetEntity( inputdata_t &inputdata )
 	CHL2_Player *pPlayer = dynamic_cast<CHL2_Player*>(m_hPlayer.Get());
 	pPlayer->SetLocatorTargetEntity(pTarget);
 }
-
-#ifdef PORTAL
-void CLogicPlayerProxy::InputSuppressCrosshair( inputdata_t &inputdata )
-{
-	if( m_hPlayer == NULL )
-		return;
-
-	CPortal_Player *pPlayer = ToPortalPlayer(m_hPlayer.Get());
-	pPlayer->SuppressCrosshair( true );
-}
-#endif // PORTAL

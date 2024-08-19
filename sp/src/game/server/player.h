@@ -18,6 +18,7 @@
 #include "hintsystem.h"
 #include "SoundEmitterSystem/isoundemittersystembase.h"
 #include "util_shared.h"
+#include "bb_inventory.h"
 
 #if defined USES_ECON_ITEMS
 #include "game_item_schema.h"
@@ -800,6 +801,16 @@ public:
 		return;
 	}
 
+	virtual CBBInventory *GetInventory() {
+		Assert(0); // This should be overridden by the hl2_player class
+		return nullptr;
+	}
+
+	virtual bool UseItem(const char* name) {
+		Assert(0); // This should be overridden by the hl2_player class
+		return false;
+	}
+
 private:
 	// How much of a movement time buffer can we process from this user?
 	float				m_flMovementTimeForUserCmdProcessingRemaining;
@@ -1548,7 +1559,8 @@ enum
 {
 	PLAYER_REACTION_NONE = 0,
 	PLAYER_REACTION_WEAPON,
-	PLAYER_REACTION_DIE
+	PLAYER_REACTION_DIE,
+	PLAYER_REACTION_HEAL
 };
 
 #endif // PLAYER_H
