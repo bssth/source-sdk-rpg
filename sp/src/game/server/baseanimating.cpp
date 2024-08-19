@@ -1209,7 +1209,6 @@ void CBaseAnimating::HandleAnimEvent( animevent_t *pEvent )
 float CBaseAnimating::SetPoseParameter( CStudioHdr *pStudioHdr, const char *szName, float flValue )
 {
 	int poseParam = LookupPoseParameter( pStudioHdr, szName );
-	AssertMsg2(poseParam >= 0, "SetPoseParameter called with invalid argument %s by %s", szName, GetDebugName());
 	return SetPoseParameter( pStudioHdr, poseParam, flValue );
 }
 
