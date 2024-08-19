@@ -641,19 +641,6 @@ void CAI_BaseNPC::Event_Killed( const CTakeDamageInfo &info )
 void CAI_BaseNPC::Ignite( float flFlameLifetime, bool bNPCOnly, float flSize, bool bCalledByLevelDesigner )
 {
 	BaseClass::Ignite( flFlameLifetime, bNPCOnly, flSize, bCalledByLevelDesigner );
-
-#ifdef HL2_EPISODIC
-	CBasePlayer *pPlayer = AI_GetSinglePlayer();
-	if ( pPlayer->IRelationType( this ) != D_LI )
-	{
-		CNPC_Alyx *alyx = CNPC_Alyx::GetAlyx();
-
-		if ( alyx )
-		{
-			alyx->EnemyIgnited( this );
-		}
-	}
-#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -5225,52 +5212,7 @@ bool CAI_BaseNPC::WeaponLOSCondition(const Vector &ownerPos, const Vector &targe
 		}
 		bHaveLOS = false;
 	}
-	// -------------------------------------------
-	//  Check for friendly fire with the player
-	// -------------------------------------------
-	if ( CapabilitiesGet() & ( bits_CAP_NO_HIT_PLAYER | bits_CAP_NO_HIT_SQUADMATES ) )
-	{
-		float spread = 0.92f;
-		if ( GetActiveWeapon() )
-		{
-			Vector vSpread = GetAttackSpread( GetActiveWeapon() );
-			if ( vSpread.x > VECTOR_CONE_15DEGREES.x )
-				spread = FastCos( asin(vSpread.x) );
-			else // too much error because using point not box
-				spread = 0.99145f; // "15 degrees"
-		}
-		if ( CapabilitiesGet() & bits_CAP_NO_HIT_PLAYER)
-		{
-			// Check shoot direction relative to player
-			if (PlayerInSpread( ownerPos, targetPos, spread, 8*12 ))
-			{
-				if (bSetConditions)
-				{
-					SetCondition( COND_WEAPON_PLAYER_IN_SPREAD );
-				}
-				bHaveLOS = false;
-			}
-			/* For grenades etc. check that player is clear?
-			// Check player position also
-			if (PlayerInRange( targetPos, 100 ))
-			{
-				SetCondition( COND_WEAPON_PLAYER_NEAR_TARGET );
-			}
-			*/
-		}
 
-		if ( bHaveLOS )
-		{
-			if ( ( CapabilitiesGet() & bits_CAP_NO_HIT_SQUADMATES) && m_pSquad && GetEnemy() )
-			{
-				if ( IsSquadmateInSpread( ownerPos, targetPos, spread, 8*12 ) )
-				{
-					SetCondition( COND_WEAPON_BLOCKED_BY_FRIEND );
-					bHaveLOS = false;
-				}
-			}
-		}
-	}
 	return bHaveLOS;
 }
 

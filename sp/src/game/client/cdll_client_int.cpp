@@ -354,7 +354,7 @@ const bool IsSteamDeck()
 	if ( CommandLine()->FindParm( "-nogamepadui" ) )
 		return false;
 
-	return true;
+	return false;
 }
 
 //-----------------------------------------------------------------------------

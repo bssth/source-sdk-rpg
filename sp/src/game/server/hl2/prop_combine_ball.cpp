@@ -567,19 +567,12 @@ void CPropCombineBall::InputKill( inputdata_t &inputdata )
 //-----------------------------------------------------------------------------
 void CPropCombineBall::InputSocketed( inputdata_t &inputdata )
 {
-	// tell owner ( if any ) that we're dead.This is mostly for NPCMaker functionality.
+	// tell owner ( if any ) that we're dead. This is mostly for NPCMaker functionality.
 	CBaseEntity *pOwner = GetOwnerEntity();
 	if ( pOwner )
 	{
 		pOwner->DeathNotice( this );
 		SetOwnerEntity( NULL );
-	}
-
-	// if our owner is a player, tell them we were socketed
-	CHL2_Player *pPlayer = dynamic_cast<CHL2_Player *>( pOwner );
-	if ( pPlayer )
-	{
-		pPlayer->CombineBallSocketed( this );
 	}
 
 	UTIL_Remove( this );
@@ -1123,14 +1116,6 @@ bool CPropCombineBall::DissolveEntity( CBaseEntity *pEntity )
 	if( pEntity->IsEFlagSet( EFL_NO_DISSOLVE ) )
 		return false;
 
-#ifdef HL2MP
-	if ( pEntity->IsPlayer() )
-	{
-		m_bStruckEntity = true;
-		return false;
-	}
-#endif
-
 	if( !pEntity->IsNPC() && !(dynamic_cast<CRagdollProp*>(pEntity)) )
 		return false;
 
@@ -1310,8 +1295,6 @@ bool CPropCombineBall::IsAttractiveTarget( CBaseEntity *pEntity )
 	}
 	else
 	{
-		
-#ifndef HL2MP
 		if ( GetOwnerEntity() ) 
 		{
 			// Things we check if this ball has an owner that's not an NPC.
@@ -1333,21 +1316,6 @@ bool CPropCombineBall::IsAttractiveTarget( CBaseEntity *pEntity )
 
 		if( pEntity->Classify() == CLASS_BULLSEYE )
 			return false;
-
-#else
-		if ( pEntity->IsPlayer() == false )
-			 return false;
-
-		if ( pEntity == GetOwnerEntity() )
-			 return false;
-		
-		//No tracking teammates in teammode!
-		if ( g_pGameRules->IsTeamplay() )
-		{
-			if ( g_pGameRules->PlayerRelationship( GetOwnerEntity(), pEntity ) == GR_TEAMMATE )
-				 return false;
-		}
-#endif
 
 		// We must be able to hit them
 		trace_t	tr;

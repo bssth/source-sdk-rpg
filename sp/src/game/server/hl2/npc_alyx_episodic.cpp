@@ -5,8 +5,6 @@
 //			Try the new Alyx Brite toothpaste!
 //			Alyx lederhosen!
 //
-//			FIXME: need a better comment block
-//
 //=============================================================================//
 
 #include "cbase.h"
@@ -25,7 +23,6 @@
 #include "IEffects.h"
 #include "globalstate.h"
 #include "weapon_physcannon.h"
-#include "info_darknessmode_lightsource.h"
 #include "sceneentity.h"
 #include "bb_gamerules.h"
 #include "scripted.h"
@@ -57,8 +54,6 @@ bool IsInCommentaryMode( void );
 
 #define ALYX_BREATHING_VOLUME_MAX		1.0
 
-#define ALYX_DARKNESS_LOST_PLAYER_DIST	( 120 * 120 ) // 12 feet
-
 #define ALYX_MIN_MOB_DIST_SQR Square(120)		// Any enemy closer than this adds to the 'mob' 
 #define ALYX_MIN_CONSIDER_DIST	Square(1200)	// Only enemies within this range are counted and considered to generate AI speech
 
@@ -84,24 +79,18 @@ BEGIN_DATADESC( CNPC_Alyx )
 	DEFINE_FIELD( m_hStealthLookTarget, FIELD_EHANDLE ),
 	DEFINE_FIELD( m_bInteractionAllowed, FIELD_BOOLEAN ),
 	DEFINE_FIELD( m_fTimeNextSearchForInteractTargets, FIELD_TIME ),
-	DEFINE_FIELD( m_bDarknessSpeechAllowed, FIELD_BOOLEAN ),
 	DEFINE_FIELD( m_bIsEMPHolstered, FIELD_BOOLEAN ),
 	DEFINE_FIELD( m_bIsFlashlightBlind, FIELD_BOOLEAN ),
 	DEFINE_FIELD( m_fStayBlindUntil, FIELD_TIME ),
 	DEFINE_FIELD( m_flDontBlindUntil, FIELD_TIME ),
-	DEFINE_FIELD( m_bSpokeLostPlayerInDarkness, FIELD_BOOLEAN ),
 	DEFINE_FIELD( m_bPlayerFlashlightState, FIELD_BOOLEAN ),
 	DEFINE_FIELD( m_bHadCondSeeEnemy, FIELD_BOOLEAN ),
 	DEFINE_FIELD( m_iszCurrentBlindScene, FIELD_STRING ),
-	DEFINE_FIELD( m_fTimeUntilNextDarknessFoundPlayer, FIELD_TIME ),
 	DEFINE_FIELD( m_fCombatStartTime, FIELD_TIME ),
 	DEFINE_FIELD( m_fCombatEndTime, FIELD_TIME ),
 	DEFINE_FIELD( m_flNextCrouchTime, FIELD_TIME ),
 	DEFINE_FIELD( m_WeaponType, FIELD_INTEGER ),
 	DEFINE_KEYFIELD( m_bShouldHaveEMP, FIELD_BOOLEAN, "ShouldHaveEMP" ),
-	
-	DEFINE_SOUNDPATCH( m_sndDarknessBreathing ),
-
 	DEFINE_EMBEDDED( m_SpeechWatch_LostPlayer ),
 	DEFINE_EMBEDDED( m_SpeechTimer_HeardSound ),
 	DEFINE_EMBEDDED( m_SpeechWatch_SoundDelay ),
@@ -113,7 +102,6 @@ BEGIN_DATADESC( CNPC_Alyx )
 	DEFINE_INPUTFUNC( FIELD_VOID,		"DisallowInteraction",	InputDisallowInteraction ),
 	DEFINE_INPUTFUNC( FIELD_VOID,		"AllowInteraction",		InputAllowInteraction ),
 	DEFINE_INPUTFUNC( FIELD_STRING,		"GiveWeapon",			InputGiveWeapon ),
-	DEFINE_INPUTFUNC( FIELD_BOOLEAN,	"AllowDarknessSpeech",	InputAllowDarknessSpeech ),
 	DEFINE_INPUTFUNC( FIELD_BOOLEAN,	"GiveEMP",				InputGiveEMP ),
 	DEFINE_INPUTFUNC( FIELD_VOID,		"VehiclePunted",		InputVehiclePunted ),
 	DEFINE_INPUTFUNC( FIELD_VOID,		"OutsideTransition",	InputOutsideTransition ),
@@ -136,11 +124,6 @@ static int AE_ALYX_EMPTOOL_SEQUENCE;
 static int AE_ALYX_EMPTOOL_USE;
 static int COMBINE_AE_BEGIN_ALTFIRE;
 static int COMBINE_AE_ALTFIRE;
-
-ConVar npc_alyx_readiness( "npc_alyx_readiness", "1" );
-ConVar npc_alyx_force_stop_moving( "npc_alyx_force_stop_moving", "1" );
-ConVar npc_alyx_readiness_transitions( "npc_alyx_readiness_transitions", "1" );
-ConVar npc_alyx_crouch( "npc_alyx_crouch", "1" );
 
 // global pointer to Alyx for fast lookups
 CEntityClassList<CNPC_Alyx> g_AlyxList;
@@ -167,38 +150,7 @@ CNPC_Alyx::~CNPC_Alyx( )
 //=========================================================
 Class_T	CNPC_Alyx::Classify ( void )
 {
-	return	CLASS_PLAYER_ALLY_VITAL;
-}
-
-//-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
-bool CNPC_Alyx::FValidateHintType( CAI_Hint *pHint )
-{
-	switch( pHint->HintType() )
-	{
-	case HINT_WORLD_VISUALLY_INTERESTING:
-		return true;
-		break;
-	case HINT_WORLD_VISUALLY_INTERESTING_STEALTH:
-		return true;
-		break;
-	}
-
-	return BaseClass::FValidateHintType( pHint );
-}
-
-//-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
-int CNPC_Alyx::ObjectCaps() 
-{
-	int caps = BaseClass::ObjectCaps();
-
-	if( m_FuncTankBehavior.IsMounted() )
-	{
-		caps &= ~FCAP_IMPULSE_USE;
-	}
-
-	return caps;
+	return CLASS_PLAYER_ALLY_VITAL;
 }
 
 //=========================================================
@@ -211,7 +163,6 @@ void CNPC_Alyx::HandleAnimEvent( animevent_t *pEvent )
 	{
 		if (!m_hEmpTool)
 		{
-			// Old savegame?
 			CreateEmpTool();
 			if (!m_hEmpTool)
 				return;
@@ -274,7 +225,6 @@ void CNPC_Alyx::HandleAnimEvent( animevent_t *pEvent )
 		fakeEvent.pSource = this;
 		fakeEvent.event = EVENT_WEAPON_AR2_ALTFIRE;
 		GetActiveWeapon()->Operator_HandleAnimEvent( &fakeEvent, this );
-		//m_iNumGrenades--;
 
 		return;
 	}
@@ -286,14 +236,6 @@ void CNPC_Alyx::HandleAnimEvent( animevent_t *pEvent )
 		BaseClass::HandleAnimEvent( pEvent );
 		break;
 	}
-}
-
-//=========================================================
-// Returns a pointer to Alyx's entity
-//=========================================================
-CNPC_Alyx *CNPC_Alyx::GetAlyx( void )
-{
-	return g_AlyxList.m_pClassList;
 }
 
 //=========================================================
@@ -315,19 +257,18 @@ void CNPC_Alyx::Spawn()
 {
 	BaseClass::Spawn();
 
-	// If Alyx has a parent, she's currently inside a pod. Prevent her from moving.
-	if ( GetMoveParent() )
-	{
-		SetMoveType( MOVETYPE_NONE );
-		CapabilitiesClear();
+	SetSolid(SOLID_BBOX);
+	AddSolidFlags(FSOLID_NOT_STANDABLE);
+	SetMoveType(MOVETYPE_STEP);
 
-		CapabilitiesAdd( bits_CAP_ANIMATEDFACE | bits_CAP_TURN_HEAD );
-	}
-	else
-	{
-		SetupAlyxWithoutParent();
-		CreateEmpTool( );
-	}
+	CapabilitiesAdd(bits_CAP_MOVE_GROUND | bits_CAP_DOORS_GROUP | bits_CAP_TURN_HEAD | bits_CAP_DUCK | bits_CAP_SQUAD);
+	CapabilitiesAdd(bits_CAP_USE_WEAPONS);
+	CapabilitiesAdd(bits_CAP_ANIMATEDFACE);
+	CapabilitiesAdd(bits_CAP_AIM_GUN);
+	CapabilitiesAdd(bits_CAP_MOVE_SHOOT);
+	CapabilitiesAdd(bits_CAP_USE_SHOT_REGULATOR);
+
+	CreateEmpTool();
 
 	AddEFlags( EFL_NO_DISSOLVE | EFL_NO_PHYSCANNON_INTERACTION );
 
@@ -345,8 +286,6 @@ void CNPC_Alyx::Spawn()
 	SetEMPHolstered(true);
 
 	m_bDontPickupWeapons = true;
-
-	m_bDarknessSpeechAllowed = true;
 		
 	m_fCombatStartTime = 0.0f;
 	m_fCombatEndTime   = 0.0f;
@@ -386,14 +325,7 @@ void CNPC_Alyx::Precache()
 //-----------------------------------------------------------------------------
 void CNPC_Alyx::Activate( void )
 {
-	// Alyx always kicks her health back up to full after loading a savegame.
-	// Avoids problems with players saving the game in places where she dies immediately afterwards.
-	m_iHealth = 80;
-
 	BaseClass::Activate();
-
-	// Alyx always assumes she has said hello to Gordon!
-	SetSpokeConcept( TLK_HELLO, NULL, false );	
 
 	// Add my personal concepts
 	CAI_AllySpeechManager *pSpeechManager = GetAllySpeechManager();
@@ -420,45 +352,14 @@ void CNPC_Alyx::Activate( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CNPC_Alyx::StopLoopingSounds( void )
-{
-	CSoundEnvelopeController::GetController().SoundDestroy( m_sndDarknessBreathing );
-	m_sndDarknessBreathing = NULL;
-
-	BaseClass::StopLoopingSounds();
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
 void CNPC_Alyx::SelectModel()
 {
-	// Alyx is allowed to use multiple models, because she appears in the pod.
-	// She defaults to her normal model.
 	const char *szModel = STRING( GetModelName() );
 	if (!szModel || !*szModel)
 	{
 		SetModelName( AllocPooledString("models/alyx.mdl") );
 	}
 }
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CNPC_Alyx::SetupAlyxWithoutParent( void )
-{
-	SetSolid( SOLID_BBOX );
-	AddSolidFlags( FSOLID_NOT_STANDABLE );
-	SetMoveType( MOVETYPE_STEP );
-
-	CapabilitiesAdd( bits_CAP_MOVE_GROUND | bits_CAP_DOORS_GROUP | bits_CAP_TURN_HEAD | bits_CAP_DUCK | bits_CAP_SQUAD );
-	CapabilitiesAdd( bits_CAP_USE_WEAPONS );
-	CapabilitiesAdd( bits_CAP_ANIMATEDFACE );
-	CapabilitiesAdd( bits_CAP_AIM_GUN );
-	CapabilitiesAdd( bits_CAP_MOVE_SHOOT );
-	CapabilitiesAdd( bits_CAP_USE_SHOT_REGULATOR );
-}
-
 
 //-----------------------------------------------------------------------------
 // Purpose: Create and initialized Alyx's EMP tool
@@ -536,7 +437,7 @@ void CNPC_Alyx::ReadinessLevelChanged( int iPriorLevel )
 	if ( GetActiveWeapon() == NULL )
 		return;
 
-	//If Alyx is going from Relaxed to Agitated or Stimulated, let her raise her weapon before she's able to fire.
+	// If Alyx is going from Relaxed to Agitated or Stimulated, let her raise her weapon before she's able to fire.
 	if ( iPriorLevel == AIRL_RELAXED && GetReadinessLevel() > iPriorLevel )
 	{
 		GetShotRegulator()->FireNoEarlierThan( gpGlobals->curtime + 0.5 );
@@ -546,38 +447,35 @@ void CNPC_Alyx::ReadinessLevelChanged( int iPriorLevel )
 	if ( HasActiveLayer() )
 		return;
 
-	if ( npc_alyx_readiness_transitions.GetBool() )
+	// We don't have crouching readiness transitions yet
+	if (IsCrouching())
+		return;
+
+	static ReadinessTransition_t readinessTransitions[] =
 	{
-		// We don't have crouching readiness transitions yet
-		if ( IsCrouching() )
-			return;
+		//Previous Readiness level - Current Readiness Level - Activity NPC needs to be playing - Gesture to play
+		{ AIRL_RELAXED,	AIRL_STIMULATED, ACT_IDLE, ACT_READINESS_RELAXED_TO_STIMULATED, },
+		{ AIRL_RELAXED,	AIRL_STIMULATED, ACT_WALK, ACT_READINESS_RELAXED_TO_STIMULATED_WALK, },
+		{ AIRL_AGITATED, AIRL_STIMULATED, ACT_IDLE, ACT_READINESS_AGITATED_TO_STIMULATED, },
+		{ AIRL_STIMULATED, AIRL_RELAXED, ACT_IDLE, ACT_READINESS_STIMULATED_TO_RELAXED, }
+	};
 
-		static ReadinessTransition_t readinessTransitions[] =
+	for (int i = 0; i < ARRAYSIZE(readinessTransitions); i++)
+	{
+		if (GetIdealActivity() != readinessTransitions[i].requiredActivity)
+			continue;
+
+		Activity translatedTransitionActivity = Weapon_TranslateActivity(readinessTransitions[i].transitionActivity);
+
+		if (translatedTransitionActivity == ACT_INVALID || translatedTransitionActivity == readinessTransitions[i].transitionActivity)
+			continue;
+
+		Activity finalActivity = TranslateActivityReadiness(translatedTransitionActivity);
+
+		if (iPriorLevel == readinessTransitions[i].iPreviousLevel && GetReadinessLevel() == readinessTransitions[i].iCurrentLevel)
 		{
-			//Previous Readiness level - Current Readiness Level - Activity NPC needs to be playing - Gesture to play
-			{ AIRL_RELAXED,	AIRL_STIMULATED, ACT_IDLE, ACT_READINESS_RELAXED_TO_STIMULATED, },
-			{ AIRL_RELAXED,	AIRL_STIMULATED, ACT_WALK, ACT_READINESS_RELAXED_TO_STIMULATED_WALK, },
-			{ AIRL_AGITATED, AIRL_STIMULATED, ACT_IDLE, ACT_READINESS_AGITATED_TO_STIMULATED, },
-			{ AIRL_STIMULATED, AIRL_RELAXED, ACT_IDLE, ACT_READINESS_STIMULATED_TO_RELAXED, }
-		};
-
-		for ( int i = 0; i < ARRAYSIZE( readinessTransitions ); i++ )
-		{
-			if ( GetIdealActivity() != readinessTransitions[i].requiredActivity )
-				continue;
-
-			Activity translatedTransitionActivity = Weapon_TranslateActivity( readinessTransitions[i].transitionActivity );
-
-			if ( translatedTransitionActivity == ACT_INVALID || translatedTransitionActivity == readinessTransitions[i].transitionActivity )
-				continue;
-
-			Activity finalActivity = TranslateActivityReadiness( translatedTransitionActivity );
-
-			if ( iPriorLevel == readinessTransitions[i].iPreviousLevel && GetReadinessLevel() == readinessTransitions[i].iCurrentLevel )
-			{
-				RestartGesture( finalActivity );
-				break;
-			}
+			RestartGesture(finalActivity);
+			break;
 		}
 	}
 }
@@ -588,17 +486,6 @@ void CNPC_Alyx::ReadinessLevelChanged( int iPriorLevel )
 void CNPC_Alyx::PrescheduleThink( void )
 {
 	BaseClass::PrescheduleThink();
-
-	// Figure out if Alyx has just been removed from her parent
-	if ( GetMoveType() == MOVETYPE_NONE && !GetMoveParent() )
-	{
-		// Don't confuse the passenger behavior with just removing Alyx's parent!
-		if ( m_PassengerBehavior.IsEnabled() == false )
-		{
-			SetupAlyxWithoutParent();
-			SetupVPhysicsHull();
-		}
-	}
 
 	// If Alyx is in combat, and she doesn't have her gun out, fetch it
 	if ( GetState() == NPC_STATE_COMBAT && IsWeaponHolstered() && !m_FuncTankBehavior.IsRunning() )
@@ -837,7 +724,6 @@ bool CNPC_Alyx::ShouldPlayerAvoid( void )
 	if( IsCurSchedule(SCHED_ALYX_NEW_WEAPON, false) )
 		return true;
 
-#if 1
 	if( IsCurSchedule( SCHED_PC_GET_OFF_COMPANION, false) )
 	{
 		CBaseEntity *pGroundEnt = GetGroundEntity();
@@ -847,7 +733,6 @@ bool CNPC_Alyx::ShouldPlayerAvoid( void )
 				return true;
 		}
 	}
-#endif 
 	return BaseClass::ShouldPlayerAvoid();
 }
 
@@ -896,41 +781,6 @@ void CNPC_Alyx::AnalyzeGunfireSound( CSound *pSound )
 			UpdateEnemyMemory( pSoundOriginBCC, pSoundOriginBCC->GetAbsOrigin(), this );
 		}
 	}
-}
-
-//-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
-bool CNPC_Alyx::IsValidEnemy( CBaseEntity *pEnemy )
-{
-	if (!CanSeeEntityInDarkness(pEnemy))
-		return false;
-
-	// Alyx can only take a stalker as her enemy which is angry at the player or her.
-	if ( pEnemy->Classify() == CLASS_STALKER )
-	{
-		if( !pEnemy->GetEnemy() )
-		{
-			return false;
-		}
-
-		if( pEnemy->GetEnemy() != this && !pEnemy->GetEnemy()->IsPlayer() )
-		{
-			return false;
-		}
-	}
-
-	if ( m_AssaultBehavior.IsRunning() && IsTurret( pEnemy ) )
-	{
-		CBaseCombatCharacter *pBCC = dynamic_cast<CBaseCombatCharacter*>(pEnemy);
-
-		if ( pBCC != NULL && !pBCC->FInViewCone(this) )
-		{
-			// Don't let turrets that can't shoot me distract me from my assault behavior.
-			return false;
-		}
-	}
-
-	return BaseClass::IsValidEnemy(pEnemy);
 }
 
 //-----------------------------------------------------------------------------
@@ -990,38 +840,6 @@ void CNPC_Alyx::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 			pMemory->timeFirstSeen = gpGlobals->curtime - 10.0f;
 		}
 	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Called by enemy NPC's when they are ignited
-// Input  : pVictim - entity that was ignited
-//-----------------------------------------------------------------------------
-void CNPC_Alyx::EnemyIgnited( CAI_BaseNPC *pVictim )
-{
-	if ( FVisible( pVictim ) )
-	{
-		SpeakIfAllowed( TLK_ENEMY_BURNING );
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Called by combine balls when they're socketed
-// Input  : pVictim - entity killed by player
-//-----------------------------------------------------------------------------
-void CNPC_Alyx::CombineBallSocketed( int iNumBounces )
-{
-	CBasePlayer *pPlayer = AI_GetSinglePlayer();
-	
-	if ( !pPlayer || !FVisible(pPlayer) )
-	{
-		return;
-	}
-
-	// set up the speech modifiers
-	CFmtStrN<128> modifiers( "num_bounces:%d", iNumBounces );
-
-	// fire off a ball socketed concept
-	SpeakIfAllowed( TLK_BALLSOCKETED, modifiers );
 }
 
 //-----------------------------------------------------------------------------
@@ -1115,7 +933,6 @@ void CNPC_Alyx::DoMobbedCombatAI( void )
 //-----------------------------------------------------------------------------
 void CNPC_Alyx::DoCustomCombatAI( void )
 {
-	// Only run the following code if we're not in a vehicle
 	if ( RunningPassengerBehavior() == false )
 	{
 		// Do our mobbed by enemies logic
@@ -1156,8 +973,6 @@ void CNPC_Alyx::DoCustomSpeechAI( void )
 {
 	BaseClass::DoCustomSpeechAI();
 
-	CBasePlayer *pPlayer = AI_GetSinglePlayer();
-
 	if ( HasCondition(COND_NEW_ENEMY) && GetEnemy() )
 	{
 		if ( GetEnemy()->Classify() == CLASS_HEADCRAB )
@@ -1185,221 +1000,12 @@ void CNPC_Alyx::DoCustomSpeechAI( void )
 		}
 	}
 
-	// Darkness mode speech
 	ClearCondition( COND_ALYX_IN_DARK );
-	// Even though the darkness light system will take flares into account when Alyx
-	// says she's lost the player in the darkness, players still think she's silly
-	// when they're too far from the flare to be seen. 
-	// So, check for lit flares or other dynamic lights, and don't do
-	// a bunch of the darkness speech if there's a lit flare nearby.
-	bool bNearbyFlare = DarknessLightSourceWithinRadius(this, 500);
-	if (!bNearbyFlare)
-	{
-		SetCondition(COND_ALYX_IN_DARK);
-		if (HasCondition(COND_ALYX_PLAYER_TURNED_OFF_FLASHLIGHT) || HasCondition(COND_ALYX_PLAYER_FLASHLIGHT_EXPIRED))
-		{
-			// Player just turned off the flashlight. Start ramping up Alyx's breathing.
-			if (!m_sndDarknessBreathing)
-			{
-				CPASAttenuationFilter filter(this);
-				m_sndDarknessBreathing = CSoundEnvelopeController::GetController().SoundCreate(filter, entindex(), CHAN_STATIC,
-					"ep_01.al_dark_breathing01", SNDLVL_TALKING);
-				CSoundEnvelopeController::GetController().Play(m_sndDarknessBreathing, 0.0f, PITCH_NORM);
-			}
 
-			if (m_sndDarknessBreathing)
-			{
-				CSoundEnvelopeController::GetController().SoundChangeVolume(m_sndDarknessBreathing, ALYX_BREATHING_VOLUME_MAX, RandomFloat(10, 20));
-				m_SpeechWatch_BreathingRamp.Stop();
-			}
-		}
-	}
-
-	// If we lose an enemy due to the flashlight, comment about it
-	if (!HasCondition(COND_SEE_ENEMY) && m_bHadCondSeeEnemy && !HasCondition(COND_TALKER_PLAYER_DEAD))
-	{
-		if (m_bDarknessSpeechAllowed && HasCondition(COND_ALYX_PLAYER_TURNED_OFF_FLASHLIGHT) &&
-			GetEnemy() && (GetEnemy()->Classify() != CLASS_BULLSEYE))
-		{
-			SpeakIfAllowed("TLK_DARKNESS_LOSTENEMY_BY_FLASHLIGHT");
-		}
-		else if (m_bDarknessSpeechAllowed && HasCondition(COND_ALYX_PLAYER_FLASHLIGHT_EXPIRED) &&
-			GetEnemy() && (GetEnemy()->Classify() != CLASS_BULLSEYE))
-		{
-			SpeakIfAllowed("TLK_DARKNESS_LOSTENEMY_BY_FLASHLIGHT_EXPIRED");
-		}
-		else if (m_bDarknessSpeechAllowed && GetEnemy() && (GetEnemy()->Classify() != CLASS_BULLSEYE) &&
-			pPlayer && pPlayer->FlashlightIsOn() && !pPlayer->IsIlluminatedByFlashlight(GetEnemy(), NULL) &&
-			FVisible(GetEnemy()))
-		{
-			SpeakIfAllowed(TLK_DARKNESS_ENEMY_IN_DARKNESS);
-		}
-		m_bHadCondSeeEnemy = false;
-	}
-	else if (HasCondition(COND_SEE_ENEMY))
+	if (HasCondition(COND_SEE_ENEMY))
 	{
 		m_bHadCondSeeEnemy = true;
 	}
-	else if ((!GetEnemy() || (GetEnemy()->Classify() == CLASS_BULLSEYE)) && m_bDarknessSpeechAllowed)
-	{
-		if (HasCondition(COND_ALYX_PLAYER_FLASHLIGHT_EXPIRED))
-		{
-			SpeakIfAllowed(TLK_DARKNESS_FLASHLIGHT_EXPIRED);
-		}
-		else if (HasCondition(COND_ALYX_PLAYER_TURNED_OFF_FLASHLIGHT))
-		{
-			SpeakIfAllowed(TLK_FLASHLIGHT_OFF);
-		}
-		else if (HasCondition(COND_ALYX_PLAYER_TURNED_ON_FLASHLIGHT))
-		{
-			SpeakIfAllowed(TLK_FLASHLIGHT_ON);
-		}
-	}
-
-	// If we've just seen a new enemy, and it's illuminated by the flashlight, 
-	// tell the player to keep the flashlight on 'em.
-	if (HasCondition(COND_NEW_ENEMY) && !HasCondition(COND_TALKER_PLAYER_DEAD))
-	{
-		// First time we've seen this guy?
-		if (gpGlobals->curtime - GetEnemies()->FirstTimeSeen(GetEnemy()) < 0.5)
-		{
-			if (pPlayer && pPlayer->IsIlluminatedByFlashlight(GetEnemy(), NULL) && m_bDarknessSpeechAllowed &&
-				!LookerCouldSeeTargetInDarkness(this, GetEnemy()))
-			{
-				SpeakIfAllowed("TLK_DARKNESS_FOUNDENEMY_BY_FLASHLIGHT");
-			}
-		}
-	}
-
-	// When we lose the player, start lost-player talker after some time
-	if (!bNearbyFlare && m_bDarknessSpeechAllowed)
-	{
-		if (!HasCondition(COND_SEE_PLAYER) && !m_SpeechWatch_LostPlayer.IsRunning())
-		{
-			m_SpeechWatch_LostPlayer.Set(5, 8);
-			m_SpeechWatch_LostPlayer.Start();
-			m_MoveMonitor.SetMark(AI_GetSinglePlayer(), 48);
-		}
-		else if (m_SpeechWatch_LostPlayer.Expired())
-		{
-			// Can't see the player?
-			if (!HasCondition(COND_SEE_PLAYER) && !HasCondition(COND_TALKER_PLAYER_DEAD) && !HasCondition(COND_SEE_ENEMY) &&
-				(!pPlayer || pPlayer->GetAbsOrigin().DistToSqr(GetAbsOrigin()) > ALYX_DARKNESS_LOST_PLAYER_DIST))
-			{
-				// only speak if player hasn't moved.
-				if (m_MoveMonitor.TargetMoved(AI_GetSinglePlayer()))
-				{
-					SpeakIfAllowed("TLK_DARKNESS_LOSTPLAYER");
-					m_SpeechWatch_LostPlayer.Set(10);
-					m_SpeechWatch_LostPlayer.Start();
-					m_bSpokeLostPlayerInDarkness = true;
-				}
-			}
-		}
-
-		// Speech concepts that only occur when the player's flashlight is off
-		if (pPlayer && !HasCondition(COND_TALKER_PLAYER_DEAD) && !pPlayer->FlashlightIsOn())
-		{
-			// When the player first turns off the light, don't talk about sounds for a bit
-			if (HasCondition(COND_ALYX_PLAYER_TURNED_OFF_FLASHLIGHT) || HasCondition(COND_ALYX_PLAYER_FLASHLIGHT_EXPIRED))
-			{
-				m_SpeechTimer_HeardSound.Set(4);
-			}
-			else if (m_SpeechWatch_SoundDelay.Expired())
-			{
-				// We've waited for a bit after the sound, now talk about it
-				SpeakIfAllowed("TLK_DARKNESS_HEARDSOUND");
-				m_SpeechWatch_SoundDelay.Stop();
-			}
-			else if (HasCondition(COND_HEAR_SPOOKY))
-			{
-				// If we hear anything while the player's flashlight is off, randomly mention it
-				if (m_SpeechTimer_HeardSound.Expired())
-				{
-					m_SpeechTimer_HeardSound.Set(10);
-
-					// Wait for the sound to play for a bit before speaking about it
-					m_SpeechWatch_SoundDelay.Set(1.0, 3.0);
-					m_SpeechWatch_SoundDelay.Start();
-				}
-			}
-		}
-	}
-
-	// Stop the heard sound response if the player turns the flashlight on
-	if (bNearbyFlare || HasCondition(COND_ALYX_PLAYER_TURNED_ON_FLASHLIGHT))
-	{
-		m_SpeechWatch_SoundDelay.Stop();
-
-		if (m_sndDarknessBreathing)
-		{
-			CSoundEnvelopeController::GetController().SoundChangeVolume(m_sndDarknessBreathing, 0.0f, 0.5);
-			m_SpeechWatch_BreathingRamp.Stop();
-		}
-	}
-
-	// If we spoke lost-player, and now we see him/her, say so
- 	if ( m_bSpokeLostPlayerInDarkness )
-	{
-		// If we've left darkness mode, or if the player has blinded me with 
-		// the flashlight, don't bother speaking the found player line.
-		if ( !m_bIsFlashlightBlind && m_bDarknessSpeechAllowed )
-		{
-			if ( HasCondition(COND_SEE_PLAYER) && !HasCondition( COND_TALKER_PLAYER_DEAD ) )
-			{
-				if ( ( m_fTimeUntilNextDarknessFoundPlayer == AI_INVALID_TIME ) || ( gpGlobals->curtime < m_fTimeUntilNextDarknessFoundPlayer ) )
-				{
-					SpeakIfAllowed( "TLK_DARKNESS_FOUNDPLAYER" );
-				}
-				m_bSpokeLostPlayerInDarkness = false;
-			}
-		}
-		else
-		{
-			m_bSpokeLostPlayerInDarkness = false;
-		}
-	}
-
-
-	if ( ( !m_bDarknessSpeechAllowed || HasCondition(COND_SEE_PLAYER) ) && m_SpeechWatch_LostPlayer.IsRunning() )
-	{
-		m_SpeechWatch_LostPlayer.Stop();
-		m_MoveMonitor.ClearMark();
-	}
-
-	// Ramp the breathing back up after speaking
- 	if ( m_SpeechWatch_BreathingRamp.IsRunning() )
-	{
-		if ( m_SpeechWatch_BreathingRamp.Expired() )
-		{
-			CSoundEnvelopeController::GetController().SoundChangeVolume( m_sndDarknessBreathing, ALYX_BREATHING_VOLUME_MAX, RandomFloat(5,10) );
-			m_SpeechWatch_BreathingRamp.Stop();
-		}
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-bool CNPC_Alyx::SpeakIfAllowed( AIConcept_t concept, const char *modifiers /*= NULL*/, bool bRespondingToPlayer /*= false*/, char *pszOutResponseChosen /*= NULL*/, size_t bufsize /* = 0 */ )
-{
-	if ( BaseClass::SpeakIfAllowed( concept, modifiers, bRespondingToPlayer, pszOutResponseChosen, bufsize ) )
-	{
-		// If we're breathing in the darkness, drop the volume quickly
-		if ( m_sndDarknessBreathing && CSoundEnvelopeController::GetController().SoundGetVolume( m_sndDarknessBreathing ) > 0.0 )
-		{
-			CSoundEnvelopeController::GetController().SoundChangeVolume( m_sndDarknessBreathing, 0.0f, 0.1 );
-
-			// Ramp up the sound again after the response is over
-			float flDelay = (GetTimeSpeechComplete() - gpGlobals->curtime);
-			m_SpeechWatch_BreathingRamp.Set( flDelay );
-			m_SpeechWatch_BreathingRamp.Start();
-		}
-
-		return true;
-	}
-
-	return false;
 }
 
 extern int ACT_ANTLION_FLIP;
@@ -1477,65 +1083,6 @@ int CNPC_Alyx::IRelationPriority( CBaseEntity *pTarget )
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
-#define ALYX_360_VIEW_DIST_SQR	129600 // 30 feet
-bool CNPC_Alyx::FInViewCone( CBaseEntity *pEntity )
-{
-	// Alyx can see 360 degrees but only at limited distance. This allows her to be aware of a 
-	// large mob of enemies (usually antlions or zombies) closing in. This situation is so obvious to the 
-	// player that it doesn't make sense for Alyx to be unaware of the entire group simply because she 
-	// hasn't seen all of the enemies with her own eyes.
-	if( ( pEntity->IsNPC() || pEntity->IsPlayer() ) && pEntity->GetAbsOrigin().DistToSqr(GetAbsOrigin()) <= ALYX_360_VIEW_DIST_SQR )
-	{
-		// Only see players and NPC's with 360 cone
-		// For instance, DON'T tell the eyeball/head tracking code that you can see an object that is behind you!
-		return true;
-	}
-
-	// Else, fall through...
-	if (CanSeeEntityInDarkness(pEntity))
-		return true;
-
-	return BaseClass::FInViewCone( pEntity );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *pEntity - 
-//-----------------------------------------------------------------------------
-bool CNPC_Alyx::CanSeeEntityInDarkness( CBaseEntity *pEntity )
-{
-	/*
-	// Alyx can see enemies that are right next to her
-	// Robin: Disabled, made her too effective, you could safely leave her alone.
-  	if ( pEntity->IsNPC() )
-	{
-		if ( (pEntity->WorldSpaceCenter() - EyePosition()).LengthSqr() < (80*80) )
-			return true;
-	}
-	*/
-
-	CBasePlayer *pPlayer = UTIL_PlayerByIndex(1);
-	if ( pPlayer && pEntity != pPlayer )
-	{
-		if ( pPlayer->IsIlluminatedByFlashlight(pEntity, NULL ) )
-			return true;
-	}
-
-	return LookerCouldSeeTargetInDarkness( this, pEntity );
-}
-
-//-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
-bool CNPC_Alyx::QuerySeeEntity( CBaseEntity *pEntity, bool bOnlyHateOrFearIfNPC)
-{
-	if (!CanSeeEntityInDarkness(pEntity))
-		return false;
-
-	return BaseClass::QuerySeeEntity(pEntity, bOnlyHateOrFearIfNPC);
-}
-
-//-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
 bool CNPC_Alyx::IsCoverPosition( const Vector &vecThreat, const Vector &vecPosition )
 {
 	return BaseClass::IsCoverPosition( vecThreat, vecPosition );
@@ -1568,11 +1115,6 @@ Activity CNPC_Alyx::NPC_TranslateActivity( Activity activity )
 	}
 
 	return activity;
-}
-
-bool CNPC_Alyx::ShouldDeferToFollowBehavior()
-{
-	return BaseClass::ShouldDeferToFollowBehavior();
 }
 
 void CNPC_Alyx::BuildScheduleTestBits()
@@ -1835,7 +1377,6 @@ int CNPC_Alyx::TranslateSchedule( int scheduleType )
 	case SCHED_IDLE_STAND:
 		return SCHED_ALYX_IDLE_STAND;
 
-#ifdef HL2_EPISODIC
 	case SCHED_RUN_RANDOM:
 		if( GetEnemy() && HasCondition(COND_SEE_ENEMY) && GetActiveWeapon() )
 		{
@@ -1845,7 +1386,6 @@ int CNPC_Alyx::TranslateSchedule( int scheduleType )
 			return SCHED_RANGE_ATTACK1;
 		}
 		break;
-#endif// HL2_EPISODIC
 	}
 
 	return BaseClass::TranslateSchedule( scheduleType );
@@ -1860,7 +1400,6 @@ void CNPC_Alyx::StartTask( const Task_t *pTask )
 	{
 	case TASK_SOUND_WAKE:
 		LocateEnemySound();
-		// Don't do the half second wait here that the PlayerCompanion class does. (sbj) 1/4/2006
 		TaskComplete();
 		break;
 
@@ -1916,42 +1455,35 @@ void CNPC_Alyx::StartTask( const Task_t *pTask )
 		break;
 
 	case TASK_STOP_MOVING:
-		if ( npc_alyx_force_stop_moving.GetBool() )
+		if ((GetNavigator()->IsGoalSet() && GetNavigator()->IsGoalActive()) || GetNavType() == NAV_JUMP)
 		{
-			if ( ( GetNavigator()->IsGoalSet() && GetNavigator()->IsGoalActive() ) || GetNavType() == NAV_JUMP )
-			{
-				DbgNavMsg( this, "Start TASK_STOP_MOVING\n" );
-				DbgNavMsg( this, "Initiating stopping path\n" );
-				GetNavigator()->StopMoving( false );
+			DbgNavMsg(this, "Start TASK_STOP_MOVING\n");
+			DbgNavMsg(this, "Initiating stopping path\n");
+			GetNavigator()->StopMoving(false);
 
-				// E3 Hack
-				if ( HasPoseMoveYaw() ) 
-				{
-					SetPoseParameter( m_poseMove_Yaw, 0 );
-				}
-			}
-			else
+			// E3 Hack
+			if (HasPoseMoveYaw())
 			{
-				if ( GetNavigator()->SetGoalFromStoppingPath() )
-				{
-					DbgNavMsg( this, "Start TASK_STOP_MOVING\n" );
-					DbgNavMsg( this, "Initiating stopping path\n" );
-				}
-				else
-				{
-					GetNavigator()->ClearGoal();
-
-					if ( IsMoving() )
-					{
-						SetIdealActivity( GetStoppedActivity() );
-					}
-					TaskComplete();
-				}
+				SetPoseParameter(m_poseMove_Yaw, 0);
 			}
 		}
 		else
 		{
-			BaseClass::StartTask( pTask );
+			if (GetNavigator()->SetGoalFromStoppingPath())
+			{
+				DbgNavMsg(this, "Start TASK_STOP_MOVING\n");
+				DbgNavMsg(this, "Initiating stopping path\n");
+			}
+			else
+			{
+				GetNavigator()->ClearGoal();
+
+				if (IsMoving())
+				{
+					SetIdealActivity(GetStoppedActivity());
+				}
+				TaskComplete();
+			}
 		}
 		break;
 
@@ -2077,17 +1609,10 @@ void CNPC_Alyx::RunTask( const Task_t *pTask )
 
 		case TASK_STOP_MOVING:
 		{
-			if ( npc_alyx_force_stop_moving.GetBool() )
+			ChainRunTask(TASK_WAIT_FOR_MOVEMENT);
+			if (!TaskIsRunning())
 			{
-				ChainRunTask( TASK_WAIT_FOR_MOVEMENT );
-				if ( !TaskIsRunning() )
-				{
-					DbgNavMsg( this, "TASK_STOP_MOVING Complete\n" );
-				}
-			}
-			else
-			{
-				BaseClass::RunTask( pTask );
+				DbgNavMsg(this, "TASK_STOP_MOVING Complete\n");
 			}
 			break;
 		}
@@ -2199,20 +1724,6 @@ int CNPC_Alyx::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 		return 0;
 
 	int taken = BaseClass::OnTakeDamage_Alive(info);
-
-	if ( taken && !HasCondition( COND_TALKER_PLAYER_DEAD ) )
-	{
-		if ( !HasCondition(COND_SEE_ENEMY) && (info.GetDamageType() & (DMG_SLASH | DMG_CLUB) ) )
-		{
-			// I've taken melee damage. If I haven't seen the enemy for a few seconds, make some noise.
-  			float flLastTimeSeen = GetEnemies()->LastTimeSeen( info.GetAttacker(), false );
-			if ( flLastTimeSeen == AI_INVALID_TIME || gpGlobals->curtime - flLastTimeSeen > 3.0 )
-			{
-				SpeakIfAllowed( "TLK_DARKNESS_UNKNOWN_WOUND" );
-				m_fTimeUntilNextDarknessFoundPlayer = gpGlobals->curtime + RandomFloat( 3, 5 );
-			}
-		}
-	}
 
 	if( taken && (info.GetDamageType() & DMG_BLAST) )
 	{
@@ -2604,12 +2115,8 @@ bool CNPC_Alyx::PlayerFlashlightOnMyEyes( CBasePlayer *pPlayer )
 	Vector vecToEyes = (vecEyes - pPlayer->EyePosition());
 	float flDist = VectorNormalize( vecToEyes ); 
 
-	// We can be blinded in daylight, but only at close range
-	//if ( BBGameRules()->IsAlyxInDarknessMode() == false )
-	//{
-		if ( flDist > (8*12.0f) )
-			return false;
-	//}
+	if ( flDist > (8*12.0f) )
+		return false;
 
 	float flDot = DotProduct( vecPlayerForward, vecToEyes );
 	if ( flDot < 0.98 )
@@ -2855,9 +2362,6 @@ bool CNPC_Alyx::Stand( void )
 //-----------------------------------------------------------------------------
 bool CNPC_Alyx::Crouch( void )
 {
-	if ( !npc_alyx_crouch.GetBool() )
-		return false;
-
 	// Alyx will ignore crouch requests while she has the shotgun
 	if ( HasShotgun() )
 		return false;
@@ -2916,7 +2420,6 @@ void CNPC_Alyx::ModifyOrAppendCriteria( AI_CriteriaSet &set )
 		}
 	}
 	set.AppendCriteria( "num_enemies", UTIL_VarArgs( "%d", iNumEnemies ) );
-	set.AppendCriteria( "darkness_mode", UTIL_VarArgs( "%d", HasCondition( COND_ALYX_IN_DARK ) ) );
 	set.AppendCriteria( "water_level", UTIL_VarArgs( "%d", GetWaterLevel() ) );
 
 	CHL2_Player *pPlayer = assert_cast<CHL2_Player*>( UTIL_PlayerByIndex( 1 ) );
@@ -2931,8 +2434,7 @@ void CNPC_Alyx::ModifyOrAppendCriteria( AI_CriteriaSet &set )
 //-----------------------------------------------------------------------------
 bool CNPC_Alyx::IsReadinessCapable( void )
 {
-	// Let the convar decide
-	return npc_alyx_readiness.GetBool();;
+	return true;
 }
 
 //-----------------------------------------------------------------------------

@@ -91,7 +91,7 @@ private:
 //-----------------------------------------------------------------------------
 inline CBBRules* BBGameRules()
 {
-#if ( !defined( HL2_DLL ) && !defined( HL2_CLIENT_DLL ) ) || defined( HL2MP )
+#if ( !defined( HL2_DLL ) && !defined( HL2_CLIENT_DLL ) )
 	Assert( 0 );	// g_pGameRules is NOT an instance of CBBRules and bad things happen
 #endif
 	return static_cast<CBBRules*>(g_pGameRules);

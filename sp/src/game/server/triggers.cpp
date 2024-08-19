@@ -1470,7 +1470,7 @@ void CChangeLevel::InputChangeLevel( inputdata_t &inputdata )
 	if ( gpGlobals->maxClients == 1 )
 	{
 		CBasePlayer *pPlayer = UTIL_GetLocalPlayer();
-		if ( pPlayer && ( !pPlayer->IsAlive() || pPlayer->GetBonusChallenge() > 0 ) )
+		if ( pPlayer && ( !pPlayer->IsAlive()) )
 			return;
 	}
 

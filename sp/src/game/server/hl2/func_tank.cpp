@@ -1283,15 +1283,6 @@ void CFuncTank::NPC_Fire( void )
 		}
 	}
 
-	if ( !HasSpawnFlags( SF_TANK_ALLOW_PLAYER_HITS ) && (pNPC->CapabilitiesGet() & bits_CAP_NO_HIT_PLAYER) )
-	{
-		// Avoid shooting player.
-		if ( pNPC->PlayerInSpread( vecBarrelEnd, vecBarrelEnd + vecForward * 2048, gTankSpread[m_spread].x, 8*12 ) )
-		{
-			return;
-		}
-	}
-
 	bool bIgnoreSpread = false;
 
   	CBaseEntity *pEnemy = pNPC->GetEnemy();

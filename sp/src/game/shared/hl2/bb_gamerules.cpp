@@ -1454,9 +1454,6 @@ bool CBBRules::ShouldBurningPropsEmitLight()
 // Global functions.
 // ------------------------------------------------------------------------------------ //
 
-#ifndef HL2MP
-#ifndef PORTAL
-
 // shared ammo definition
 // JAY: Trying to make a more physical bullet response
 #define BULLET_MASS_GRAINS_TO_LB(grains)	(0.002285*(grains)/16.0f)
@@ -1509,5 +1506,3 @@ CAmmoDef *GetAmmoDef()
 	return &def;
 }
 
-#endif
-#endif

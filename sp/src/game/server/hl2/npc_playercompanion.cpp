@@ -65,19 +65,6 @@ BEGIN_DATADESC( CNPC_PlayerCompanion )
 	DEFINE_EMBEDDED( m_SpeechWatch_PlayerLooking ),
 	DEFINE_EMBEDDED( m_FakeOutMortarTimer ),
 
-// (recomputed)
-//						m_bWeightPathsInCover	
-
-// These are auto-saved by AI
-//	DEFINE_FIELD( m_AssaultBehavior,	CAI_AssaultBehavior ),
-//	DEFINE_FIELD( m_FollowBehavior,		CAI_FollowBehavior ),
-//	DEFINE_FIELD( m_StandoffBehavior,	CAI_StandoffBehavior ),
-//	DEFINE_FIELD( m_LeadBehavior,		CAI_LeadBehavior ),
-//  DEFINE_FIELD( m_OperatorBehavior,	FIELD_EMBEDDED ),
-//					m_ActBusyBehavior
-//					m_PassengerBehavior
-//					m_FearBehavior
-
 	DEFINE_INPUTFUNC( FIELD_VOID,	"OutsideTransition",	InputOutsideTransition ),
 	DEFINE_INPUTFUNC( FIELD_VOID,	"SetReadinessPanic",	InputSetReadinessPanic ),
 	DEFINE_INPUTFUNC( FIELD_VOID,	"SetReadinessStealth",	InputSetReadinessStealth ),
@@ -220,7 +207,7 @@ void CNPC_PlayerCompanion::Spawn()
 		CapabilitiesAdd( bits_CAP_DUCK | bits_CAP_DOORS_GROUP );
 		CapabilitiesAdd( bits_CAP_USE_SHOT_REGULATOR );
 	}
-	CapabilitiesAdd( bits_CAP_NO_HIT_PLAYER | bits_CAP_NO_HIT_SQUADMATES );
+
 	CapabilitiesAdd( bits_CAP_MOVE_GROUND );
 	SetMoveType( MOVETYPE_STEP );
 
@@ -234,7 +221,6 @@ void CNPC_PlayerCompanion::Spawn()
 
 	m_AnnounceAttackTimer.Set( 10, 30 );
 
-#ifdef HL2_EPISODIC
 	// We strip this flag because it's been made obsolete by the StartScripting behavior
 	if ( HasSpawnFlags( SF_NPC_ALTCOLLISION ) )
 	{
@@ -243,7 +229,6 @@ void CNPC_PlayerCompanion::Spawn()
 	}
 
 	m_hFlare = NULL;
-#endif // HL2_EPISODIC
 
 	BaseClass::Spawn();
 }

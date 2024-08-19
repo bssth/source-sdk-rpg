@@ -121,10 +121,6 @@ bool CEventLog::PrintPlayerEvent( IGameEvent *event )
 	else if ( !Q_strncmp( eventName, "player_death", Q_strlen("player_death") ) )
 	{
 		const int attackerid = event->GetInt("attacker" );
-
-#ifdef HL2MP
-		const char *weapon = event->GetString( "weapon" );
-#endif
 		
 		CBasePlayer *pAttacker = UTIL_PlayerByUserId( attackerid );
 		CTeam *team = pPlayer->GetTeam();
@@ -137,54 +133,15 @@ bool CEventLog::PrintPlayerEvent( IGameEvent *event )
 		if ( pPlayer == pAttacker && pPlayer )  
 		{  
 
-#ifdef HL2MP
-			UTIL_LogPrintf( "\"%s<%i><%s><%s>\" committed suicide with \"%s\"\n",  
-							pPlayer->GetPlayerName(),
-							userid,
-							pPlayer->GetNetworkIDString(),
-							team ? team->GetName() : "",
-							weapon
-							);
-#else
-			UTIL_LogPrintf( "\"%s<%i><%s><%s>\" committed suicide with \"%s\"\n",  
-							pPlayer->GetPlayerName(),
-							userid,
-							pPlayer->GetNetworkIDString(),
-							team ? team->GetName() : "",
-							pAttacker->GetClassname()
-							);
-#endif
+			UTIL_LogPrintf("\"%s<%i><%s><%s>\" committed suicide with \"%s\"\n",
+				pPlayer->GetPlayerName(),
+				userid,
+				pPlayer->GetNetworkIDString(),
+				team ? team->GetName() : "",
+				pAttacker->GetClassname()
+			);
 		}
-		else if ( pAttacker )
-		{
-			CTeam *attackerTeam = pAttacker->GetTeam();
-
-#ifdef HL2MP
-			UTIL_LogPrintf( "\"%s<%i><%s><%s>\" killed \"%s<%i><%s><%s>\" with \"%s\"\n",  
-							pAttacker->GetPlayerName(),
-							attackerid,
-							pAttacker->GetNetworkIDString(),
-							attackerTeam ? attackerTeam->GetName() : "",
-							pPlayer->GetPlayerName(),
-							userid,
-							pPlayer->GetNetworkIDString(),
-							team ? team->GetName() : "",
-							weapon
-							);
-#else
-			UTIL_LogPrintf( "\"%s<%i><%s><%s>\" killed \"%s<%i><%s><%s>\"\n",  
-							pAttacker->GetPlayerName(),
-							attackerid,
-							pAttacker->GetNetworkIDString(),
-							attackerTeam ? attackerTeam->GetName() : "",
-							pPlayer->GetPlayerName(),
-							userid,
-							pPlayer->GetNetworkIDString(),
-							team ? team->GetName() : ""
-							);								
-#endif
-		}
-		else
+		else if (!pAttacker)
 		{  
 			// killed by the world
 			UTIL_LogPrintf( "\"%s<%i><%s><%s>\" committed suicide with \"world\"\n",
@@ -228,8 +185,6 @@ bool CEventLog::PrintPlayerEvent( IGameEvent *event )
 
 bool CEventLog::PrintTeamEvent( IGameEvent *event )
 {
-//	const char * name = event->GetName() + Q_strlen("team_"); // remove prefix
-
 	return false;
 }
 

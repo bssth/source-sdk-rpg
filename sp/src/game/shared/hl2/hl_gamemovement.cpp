@@ -57,8 +57,6 @@ void CHL2GameMovement::SwallowUseKey()
 {
 	mv->m_nOldButtons |= IN_USE;
 	player->m_afButtonPressed &= ~IN_USE;
-
-	GetHL2Player()->m_bPlayUseDenySound = false;
 }
 
 #if !defined( CLIENT_DLL )
@@ -661,7 +659,6 @@ void CHL2GameMovement::FullLadderMove()
 			player->SetMoveType( MOVETYPE_WALK );
 			player->SetMoveCollide( MOVECOLLIDE_DEFAULT );
 			SetLadder( NULL );
-			GetHL2Player()->m_bPlayUseDenySound = false;
 
 			// Dismount with a bit of velocity in facing direction
 			VectorScale( m_vecForward, USE_DISMOUNT_SPEED, mv->m_vecVelocity );
@@ -971,12 +968,6 @@ bool CHL2GameMovement::LadderMove( void )
 		return false;
 	}
 
-	// Don't play the deny sound
-	if ( pressed_use )
-	{
-		GetHL2Player()->m_bPlayUseDenySound = false;
-	}
-
 	// Make sure we are on the ladder
 	player->SetMoveType( MOVETYPE_LADDER );
 	player->SetMoveCollide( MOVECOLLIDE_DEFAULT );
@@ -1128,23 +1119,8 @@ void CHL2GameMovement::SetGroundEntity( trace_t *pm )
 	BaseClass::SetGroundEntity( pm );
 }
 
-bool CHL2GameMovement::CanAccelerate()
-{
-#ifdef HL2MP 
-	if ( player->IsObserver() )
-	{
-		return true;
-	}
-#endif
+// Expose our interface.
+static CHL2GameMovement g_GameMovement;
+IGameMovement* g_pGameMovement = (IGameMovement*)&g_GameMovement;
 
-	return BaseClass::CanAccelerate();
-}
-
-
-#ifndef PORTAL	// Portal inherits from this but needs to declare it's own global interface
-	// Expose our interface.
-	static CHL2GameMovement g_GameMovement;
-	IGameMovement *g_pGameMovement = ( IGameMovement * )&g_GameMovement;
-
-	EXPOSE_SINGLE_INTERFACE_GLOBALVAR(CGameMovement, IGameMovement,INTERFACENAME_GAMEMOVEMENT, g_GameMovement );
-#endif
+EXPOSE_SINGLE_INTERFACE_GLOBALVAR(CGameMovement, IGameMovement, INTERFACENAME_GAMEMOVEMENT, g_GameMovement);

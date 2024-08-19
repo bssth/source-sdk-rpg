@@ -68,7 +68,7 @@ enum Capability_t
 	bits_CAP_FRIENDLY_DMG_IMMUNE	= 0x02000000, // don't take damage from npc's that are D_LI
 	bits_CAP_SQUAD					= 0x04000000, // can form squads
 	bits_CAP_DUCK					= 0x08000000, // cover and reload ducking
-	bits_CAP_NO_HIT_PLAYER			= 0x10000000, // don't hit players
+	bits_CAP_NO_HIT_PLAYER			= 0x10000000, // don't hit players (NOT working in this branch)
 	bits_CAP_AIM_GUN				= 0x20000000, // Use arms to aim gun, not just body
 	bits_CAP_NO_HIT_SQUADMATES		= 0x40000000, // none
 	bits_CAP_SIMPLE_RADIUS_DAMAGE	= 0x80000000, // Do not use robust radius damage model on this character.

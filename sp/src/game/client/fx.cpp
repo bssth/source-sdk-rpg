@@ -36,18 +36,14 @@ CLIENTEFFECT_MATERIAL( "effects/muzzleflash1" )
 CLIENTEFFECT_MATERIAL( "effects/muzzleflash2" )
 CLIENTEFFECT_MATERIAL( "effects/muzzleflash3" )
 CLIENTEFFECT_MATERIAL( "effects/muzzleflash4" )
-#ifndef CSTRIKE_DLL
 CLIENTEFFECT_MATERIAL( "effects/bluemuzzle" )
 CLIENTEFFECT_MATERIAL( "effects/gunshipmuzzle" )
 CLIENTEFFECT_MATERIAL( "effects/gunshiptracer" )
-#ifndef HL2MP
 CLIENTEFFECT_MATERIAL( "effects/huntertracer" )
-#endif
 CLIENTEFFECT_MATERIAL( "sprites/physcannon_bluelight2" )
 CLIENTEFFECT_MATERIAL( "effects/combinemuzzle1" )
 CLIENTEFFECT_MATERIAL( "effects/combinemuzzle2" )
 CLIENTEFFECT_MATERIAL( "effects/combinemuzzle2_nocull" )
-#endif
 CLIENTEFFECT_REGISTER_END()
 #endif
 

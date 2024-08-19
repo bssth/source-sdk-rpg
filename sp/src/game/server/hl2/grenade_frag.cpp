@@ -294,21 +294,13 @@ void CGrenadeFrag::OnPhysGunPickup( CBasePlayer *pPhysGunUser, PhysGunPickup_t r
 {
 	SetThrower( pPhysGunUser );
 
-#ifdef HL2MP
-	SetTimer( FRAG_GRENADE_GRACE_TIME_AFTER_PICKUP, FRAG_GRENADE_GRACE_TIME_AFTER_PICKUP / 2);
-
-	BlipSound();
-	m_flNextBlipTime = gpGlobals->curtime + FRAG_GRENADE_BLIP_FAST_FREQUENCY;
-	m_bHasWarnedAI = true;
-#else
-	if( IsX360() )
+	if (IsX360())
 	{
 		// Give 'em a couple of seconds to aim and throw. 
-		SetTimer( 2.0f, 1.0f);
+		SetTimer(2.0f, 1.0f);
 		BlipSound();
 		m_flNextBlipTime = gpGlobals->curtime + FRAG_GRENADE_BLIP_FAST_FREQUENCY;
 	}
-#endif
 
 	BaseClass::OnPhysGunPickup( pPhysGunUser, reason );
 }

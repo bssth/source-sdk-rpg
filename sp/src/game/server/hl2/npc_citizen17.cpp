@@ -16,15 +16,7 @@
 #include "hl2_player.h"
 #include "items.h"
 
-
-#ifdef HL2MP
-#include "hl2mp/weapon_crowbar.h"
-#else
-#include "weapon_crowbar.h"
-#endif
-
 #include "eventqueue.h"
-
 #include "ai_squad.h"
 #include "ai_pathfinder.h"
 #include "ai_route.h"
@@ -899,13 +891,11 @@ void CNPC_Citizen::GatherConditions()
 				}
 			}
 
-#ifdef HL2_EPISODIC
 			// Heal if I'm on an assault. The player hasn't had time to stare at me.
 			if( m_AssaultBehavior.IsRunning() && IsMoving() )
 			{
 				SetCondition( COND_CIT_PLAYERHEALREQUEST );
 			}
-#endif
 		}
 		else
 		{
@@ -1003,27 +993,15 @@ void CNPC_Citizen::BuildScheduleTestBits()
 		SetCustomInterruptCondition( COND_BETTER_WEAPON_AVAILABLE );
 	}
 
-#ifdef HL2_EPISODIC
-	if( IsMedic() && m_AssaultBehavior.IsRunning() )
+	if (IsMedic() && m_AssaultBehavior.IsRunning())
 	{
-		if( !IsCurSchedule(SCHED_RELOAD, false) )
+		if (!IsCurSchedule(SCHED_RELOAD, false))
 		{
-			SetCustomInterruptCondition( COND_CIT_PLAYERHEALREQUEST );
+			SetCustomInterruptCondition(COND_CIT_PLAYERHEALREQUEST);
 		}
 
-		SetCustomInterruptCondition( COND_CIT_COMMANDHEAL );
+		SetCustomInterruptCondition(COND_CIT_COMMANDHEAL);
 	}
-#else
-	if( IsMedic() && m_AssaultBehavior.IsRunning() && !IsMoving() )
-	{
-		if( !IsCurSchedule(SCHED_RELOAD, false) )
-		{
-			SetCustomInterruptCondition( COND_CIT_PLAYERHEALREQUEST );
-		}
-
-		SetCustomInterruptCondition( COND_CIT_COMMANDHEAL );
-	}
-#endif
 }
 
 
@@ -1403,9 +1381,7 @@ void CNPC_Citizen::StartTask( const Task_t *pTask )
 		break;
 		
 	case TASK_CIT_HEAL:
-#if HL2_EPISODIC
 	case TASK_CIT_HEAL_TOSS:
-#endif
 		if ( IsMedic() )
 		{
 			if ( GetTarget() && GetTarget()->IsPlayer() && GetTarget()->m_iMaxHealth == GetTarget()->m_iHealth )

@@ -969,10 +969,6 @@ void CAI_PassengerBehaviorCompanion::EnterVehicle( void )
 	m_VehicleMonitor.SetMark( m_hVehicle, 8.0f );
 	m_flEnterBeginTime = gpGlobals->curtime;
 	
-	// Remove this flag because we're sitting so close we always think we're going to hit the player
-	// FIXME: We need to store this state so we don't incorrectly restore it later
-	GetOuter()->CapabilitiesRemove( bits_CAP_NO_HIT_PLAYER );
-
 	// Discard enemies quickly
 	GetOuter()->GetEnemies()->SetEnemyDiscardTime( 2.0f );
 
@@ -1014,9 +1010,6 @@ void CAI_PassengerBehaviorCompanion::FinishExitVehicle( void )
 
 	m_nExitAttempts = 0;
 	m_VehicleMonitor.ClearMark();
-
-	// FIXME: We need to store this state so we don't incorrectly restore it later
-	GetOuter()->CapabilitiesAdd( bits_CAP_NO_HIT_PLAYER );
 
 	// FIXME: Restore this properly
 	GetOuter()->GetEnemies()->SetEnemyDiscardTime( AI_DEF_ENEMY_DISCARD_TIME );

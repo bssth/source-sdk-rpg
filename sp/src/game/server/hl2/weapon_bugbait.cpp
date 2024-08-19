@@ -72,9 +72,7 @@ IMPLEMENT_SERVERCLASS_ST(CWeaponBugBait, DT_WeaponBugBait)
 END_SEND_TABLE()
 
 LINK_ENTITY_TO_CLASS( weapon_bugbait, CWeaponBugBait );
-#ifndef HL2MP
 PRECACHE_WEAPON_REGISTER( weapon_bugbait );
-#endif
 
 BEGIN_DATADESC( CWeaponBugBait )
 

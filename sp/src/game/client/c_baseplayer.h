@@ -142,9 +142,6 @@ public:
 	virtual bool	IsPlayer( void ) const { return true; }
 	virtual int		GetHealth() const { return m_iHealth; }
 
-	int		GetBonusProgress() const { return m_iBonusProgress; }
-	int		GetBonusChallenge() const { return m_iBonusChallenge; }
-
 	// observer mode
 	virtual int			GetObserverMode() const;
 	void				SetObserverMode ( int iNewMode );
@@ -501,9 +498,6 @@ private:
 	EHANDLE			m_hUseEntity;
 	
 	float			m_flMaxspeed;
-
-	int				m_iBonusProgress;
-	int				m_iBonusChallenge;
 
 	CInterpolatedVar< Vector >	m_iv_vecViewOffset;
 

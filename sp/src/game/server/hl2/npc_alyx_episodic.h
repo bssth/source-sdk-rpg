@@ -10,8 +10,6 @@
 #include "ai_behavior_functank.h"
 #include "soundenvelope.h"
 
-extern ConVar npc_alyx_readiness;
-
 class CNPC_Alyx : public CNPC_PlayerCompanion
 {
 public:
@@ -27,25 +25,18 @@ public:
 	CNPC_Alyx( );
 	~CNPC_Alyx( );
 
-	static CNPC_Alyx *GetAlyx( void );
-
 	bool	CreateBehaviors();
 	void	Spawn( void );
 	void	Activate( void );
-	void	StopLoopingSounds( void );
 	void	SelectModel();
 	void	Precache( void );
-	void	SetupAlyxWithoutParent( void );
 	void	CreateEmpTool( void );
 	void	PrescheduleThink( void );
 	void	GatherConditions();
 	bool	ShouldPlayerAvoid( void );
 	void	AnalyzeGunfireSound( CSound *pSound );
-	bool	IsValidEnemy( CBaseEntity *pEnemy );
 	void	Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &info );
 	void	Event_Killed( const CTakeDamageInfo &info );
-	void	EnemyIgnited( CAI_BaseNPC *pVictim );
-	void	CombineBallSocketed( int iNumBounces );
 	void	AimGun( void );
 	Vector  GetActualShootPosition( const Vector &shootOrigin );
 	float	MaxYawSpeed( void );
@@ -75,15 +66,9 @@ public:
 	CAI_FollowBehavior &GetFollowBehavior( void );
 
 	Class_T Classify ( void );
-	bool	FValidateHintType( CAI_Hint *pHint );
-	int		ObjectCaps();
 	void	HandleAnimEvent( animevent_t *pEvent );
-	bool	FInViewCone( CBaseEntity *pEntity );
-	bool	QuerySeeEntity( CBaseEntity *pEntity, bool bOnlyHateOrFearIfNPC = false );
-	bool	CanSeeEntityInDarkness( CBaseEntity *pEntity );
 	bool	IsCoverPosition( const Vector &vecThreat, const Vector &vecPosition );
 	Activity NPC_TranslateActivity ( Activity activity );
-	bool	ShouldDeferToFollowBehavior();
 	void	BuildScheduleTestBits();
 	bool	ShouldBehaviorSelectSchedule( CAI_BehaviorBase *pBehavior );
 	int		SelectSchedule( void );
@@ -93,7 +78,6 @@ public:
 	void	RunTask( const Task_t *pTask );
 	void	OnStateChange( NPC_STATE OldState, NPC_STATE NewState );
 	float	LengthOfLastCombat( void ) const;
-	// bool	IsNavigationUrgent();
 
 	void	TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, trace_t *ptr, CDmgAccumulator *pAccumulator );
 	bool	CanBeHitByMeleeAttack( CBaseEntity *pAttacker );
@@ -101,7 +85,6 @@ public:
 	bool	FCanCheckAttacks();
 
 	bool	HandleInteraction(int interactionType, void *data, CBaseCombatCharacter* sourceEnt);
-	virtual bool SpeakIfAllowed( AIConcept_t concept, const char *modifiers = NULL, bool bRespondingToPlayer = false, char *pszOutResponseChosen = NULL, size_t bufsize = 0 );
 	
 	void	HolsterPistol();
 	void	DrawPistol();
@@ -134,10 +117,6 @@ public:
 	void InputDisallowInteraction( inputdata_t &inputdata )
 	{
 		m_bInteractionAllowed = false;
-	}
-	void InputAllowDarknessSpeech( inputdata_t &inputdata )
-	{
-		m_bDarknessSpeechAllowed = inputdata.value.Bool();
 	}
 	void InputGiveEMP( inputdata_t &inputdata );
 	void InputVehiclePunted( inputdata_t &inputdata );
@@ -179,21 +158,16 @@ private:
 	CHandle<CAI_Hint>	m_hStealthLookTarget;
 	bool	m_bInteractionAllowed;
 	float	m_fTimeNextSearchForInteractTargets;
-	bool	m_bDarknessSpeechAllowed;
 	bool	m_bIsEMPHolstered;
 	bool	m_bIsFlashlightBlind;
 	float	m_fStayBlindUntil;
 	float	m_flDontBlindUntil;
-	bool	m_bSpokeLostPlayerInDarkness;
 	bool	m_bPlayerFlashlightState;
 	bool	m_bHadCondSeeEnemy;
 	string_t m_iszCurrentBlindScene;
-	float	m_fTimeUntilNextDarknessFoundPlayer;
 	float   m_fCombatStartTime;
 	float	m_fCombatEndTime;
 	float	m_flNextCrouchTime;
-
-	CSoundPatch		*m_sndDarknessBreathing;
 
 	// Speech timers
 	// Theoretically, these shouldn't be needed. Instead, each response

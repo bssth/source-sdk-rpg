@@ -8,7 +8,6 @@
 #include "ai_basenpc.h"
 #include "animation.h"
 #include "basecombatweapon.h"
-#include "player.h"			// For gEvilImpulse101 / CBasePlayer
 #include "gamerules.h"		// For g_pGameRules
 #include <KeyValues.h>
 #include "ammodef.h"
@@ -27,14 +26,8 @@
 #include "iservervehicle.h"
 #include "func_break.h"
 
-#ifdef HL2MP
-	#include "hl2mp_gamerules.h"
-#endif
-
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
-
-extern int	gEvilImpulse101;		// In Player.h
 
 // -----------------------------------------
 //	Sprite Index info
@@ -567,27 +560,12 @@ void CBaseCombatWeapon::Materialize( void )
 	if ( IsEffectActive( EF_NODRAW ) )
 	{
 		// changing from invisible state to visible.
-#ifdef HL2MP
-		EmitSound( "AlyxEmp.Charge" );
-#else
-		EmitSound( "BaseCombatWeapon.WeaponMaterialize" );
-#endif
-		
 		RemoveEffects( EF_NODRAW );
 		DoMuzzleFlash();
 	}
-#ifdef HL2MP
-	if ( HasSpawnFlags( SF_NORESPAWN ) == false )
-	{
-		VPhysicsInitNormal( SOLID_BBOX, GetSolidFlags() | FSOLID_TRIGGER, false );
-		SetMoveType( MOVETYPE_VPHYSICS );
 
-		HL2MPRules()->AddLevelDesignerPlacedObject( this );
-	}
-#else
 	SetSolid( SOLID_BBOX );
 	AddSolidFlags( FSOLID_TRIGGER );
-#endif
 
 	SetPickupTouch();
 

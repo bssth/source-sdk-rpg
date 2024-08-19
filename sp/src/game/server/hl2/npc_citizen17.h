@@ -83,9 +83,7 @@ public:
 	void			Activate();
 	virtual void	OnGivenWeapon( CBaseCombatWeapon *pNewWeapon );
 
-#ifdef HL2_EPISODIC
 	virtual float	GetJumpGravity() const		{ return 1.8f; }
-#endif//HL2_EPISODIC
 
 	void			OnRestore();
 	
@@ -213,17 +211,13 @@ public:
 	
 	bool 			CanHeal();
 	bool 			ShouldHealTarget( CBaseEntity *pTarget, bool bActiveUse = false );
-#if HL2_EPISODIC
 	bool 			ShouldHealTossTarget( CBaseEntity *pTarget, bool bActiveUse = false );
-#endif
 	void 			Heal();
 
 	bool			ShouldLookForHealthItem();
 
-#if HL2_EPISODIC
 	void			TossHealthKit( CBaseCombatCharacter *pThrowAt, const Vector &offset ); // create a healthkit and throw it at someone
 	void			InputForceHealthKitToss( inputdata_t &inputdata );
-#endif
 	
 	//---------------------------------
 	// Inputs
@@ -266,9 +260,7 @@ private:
 		SCHED_CITIZEN_MOURN_PLAYER,
 		SCHED_CITIZEN_SIT_ON_TRAIN,
 		SCHED_CITIZEN_STRIDER_RANGE_ATTACK1_RPG,
-#ifdef HL2_EPISODIC
 		SCHED_CITIZEN_HEAL_TOSS,
-#endif
 		
 		TASK_CIT_HEAL = BaseClass::NEXT_TASK,
 		TASK_CIT_RPG_AUGER,
@@ -276,10 +268,7 @@ private:
 		TASK_CIT_SIT_ON_TRAIN,
 		TASK_CIT_LEAVE_TRAIN,
 		TASK_CIT_SPEAK_MOURNING,
-#ifdef HL2_EPISODIC
 		TASK_CIT_HEAL_TOSS,
-#endif
-
 	};
 
 	//-----------------------------------------------------

@@ -321,18 +321,10 @@ public:
 	virtual void			PostThink( void );
 	virtual int				TakeHealth( float flHealth, int bitsDamageType );
 	virtual void			TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, trace_t *ptr, CDmgAccumulator *pAccumulator );
-	bool					ShouldTakeDamageInCommentaryMode( const CTakeDamageInfo &inputInfo );
 	virtual int				OnTakeDamage( const CTakeDamageInfo &info );
 	virtual void			DamageEffect(float flDamage, int fDamageType);
 
 	virtual void			OnDamagedByExplosion( const CTakeDamageInfo &info );
-
-	void					PauseBonusProgress( bool bPause = true );
-	void					SetBonusProgress( int iBonusProgress );
-	void					SetBonusChallenge( int iBonusChallenge );
-
-	int						GetBonusProgress() const { return m_iBonusProgress; }
-	int						GetBonusChallenge() const { return m_iBonusChallenge; }
 
 	virtual Vector			EyePosition( );			// position of eyes
 	const QAngle			&EyeAngles( );
@@ -546,6 +538,7 @@ public:
 
 	// physics interactions
 	// mass/size limit set to zero for none
+	// UNDONE: Make this virtual and move to HL2 player
 	static bool				CanPickupObject( CBaseEntity *pObject, float massLimit, float sizeLimit );
 	virtual void			PickupObject( CBaseEntity *pObject, bool bLimitMassAndSize = true ) {}
 	virtual void			ForceDropOfCarriedPhysObjects( CBaseEntity *pOnlyIfHoldindThis = NULL ) {}
@@ -933,8 +926,6 @@ protected:
 	void					UpdateButtonState( int nUserCmdButtonMask );
 
 	bool	m_bPauseBonusProgress;
-	CNetworkVar( int, m_iBonusProgress );
-	CNetworkVar( int, m_iBonusChallenge );
 
 	int						m_lastDamageAmount;		// Last damage taken
 

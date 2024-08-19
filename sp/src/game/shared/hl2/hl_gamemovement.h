@@ -42,7 +42,6 @@ public:
 	virtual bool OnLadder( trace_t &trace );
 	virtual int GetCheckInterval( IntervalType_t type );
 	virtual void	SetGroundEntity( trace_t *pm );
-	virtual bool CanAccelerate( void );
 
 private:
 

@@ -27,7 +27,7 @@ $Project "Client"
 		$File	"c_team_objectiveresource.cpp"
 		$File	"c_team_objectiveresource.h"
 
-		$Folder	"SDK2013CE DLL"
+		$Folder	"bb"
 		{
 			$File	"hudhealthbar.cpp"
 			$File	"hudhealthbar.h"
@@ -41,9 +41,6 @@ $Project "Client"
 		$Folder	"HL2 DLL"
 		{
 			$File	"$SRCDIR\game\shared\hl2\basehlcombatweapon_shared.cpp"
-			$File	"$SRCDIR\game\shared\episodic\achievements_ep1.cpp"
-			$File	"$SRCDIR\game\shared\episodic\achievements_ep2.cpp"
-			$File	"$SRCDIR\game\shared\episodic\achievements_epx.cpp"
 			$File	"hl2\c_antlion_dust.cpp"
 			$File	"hl2\c_ar2_explosion.cpp"
 			$File	"hl2\c_barnacle.cpp"
