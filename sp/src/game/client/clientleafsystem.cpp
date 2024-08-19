@@ -386,7 +386,6 @@ void DefaultRenderBoundsWorldspace( IClientRenderable *pRenderable, Vector &absM
 		AngleMatrix( angles, origin, boxToWorld );
 		TransformAABB( boxToWorld, mins, maxs, absMins, absMaxs );
 	}
-	Assert( absMins.IsValid() && absMaxs.IsValid() );
 }
 
 // Figure out a world space bounding box that encloses the entity's local render bounds in world space.

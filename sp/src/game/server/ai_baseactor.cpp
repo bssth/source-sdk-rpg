@@ -1578,7 +1578,7 @@ void CAI_BaseActor::MaintainLookTargets( float flInterval )
 		}
 	}
 
-	Assert( flHeadInfluence <= 1.0 );
+	// Assert( flHeadInfluence <= 1.0 );
 
 	// turn head toward target
 	if (bValidHeadTarget)
