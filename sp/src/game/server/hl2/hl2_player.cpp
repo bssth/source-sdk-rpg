@@ -1085,8 +1085,11 @@ bool CHL2_Player::CanZoom( CBaseEntity *pRequester )
 {
 	if ( IsZooming() )
 		return false;
-
-	// TODO: attach to inventory items
+	if (!GetInventory()->HasItem("item_binocular"))
+	{
+		Msg("Zoom device not found in inventory\n");
+		return false;
+	}
 
 	return true;
 }

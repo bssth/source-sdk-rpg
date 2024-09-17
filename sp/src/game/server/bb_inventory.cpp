@@ -28,6 +28,7 @@ string_t CBBInventory::GetItemByModel(string_t model)
 	string_t ModelToItemTable[][2] = {
 		{ FindPooledString("models/props_junk/popcan01a.mdl"), AllocPooledString("item_popcan") },
 		{ FindPooledString("models/props_c17/tools_wrench01a.mdl"), AllocPooledString("item_wrench") },
+		// { FindPooledString("models/props_combine/combine_binocular01.mdl"), AllocPooledString("item_binocular") },
 	};
 
 	for (int i = 0; i < ARRAYSIZE(ModelToItemTable); i++)
@@ -69,6 +70,12 @@ CBBItemType *CBBInventory::GetItemData(const char* name)
 		Q_strncpy(pItem->szClassName, "item_wrench", sizeof(pItem->szClassName));
 		Q_strncpy(pItem->szPrintName, "Wrench Tool", sizeof(pItem->szPrintName));
 		m_invItemsDB.Insert("item_wrench", pItem);
+		AllocPooledString(pItem->szClassName);
+
+		pItem = new CBBItemType();
+		Q_strncpy(pItem->szClassName, "item_binocular", sizeof(pItem->szClassName));
+		Q_strncpy(pItem->szPrintName, "Binocular (Zoom)", sizeof(pItem->szPrintName));
+		m_invItemsDB.Insert("item_binocular", pItem);
 		AllocPooledString(pItem->szClassName);
 	}
 
@@ -130,6 +137,9 @@ bool CBBInventory::RemoveItemPosition(int Position)
 
 bool CBBInventory::HasItem(const char* name)
 {
+	if (FindPooledString(name) == NULL_STRING)
+		AllocPooledString(name);
+
 	for (int i = 0; i < MAX_INVENTORY; i++)
 	{
 		if (m_iInventory[i] == FindPooledString(name))
