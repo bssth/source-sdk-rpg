@@ -2918,6 +2918,14 @@ bool CHL2_Player::Weapon_CanSwitchTo( CBaseCombatWeapon *pWeapon )
 	if (pWeapon->GetSlot() == WEAPON_EXPLOSIVE_SLOT && m_afButtonPressed & IN_GRENADE1)
 		return true;
 
+	// [Mapbase port] weapon_slam isn't a thrown grenade — it's a deployable
+	// charge with its own viewmodel and primary/secondary attacks. The HL2
+	// weapon script puts it in bucket 4 (the explosive slot), so without an
+	// explicit carve-out the slot check below would block 'use weapon_slam'
+	// and the auto-switch path. Treat it as switchable like any side weapon.
+	if ( FClassnameIs( pWeapon, "weapon_slam" ) )
+		return true;
+
 	return pWeapon->GetSlot() == WEAPON_PRIMARY_SLOT;
 }
 
