@@ -129,3 +129,90 @@
 	output OnCorrectCode(void) : "Fired when the code is correct."
 	output OnIncorrectCode(void) : "Fired when the code is incorrect."
 ]
+
+//-------------------------------------------------------------------------
+// [Mapbase port] weapon_slam — Selectable Lightweight Attack Munition.
+//   Re-enabled in singleplayer (see [Mapbase port] commit 'Re-enable
+//   weapon_slam in singleplayer'). Models live in HL2 Anniversary VPK.
+//-------------------------------------------------------------------------
+@PointClass base(Weapon) studio("models/weapons/w_slam.mdl") = weapon_slam :
+	"S.L.A.M. — secondary fire attaches a tripmine to a wall, primary fire " +
+	"throws or attaches a satchel charge that can be detonated remotely."
+[
+]
+
+//-------------------------------------------------------------------------
+// [Mapbase port] env_instructor_hint — places a Game Instructor hint that
+//   the player sees as a HUD icon + caption. Fire ShowHint to display.
+//-------------------------------------------------------------------------
+@PointClass base(Targetname) iconsprite("editor/env_microphone.vmt") = env_instructor_hint :
+	"An entity for creating Game Instructor hints (HUD icon + caption) " +
+	"entirely from map I/O. Send 'ShowHint' to display, 'EndHint' to dismiss."
+[
+	hint_replace_key(string)         : "Replace Key"           : "" : "Hints with the same replace key will replace each other instead of stacking."
+	hint_target(target_destination)  : "Hint Target"           : "" : "Entity the hint icon will hover over. Defaults to this env_instructor_hint."
+	hint_timeout(integer)            : "Timeout (sec, 0 = forever)" : 0 : "How long the hint stays visible before auto-closing. 0 = no timeout."
+
+	hint_icon_onscreen(string)       : "Onscreen Icon"         : "icon_tip" : "Icon shown when the target is in view (e.g. icon_tip, icon_use, icon_alert)."
+	hint_icon_offscreen(string)      : "Offscreen Icon"        : "icon_tip" : "Icon shown as a directional arrow when the target is offscreen."
+
+	hint_caption(string)             : "Caption"               : "" : "Localization token (#FOO_BAR) or literal text shown next to the icon."
+	hint_activator_caption(string)   : "Activator Caption"     : "" : "Alternate caption shown to the entity that triggered ShowHint, if different from the global caption."
+	hint_color(color255)             : "Caption Color"         : "255 255 255" : "RGB color of the caption text."
+
+	hint_icon_offset(float)          : "Icon Offset"           : "0.0" : "World units to offset the icon above the target's origin."
+	hint_range(float)                : "Visible Range"         : "0.0" : "If non-zero, hint only shows when the player is within this distance."
+
+	hint_pulseoption(choices)        : "Icon Pulse"            : 0 =
+	[
+		0 : "None"
+		1 : "Slow"
+		2 : "Fast"
+		3 : "Urgent"
+	]
+	hint_alphaoption(choices)        : "Icon Alpha Pulse"      : 0 =
+	[
+		0 : "None"
+		1 : "Slow"
+		2 : "Fast"
+		3 : "Urgent"
+	]
+	hint_shakeoption(choices)        : "Icon Shake"            : 0 =
+	[
+		0 : "None"
+		1 : "Narrow"
+		2 : "Wide"
+	]
+
+	hint_static(choices)             : "Static (fixed HUD pos)" : 0 =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+	hint_nooffscreen(choices)        : "Hide Offscreen Icon"   : 0 =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+	hint_forcecaption(choices)       : "Force Caption"         : 0 =
+	[
+		0 : "No"
+		1 : "Yes (caption shows even when icon is occluded)"
+	]
+	hint_allow_nodraw_target(choices) : "Allow Nodraw Target"  : 1 =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+	hint_local_player_only(choices)  : "Local Player Only"     : 1 =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+
+	hint_binding(string)             : "Binding to Display"    : "" : "If set, shows the player's current key binding for this command instead of a static icon (e.g. +use, +jump)."
+
+	// Inputs
+	input ShowHint(string)           : "Show this hint to the player. Optional string parameter sets the hint name (used by replace_key)."
+	input EndHint(void)               : "Dismiss this hint."
+]
