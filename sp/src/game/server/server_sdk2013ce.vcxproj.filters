@@ -701,6 +701,9 @@
     <ClInclude Include="..\..\common\replay\ireplaysessionrecorder.h">
       <Filter>Replay</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\game\shared\mapbase\matchers.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\game\shared\achievement_saverestore.h">
       <Filter>Source Files</Filter>
     </ClInclude>
@@ -1794,6 +1797,9 @@
   <ItemGroup>
     <ClCompile Include="gamedll_replay.cpp">
       <Filter>Replay</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\game\shared\mapbase\matchers.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\game\shared\achievement_saverestore.cpp">
       <Filter>Source Files</Filter>
