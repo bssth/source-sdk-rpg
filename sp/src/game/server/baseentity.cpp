@@ -2965,42 +2965,22 @@ bool CBaseEntity::PassesDamageFilter( const CTakeDamageInfo &info )
 	return true;
 }
 
+// [Mapbase port] Original NamesMatch only supported a trailing '*'.
+// We now route through Matcher_NamesMatch (mapbase/matchers.h) which adds:
+//   - '*' anywhere in the pattern (e.g. "*soldier*", "elite_*_a")
+//   - '?' as a single-character wildcard (e.g. "soldier?_squad")
+//   - case-insensitive matching (preserved from the legacy impl)
+//
+// The behavior is gated on mapbase_wildcards_enabled (default 1) so it can
+// be flipped off without rebuilding if a map relied on the old semantics.
+#include "mapbase/matchers.h"
+
 FORCEINLINE bool NamesMatch( const char *pszQuery, string_t nameToMatch )
 {
 	if ( nameToMatch == NULL_STRING )
 		return (!pszQuery || *pszQuery == 0 || *pszQuery == '*');
 
-	const char *pszNameToMatch = STRING(nameToMatch);
-
-	// If the pointers are identical, we're identical
-	if ( pszNameToMatch == pszQuery )
-		return true;
-
-	while ( *pszNameToMatch && *pszQuery )
-	{
-		unsigned char cName = *pszNameToMatch;
-		unsigned char cQuery = *pszQuery;
-		// simple ascii case conversion
-		if ( cName == cQuery )
-			;
-		else if ( cName - 'A' <= (unsigned char)'Z' - 'A' && cName - 'A' + 'a' == cQuery )
-			;
-		else if ( cName - 'a' <= (unsigned char)'z' - 'a' && cName - 'a' + 'A' == cQuery )
-			;
-		else
-			break;
-		++pszNameToMatch;
-		++pszQuery;
-	}
-
-	if ( *pszQuery == 0 && *pszNameToMatch == 0 )
-		return true;
-
-	// @TODO (toml 03-18-03): Perhaps support real wildcards. Right now, only thing supported is trailing *
-	if ( *pszQuery == '*' )
-		return true;
-
-	return false;
+	return Matcher_NamesMatch( pszQuery, STRING(nameToMatch) );
 }
 
 bool CBaseEntity::NameMatchesComplex( const char *pszNameOrWildcard )
