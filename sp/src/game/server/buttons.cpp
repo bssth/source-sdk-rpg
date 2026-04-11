@@ -896,6 +896,14 @@ void CRotButton::Spawn( void )
 	m_fStayPushed = (m_flWait == -1 ? TRUE : FALSE);
 	m_fRotating = TRUE;
 
+	// [Mapbase port] Valve PR #401: CBaseButton::Spawn honors SF_BUTTON_LOCKED
+	// but CRotButton::Spawn never did, so 'Starts Locked' on func_rot_button
+	// silently did nothing.
+	if (HasSpawnFlags(SF_BUTTON_LOCKED))
+	{
+		m_bLocked = true;
+	}
+
 	SetUse(&CRotButton::ButtonUse);
 
 	//

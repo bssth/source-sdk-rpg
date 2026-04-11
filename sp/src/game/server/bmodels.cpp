@@ -1394,7 +1394,10 @@ BEGIN_DATADESC( CFuncVPhysicsClip )
 	// Keyfields
 	DEFINE_KEYFIELD( m_iFilterName,	FIELD_STRING,	"filtername" ),
 	DEFINE_FIELD( m_hFilter,	FIELD_EHANDLE ),
-	DEFINE_FIELD( m_bDisabled,	FIELD_BOOLEAN ),
+	// [Mapbase port] func_clip_vphysics 'Start Disabled' Hammer flag was a
+	// plain DEFINE_FIELD, so the keyvalue was discarded and the entity
+	// always started enabled. Promote to KEYFIELD bound to "StartDisabled".
+	DEFINE_KEYFIELD( m_bDisabled,	FIELD_BOOLEAN,	"StartDisabled" ),
 
 	DEFINE_INPUTFUNC( FIELD_VOID, "Enable", InputEnable ),
 	DEFINE_INPUTFUNC( FIELD_VOID, "Disable", InputDisable ),

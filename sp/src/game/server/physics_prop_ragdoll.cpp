@@ -1003,7 +1003,10 @@ void CRagdollProp::VPhysicsUpdate( IPhysicsObject *pPhysics )
 	}
 	else
 	{
-		if ( m_ragdoll.pGroup->IsInErrorState() )
+		// [Mapbase port] Valve PR #416: m_ragdoll.pGroup can be NULL on
+		// certain props (no physics group built); guard before deref to
+		// fix the crash inside ragdoll think.
+		if ( m_ragdoll.pGroup && m_ragdoll.pGroup->IsInErrorState() )
 		{
 			RagdollSolveSeparation( m_ragdoll, this );
 		}

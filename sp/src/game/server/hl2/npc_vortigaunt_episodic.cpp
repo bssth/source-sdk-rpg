@@ -581,6 +581,20 @@ bool CNPC_Vortigaunt::InnateWeaponLOSCondition( const Vector &ownerPos, const Ve
 	UTIL_PredictedPosition( this, flTimeDelta, &vecNewOwnerPos );
 	UTIL_PredictedPosition( GetEnemy(), flTimeDelta, &vecNewTargetPos );
 
+	// [Mapbase port] HL2:CE — null check + dky.tehkingd.u's LOS fix.
+	//
+	// Without these the vortigaunt's "predict where I'll be" hack
+	// completely breaks SCHED_ESTABLISH_LINE_OF_FIRE: every node fails LOS
+	// because the test is anchored to the vortigaunt's CURRENT position
+	// instead of the position the requester is asking about. Apply the
+	// predicted delta to the requested ownerPos so the test is consistent
+	// with the requester's intent.
+	if ( !GetEnemy() )
+		return false;
+
+	Vector ownerDelta = vecNewOwnerPos - GetAbsOrigin();
+	vecNewOwnerPos = ownerPos + ownerDelta;
+
 	Vector vecDelta = vecNewTargetPos - GetEnemy()->GetAbsOrigin();
 	Vector vecFinalTargetPos = GetEnemy()->BodyTarget( vecNewOwnerPos ) + vecDelta;
 
