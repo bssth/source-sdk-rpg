@@ -781,11 +781,83 @@ Scheme
 				"range" 		"0x0000 0x00FF"
 				"weight"		"800"
 			}
-			
+
+		}
+
+		// ====================================================================
+		// [Mapbase port] Fonts used by the Game Instructor (hud_locator_target).
+		// Without these the locator caption text renders with the default
+		// font handle (=0) and ends up invisible.
+		// ====================================================================
+		"InstructorTitle"
+		{
+			"1"
+			{
+				"name"        "Arial"
+				"tall"        "20"
+				"weight"      "400"
+				"antialias"   "1"
+				"dropshadow"  "1"
+			}
+		}
+		"InstructorTitle_ss"
+		{
+			"1"
+			{
+				"name"        "Arial"
+				"tall"        "20"
+				"weight"      "400"
+				"antialias"   "1"
+				"dropshadow"  "1"
+			}
+		}
+		"InstructorTitleGlow"
+		{
+			"1"
+			{
+				"name"        "Arial"
+				"tall"        "20"
+				"weight"      "400"
+				"antialias"   "1"
+				"dropshadow"  "1"
+			}
+		}
+		"InstructorTitleGlow_ss"
+		{
+			"1"
+			{
+				"name"        "Arial"
+				"tall"        "20"
+				"weight"      "400"
+				"antialias"   "1"
+				"dropshadow"  "1"
+			}
+		}
+		"InstructorKeyBindings"
+		{
+			"1"
+			{
+				"name"        "Arial"
+				"tall"        "18"
+				"weight"      "600"
+				"antialias"   "1"
+				"dropshadow"  "0"
+			}
+		}
+		"InstructorButtons"
+		{
+			"1"
+			{
+				"name"        "Arial"
+				"tall"        "15"
+				"weight"      "600"
+				"antialias"   "1"
+				"dropshadow"  "1"
+			}
 		}
 	}
 
-	
+
 	//////////////////////// CUSTOM FONT FILES /////////////////////////////
 	//
 	// specifies all the custom (non-system) font files that need to be loaded to service the above described fonts

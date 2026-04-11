@@ -36,4 +36,17 @@
 	{
 		"hint_name"					"string"	// the hint to stop. Will stop ALL hints with this name
 	}
+
+	// [Mapbase port] Client-side instructor control. Listened for in
+	// C_GameInstructor::Init(). Without these registered the listener
+	// registration prints "AddListener: event ... unknown" warnings on
+	// every level load.
+	"gameinstructor_draw"     { }
+	"gameinstructor_nodraw"   { }
+	"map_transition"          { }
+	"set_instructor_group_enabled"
+	{
+		"group"					"string"
+		"enabled"				"short"
+	}
 }
