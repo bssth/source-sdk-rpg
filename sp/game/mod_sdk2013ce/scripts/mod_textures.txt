@@ -1,0 +1,62 @@
+// [Mapbase port] HUD textures specific to this mod.
+//
+// Loaded by CHud::Init via LoadHudTextures("scripts/mod_textures").
+// Anything declared here is reachable through gHUD.GetIcon("name").
+//
+// All entries below come from Mapbase shared_content_v7_0/scripts/
+// instructor_textures.txt — they map the Game Instructor's symbolic icon
+// names (icon_tip, icon_alert, ...) onto cells of the two iconsheet VTFs
+// shipped under materials/vgui/hud/gameinstructor_iconsheet{1,2}.vtf.
+
+"sprites/640_hud"
+{
+	TextureData
+	{
+		// ===== Sheet 1 — Row 1 =====
+		"icon_bulb"          { "file" "vgui/hud/gameinstructor_iconsheet1"  "x" "0"   "y" "0"   "width" "64" "height" "64" }
+		"icon_caution"       { "file" "vgui/hud/gameinstructor_iconsheet1"  "x" "64"  "y" "0"   "width" "64" "height" "64" }
+		"icon_alert"         { "file" "vgui/hud/gameinstructor_iconsheet1"  "x" "128" "y" "0"   "width" "64" "height" "64" }
+		"icon_alert_red"     { "file" "vgui/hud/gameinstructor_iconsheet1"  "x" "192" "y" "0"   "width" "64" "height" "64" }
+
+		// ===== Sheet 1 — Row 2 =====
+		"icon_tip"           { "file" "vgui/hud/gameinstructor_iconsheet1"  "x" "0"   "y" "64"  "width" "64" "height" "64" }
+		"icon_skull"         { "file" "vgui/hud/gameinstructor_iconsheet1"  "x" "64"  "y" "64"  "width" "64" "height" "64" }
+		"icon_no"            { "file" "vgui/hud/gameinstructor_iconsheet1"  "x" "128" "y" "64"  "width" "64" "height" "64" }
+		"icon_run"           { "file" "vgui/hud/gameinstructor_iconsheet1"  "x" "192" "y" "64"  "width" "64" "height" "64" }
+
+		// ===== Sheet 1 — Row 3 =====
+		"icon_interact"      { "file" "vgui/hud/gameinstructor_iconsheet1"  "x" "0"   "y" "128" "width" "64" "height" "64" }
+		"icon_button"        { "file" "vgui/hud/gameinstructor_iconsheet1"  "x" "64"  "y" "128" "width" "64" "height" "64" }
+		"icon_door"          { "file" "vgui/hud/gameinstructor_iconsheet1"  "x" "128" "y" "128" "width" "64" "height" "64" }
+
+		// ===== Sheet 1 — Row 4 (arrow icons used by hud_locator_target) =====
+		"icon_arrow_plain_white_dn" { "file" "vgui/hud/gameinstructor_iconsheet1" "x" "0"   "y" "192" "width" "64" "height" "64" }
+		"icon_arrow_plain_white_up" { "file" "vgui/hud/gameinstructor_iconsheet1" "x" "64"  "y" "192" "width" "64" "height" "64" }
+		// NOTE: icon_arrow_up / icon_arrow_right are intentionally NOT mapped here.
+		// hud_locator_target loads them as standalone vgui materials
+		// (vgui/hud/icon_arrow_{right,left,up,down,plain}.vmt).
+
+		// ===== Sheet 2 — Row 1 (mouse icons) =====
+		"icon_mouseRight"    { "file" "vgui/hud/gameinstructor_iconsheet2"  "x" "0"   "y" "0"   "width" "64" "height" "64" }
+		"icon_mouseLeft"     { "file" "vgui/hud/gameinstructor_iconsheet2"  "x" "64"  "y" "0"   "width" "64" "height" "64" }
+		"icon_mouseWheel_up" { "file" "vgui/hud/gameinstructor_iconsheet2"  "x" "128" "y" "0"   "width" "64" "height" "64" }
+		"icon_mouseWheel_down" { "file" "vgui/hud/gameinstructor_iconsheet2" "x" "192" "y" "0"   "width" "64" "height" "64" }
+
+		// ===== Sheet 2 — Row 2 =====
+		"icon_mouseThree"    { "file" "vgui/hud/gameinstructor_iconsheet2"  "x" "0"   "y" "64"  "width" "64" "height" "64" }
+		"icon_key_generic"   { "file" "vgui/hud/gameinstructor_iconsheet2"  "x" "64"  "y" "64"  "width" "64" "height" "64" }
+		"icon_key_wide"      { "file" "vgui/hud/gameinstructor_iconsheet2"  "x" "128" "y" "64"  "width" "128" "height" "64" }
+
+		// ===== Sheet 2 — Row 3 =====
+		"icon_key_right"     { "file" "vgui/hud/gameinstructor_iconsheet2"  "x" "0"   "y" "128" "width" "64" "height" "64" }
+		"icon_key_left"      { "file" "vgui/hud/gameinstructor_iconsheet2"  "x" "64"  "y" "128" "width" "64" "height" "64" }
+		"icon_key_down"      { "file" "vgui/hud/gameinstructor_iconsheet2"  "x" "128" "y" "128" "width" "64" "height" "64" }
+		"icon_key_up"        { "file" "vgui/hud/gameinstructor_iconsheet2"  "x" "192" "y" "128" "width" "64" "height" "64" }
+
+		// ===== Sheet 2 — Row 4 =====
+		"icon_dpad"          { "file" "vgui/hud/gameinstructor_iconsheet2"  "x" "0"   "y" "192" "width" "64" "height" "64" }
+		"icon_fire"          { "file" "vgui/hud/gameinstructor_iconsheet2"  "x" "64"  "y" "192" "width" "64" "height" "64" }
+		"icon_present"       { "file" "vgui/hud/gameinstructor_iconsheet2"  "x" "128" "y" "192" "width" "64" "height" "64" }
+		"icon_blank"         { "file" "vgui/hud/gameinstructor_iconsheet2"  "x" "192" "y" "192" "width" "64" "height" "64" }
+	}
+}
