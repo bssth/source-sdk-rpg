@@ -1209,6 +1209,15 @@ void CBaseAnimating::HandleAnimEvent( animevent_t *pEvent )
 float CBaseAnimating::SetPoseParameter( CStudioHdr *pStudioHdr, const char *szName, float flValue )
 {
 	int poseParam = LookupPoseParameter( pStudioHdr, szName );
+	if ( poseParam < 0 )
+	{
+		// Was an Assert upstream; demoted to a dev warning because we cannot
+		// currently fix every model/animation that trips it. Root cause should
+		// still be investigated when touching the offending entity.
+		DevWarning( "SetPoseParameter: invalid parameter '%s' on %s\n",
+		            szName, GetDebugName() );
+		return flValue;
+	}
 	return SetPoseParameter( pStudioHdr, poseParam, flValue );
 }
 

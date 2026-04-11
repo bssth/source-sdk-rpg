@@ -1578,7 +1578,14 @@ void CAI_BaseActor::MaintainLookTargets( float flInterval )
 		}
 	}
 
-	// Assert( flHeadInfluence <= 1.0 );
+	// Was an Assert upstream; demoted because we cannot currently track down
+	// every look target that overshoots. Clamp so downstream math stays sane.
+	if ( flHeadInfluence > 1.0f )
+	{
+		DevWarning( "CAI_BaseActor::MaintainLookTargets: flHeadInfluence %f > 1 on %s\n",
+		            flHeadInfluence, GetDebugName() );
+		flHeadInfluence = 1.0f;
+	}
 
 	// turn head toward target
 	if (bValidHeadTarget)

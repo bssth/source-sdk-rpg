@@ -8,6 +8,7 @@
 #include "cbase.h"
 #include "gamerules.h"
 #include "player.h"
+#include "hl2_player.h"
 #include "items.h"
 #include "in_buttons.h"
 #include "engine/IEngineSound.h"
@@ -64,26 +65,25 @@ void CHealthKit::Precache( void )
 //-----------------------------------------------------------------------------
 void CHealthKit::Use(CBaseEntity* pActivator, CBaseEntity* pCaller, USE_TYPE useType, float value)
 {
-	if (!pActivator->IsPlayer())
+	if ( !pActivator || !pActivator->IsPlayer() )
 		return;
 
-	CBasePlayer* pPlayer = dynamic_cast<CBasePlayer*>(pActivator);
-	if (!pPlayer)
+	CHL2_Player *pPlayer = dynamic_cast<CHL2_Player *>( pActivator );
+	if ( !pPlayer || !pPlayer->GetInventory() )
 		return;
-	if (!pPlayer->GetInventory())
-		return;
-	if (!pPlayer->GetInventory()->AddItem("item_healthkit"))
+	if ( !pPlayer->GetInventory()->AddItem( "item_healthkit" ) )
 		return;
 
-	CSingleUserRecipientFilter user(pPlayer);
+	CPASAttenuationFilter sndFilter( pPlayer, "HealthKit.Touch" );
+	EmitSound( sndFilter, pPlayer->entindex(), "HealthKit.Touch" );
+
+	CSingleUserRecipientFilter user( pPlayer );
 	user.MakeReliable();
-
-	UserMessageBegin(user, "ItemPickup");
-	WRITE_STRING(GetClassname());
+	UserMessageBegin( user, "ItemPickup" );
+		WRITE_STRING( GetClassname() );
 	MessageEnd();
 
-	UTIL_Remove(this);
-	return;
+	UTIL_Remove( this );
 }
 
 //-----------------------------------------------------------------------------
@@ -112,26 +112,25 @@ public:
 
 	void Use(CBaseEntity* pActivator, CBaseEntity* pCaller, USE_TYPE useType, float value)
 	{
-		if (!pActivator->IsPlayer())
+		if ( !pActivator || !pActivator->IsPlayer() )
 			return;
 
-		CBasePlayer* pPlayer = dynamic_cast<CBasePlayer*>(pActivator);
-		if (!pPlayer)
+		CHL2_Player *pPlayer = dynamic_cast<CHL2_Player *>( pActivator );
+		if ( !pPlayer || !pPlayer->GetInventory() )
 			return;
-		if (!pPlayer->GetInventory())
-			return;
-		if (!pPlayer->GetInventory()->AddItem("item_healthvial"))
+		if ( !pPlayer->GetInventory()->AddItem( "item_healthvial" ) )
 			return;
 
-		CSingleUserRecipientFilter user(pPlayer);
+		CPASAttenuationFilter sndFilter( pPlayer, "HealthVial.Touch" );
+		EmitSound( sndFilter, pPlayer->entindex(), "HealthVial.Touch" );
+
+		CSingleUserRecipientFilter user( pPlayer );
 		user.MakeReliable();
-
-		UserMessageBegin(user, "ItemPickup");
-		WRITE_STRING(GetClassname());
+		UserMessageBegin( user, "ItemPickup" );
+			WRITE_STRING( GetClassname() );
 		MessageEnd();
 
-		UTIL_Remove(this);
-		return;
+		UTIL_Remove( this );
 	}
 };
 

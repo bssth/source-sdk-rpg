@@ -1085,50 +1085,43 @@ bool CHL2_Player::CanZoom( CBaseEntity *pRequester )
 {
 	if ( IsZooming() )
 		return false;
-	if (!GetInventory()->HasItem("item_binocular"))
+	if ( !GetInventory()->HasItem( "item_binocular" ) )
 	{
-		Msg("Zoom device not found in inventory\n");
+		DevMsg( "CHL2_Player::CanZoom: player has no item_binocular\n" );
 		return false;
 	}
 
 	return true;
 }
 
-bool CHL2_Player::UseItem(const char* name)
+bool CHL2_Player::UseItem( const char *name )
 {
-	CBBItemType* pItem = CBBInventory::GetItemData(name);
-	if (!pItem) {
+	const CBBItemType *pItem = CBBInventory::GetItemData( name );
+	if ( !pItem || !pItem->isUsable )
 		return false;
-	}
-	if (!pItem->isUsable) {
+	if ( !GetInventory()->CanUseItem( name ) )
 		return false;
-	}
 
-	// Health kit usage
-	if (pItem->isHealthKit()) {
-		if (GetInventory()->CanUseItem(pItem->szClassName))
-		{
-			if (TakeHealth(sk_healthkit.GetFloat(), DMG_GENERIC))
-			{
-				PlayerReactSpeak(PLAYER_REACTION_HEAL);
-				GetInventory()->UseItem(pItem->szClassName);
-				return true;
-			}
-		}
-	}
-
-	// Health vial usage
-	if (pItem->isHealthVial())
+	switch ( pItem->category )
 	{
-		if (TakeHealth(sk_healthvial.GetFloat(), DMG_GENERIC))
-		{
-			PlayerReactSpeak(PLAYER_REACTION_HEAL);
-			GetInventory()->UseItem(pItem->szClassName);
-			return true;
-		}
+	case BB_ITEM_HEALTHKIT:
+		if ( !TakeHealth( sk_healthkit.GetFloat(), DMG_GENERIC ) )
+			return false;
+		break;
+
+	case BB_ITEM_HEALTHVIAL:
+		if ( !TakeHealth( sk_healthvial.GetFloat(), DMG_GENERIC ) )
+			return false;
+		break;
+
+	default:
+		// Generic/unknown usables have no effect wired up yet.
+		return false;
 	}
 
-	return false;
+	PlayerReactSpeak( PLAYER_REACTION_HEAL );
+	GetInventory()->UseItem( name );
+	return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -2953,6 +2946,7 @@ void CHL2_Player::PickupObject( CBaseEntity *pObject, bool bLimitMassAndSize )
 	{
 		if (GetInventory()->AddItem(STRING(matchingModel)))
 		{
+			EmitSound( "Weapon_PhysCannon.Pickup" );
 			UTIL_Remove(pObject);
 			return;
 		}

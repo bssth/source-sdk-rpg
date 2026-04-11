@@ -18,7 +18,6 @@
 #include "hintsystem.h"
 #include "SoundEmitterSystem/isoundemittersystembase.h"
 #include "util_shared.h"
-#include "bb_inventory.h"
 
 #if defined USES_ECON_ITEMS
 #include "game_item_schema.h"
@@ -799,16 +798,6 @@ public:
 	// For the player to react to events (usually speak some lines)
 	virtual void PlayerReactSpeak(int eventType) {
 		return;
-	}
-
-	virtual CBBInventory *GetInventory() {
-		Assert(0); // This should be overridden by the hl2_player class
-		return nullptr;
-	}
-
-	virtual bool UseItem(const char* name) {
-		Assert(0); // This should be overridden by the hl2_player class
-		return false;
 	}
 
 private:

@@ -2401,7 +2401,10 @@ void CBoneSetup::AccumulatePose(
 	Vector		pos2[MAXSTUDIOBONES];
 	QuaternionAligned	q2[MAXSTUDIOBONES];
 
-	// This shouldn't be necessary, but the Assert should help us catch whoever is screwing this up
+	// This shouldn't be necessary, but the clamp (and the warning that was an
+	// Assert upstream) helps us catch whoever is screwing this up.
+	if ( flWeight < 0.0f || flWeight > 1.0f )
+		DevWarning( "CBoneSetup::AccumulatePose: flWeight out of range (%f)\n", flWeight );
 	flWeight = clamp( flWeight, 0.0f, 1.0f );
 
 	if ( sequence < 0 )

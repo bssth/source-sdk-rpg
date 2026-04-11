@@ -1,0 +1,49 @@
+// Inventory item definitions for Half-Life: BB.
+//
+// Each subsection defines a single item; the section name is its classname.
+// Fields:
+//   print_name    - display name for UI / console
+//   usable        - 1 if the player can "use" it from inventory (default 0)
+//   one_time_use  - 1 if the item is consumed on use (default 0)
+//   category      - generic|healthkit|healthvial|zoom (default generic)
+//   pickup_model  - optional; when the player picks up a prop with this model,
+//                   it is converted into this inventory item automatically.
+//
+// Adding an item here requires no code changes. See bb_inventory.cpp.
+
+"items"
+{
+	"item_healthkit"
+	{
+		"print_name"    "Healthkit"
+		"usable"        "1"
+		"one_time_use"  "1"
+		"category"      "healthkit"
+	}
+
+	"item_healthvial"
+	{
+		"print_name"    "Healthvial"
+		"usable"        "1"
+		"one_time_use"  "1"
+		"category"      "healthvial"
+	}
+
+	"item_popcan"
+	{
+		"print_name"    "Water Can"
+		"pickup_model"  "models/props_junk/popcan01a.mdl"
+	}
+
+	"item_wrench"
+	{
+		"print_name"    "Wrench Tool"
+		"pickup_model"  "models/props_c17/tools_wrench01a.mdl"
+	}
+
+	"item_binocular"
+	{
+		"print_name"    "Binocular (Zoom)"
+		"category"      "zoom"
+	}
+}

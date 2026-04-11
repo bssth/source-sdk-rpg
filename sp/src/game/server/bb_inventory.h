@@ -1,25 +1,44 @@
 #ifndef BB_INVENTORY_H
-
 #define BB_INVENTORY_H
 #pragma once
 
-#include "cbase.h"
+#include "string_t.h"
+#include "datamap.h"
+#include "networkvar.h" // DECLARE_CLASS_NOBASE
 
-// Not including player and other entities because inventory is a global standalone system
+// Player inventory is a per-player system. See bb_inventory.cpp for the
+// item-type database (loaded once from scripts/bb_items.txt).
 
-#define MAX_INVENTORY 50
+#define MAX_INVENTORY  50
 #define MAX_INV_STRING 64
+
+enum BBItemCategory_t
+{
+	BB_ITEM_GENERIC = 0,
+	BB_ITEM_HEALTHKIT,
+	BB_ITEM_HEALTHVIAL,
+	BB_ITEM_ZOOM,
+};
 
 class CBBItemType
 {
 public:
-	bool					isUsable = false;
-	bool					oneTimeUse = false;
-	char					szClassName[MAX_INV_STRING];
-	char					szPrintName[MAX_INV_STRING];
+	CBBItemType()
+		: isUsable( false )
+		, oneTimeUse( false )
+		, category( BB_ITEM_GENERIC )
+	{
+		szClassName[0]   = '\0';
+		szPrintName[0]   = '\0';
+		szPickupModel[0] = '\0';
+	}
 
-	inline bool isHealthKit () { return !Q_strcmp(szClassName, "item_healthkit"); }
-	inline bool isHealthVial() { return !Q_strcmp(szClassName, "item_healthvial"); }
+	bool            isUsable;
+	bool            oneTimeUse;
+	BBItemCategory_t category;
+	char            szClassName  [MAX_INV_STRING];
+	char            szPrintName  [MAX_INV_STRING];
+	char            szPickupModel[128];
 };
 
 class CBBInventory
@@ -33,29 +52,26 @@ public:
 
 	string_t m_iInventory[MAX_INVENTORY];
 
-	static string_t GetItemByModel(string_t model);
-	static CBBItemType *GetItemData(const char* name);
+	// Item-type DB (loaded lazily from scripts/bb_items.txt on first access).
+	static const CBBItemType *GetItemData(const char *name);
+	static string_t           GetItemByModel(string_t model);
 
-	bool AddItem(const char* name);
-	bool RemoveItem(const char* name);
-	bool RemoveItemPosition(int Position);
-	bool HasItem(const char* name);
-	bool UseItem(const char* name);
-	bool CanUseItem(const char* name);
-	void Think(void);
+	// Player inventory ops.
+	bool AddItem    (const char *name);
+	bool RemoveItem (const char *name);
+	bool RemoveItemPosition(int position);
+	bool HasItem    (const char *name) const;
+	bool UseItem    (const char *name);
+	bool CanUseItem (const char *name) const;
 
-	inline int GetItemCount()
+	int  GetItemCount() const
 	{
-		int item_count = 0;
-		for (int i = 0; i < MAX_INVENTORY; i++)
-		{
-			if (m_iInventory[i] != NULL_STRING)
-			{
-				item_count++;
-			}
-		}
-		return item_count;
+		int n = 0;
+		for ( int i = 0; i < MAX_INVENTORY; i++ )
+			if ( m_iInventory[i] != NULL_STRING )
+				n++;
+		return n;
 	}
 };
 
-#endif
+#endif // BB_INVENTORY_H

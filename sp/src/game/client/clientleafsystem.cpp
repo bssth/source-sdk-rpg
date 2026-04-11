@@ -386,6 +386,11 @@ void DefaultRenderBoundsWorldspace( IClientRenderable *pRenderable, Vector &absM
 		AngleMatrix( angles, origin, boxToWorld );
 		TransformAABB( boxToWorld, mins, maxs, absMins, absMaxs );
 	}
+
+	// Was an Assert upstream; demoted because some renderables produce NaN
+	// bounds which we cannot currently fix at the source.
+	if ( !absMins.IsValid() || !absMaxs.IsValid() )
+		DevWarning( "DefaultRenderBoundsWorldspace: NaN bounds\n" );
 }
 
 // Figure out a world space bounding box that encloses the entity's local render bounds in world space.
