@@ -101,6 +101,8 @@ maps/soundcache/*.cache
 quick*.tga
 sp/game/mod_sdk2013ce/ep1_gamestats.dat
 sp/game/mod_sdk2013ce/modelsounds.cache
+sp/game/mod_sdk2013ce/sound/sound.cache
+sp/game/mod_sdk2013ce/maps/soundcache/*.cache
 
 # shader files
 *.tmp
