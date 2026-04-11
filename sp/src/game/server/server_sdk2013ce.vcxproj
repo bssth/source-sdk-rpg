@@ -810,7 +810,10 @@
     <ClCompile Include="env_instructor_hint.cpp" />
     <ClCompile Include="mapbase\logic_skill.cpp" />
     <ClCompile Include="mapbase\logic_substring.cpp" />
+    <ClCompile Include="mapbase\point_advanced_finder.cpp" />
     <ClCompile Include="mapbase\point_copy_size.cpp" />
+    <ClCompile Include="mapbase\point_damageinfo.cpp" />
+    <ClCompile Include="mapbase\point_entity_replace.cpp" />
     <ClCompile Include="..\..\game\shared\achievement_saverestore.cpp" />
     <ClCompile Include="..\..\game\shared\achievementmgr.cpp" />
     <ClCompile Include="..\..\game\shared\achievements_hlx.cpp" />

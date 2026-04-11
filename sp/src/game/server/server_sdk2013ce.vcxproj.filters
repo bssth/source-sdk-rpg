@@ -1816,7 +1816,16 @@
     <ClCompile Include="mapbase\logic_substring.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="mapbase\point_advanced_finder.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="mapbase\point_copy_size.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="mapbase\point_damageinfo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="mapbase\point_entity_replace.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\game\shared\achievement_saverestore.cpp">
