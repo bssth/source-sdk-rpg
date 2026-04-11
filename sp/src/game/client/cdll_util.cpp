@@ -759,6 +759,40 @@ const char *nexttoken(char *token, const char *str, char sep)
 }
 
 //-----------------------------------------------------------------------------
+// [Mapbase port] Bounds-safe variant of nexttoken — caps the destination
+// buffer at tokenLen-1 chars + null terminator.
+//-----------------------------------------------------------------------------
+const char *nexttoken(char *token, const char *str, char sep, size_t tokenLen)
+{
+	if ((str == NULL) || (*str == '\0') || tokenLen == 0)
+	{
+		if (tokenLen > 0)
+			*token = '\0';
+		return(NULL);
+	}
+
+	char *tokenEnd = token + tokenLen - 1;
+	while ((*str != sep) && (*str != '\0') && (token < tokenEnd))
+	{
+		*token++ = *str++;
+	}
+	*token = '\0';
+
+	// Skip any remaining chars in the source token if we ran out of room.
+	while ((*str != sep) && (*str != '\0'))
+	{
+		++str;
+	}
+
+	if (*str == '\0')
+	{
+		return(str);
+	}
+
+	return(++str);
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: 
 // Input  : font - 
 //			*str - 

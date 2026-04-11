@@ -1807,6 +1807,9 @@
     <ClCompile Include="..\..\game\shared\hl2mp\weapon_slam.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="env_instructor_hint.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\game\shared\achievement_saverestore.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

@@ -807,6 +807,7 @@
     <ClCompile Include="gamedll_replay.cpp" />
     <ClCompile Include="..\..\game\shared\mapbase\matchers.cpp" />
     <ClCompile Include="..\..\game\shared\hl2mp\weapon_slam.cpp" />
+    <ClCompile Include="env_instructor_hint.cpp" />
     <ClCompile Include="..\..\game\shared\achievement_saverestore.cpp" />
     <ClCompile Include="..\..\game\shared\achievementmgr.cpp" />
     <ClCompile Include="..\..\game\shared\achievements_hlx.cpp" />

@@ -1070,6 +1070,34 @@ int UTIL_StringFieldToInt( const char *szValue, const char **pValueStrings, int 
 	return -1;
 }
 
+// [Mapbase port] Used by the Game Instructor scripted lessons.
+static const char s_NumBitsInNibble[ 16 ] =
+{
+	0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4
+};
+
+int UTIL_CountNumBitsSet( unsigned int nVar )
+{
+	int nNumBits = 0;
+	while ( nVar > 0 )
+	{
+		nNumBits += s_NumBitsInNibble[ nVar & 0x0f ];
+		nVar >>= 4;
+	}
+	return nNumBits;
+}
+
+int UTIL_CountNumBitsSet( uint64 nVar )
+{
+	int nNumBits = 0;
+	while ( nVar > 0 )
+	{
+		nNumBits += s_NumBitsInNibble[ nVar & 0x0f ];
+		nVar >>= 4;
+	}
+	return nNumBits;
+}
+
 
 int find_day_of_week( struct tm& found_day, int day_of_week, int step )
 {

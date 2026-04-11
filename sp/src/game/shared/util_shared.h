@@ -582,6 +582,10 @@ const char* ReadAndAllocStringValue(KeyValues* pSub, const char* pName, const ch
 
 int UTIL_StringFieldToInt( const char *szValue, const char **pValueStrings, int iNumStrings );
 
+// [Mapbase port]
+int UTIL_CountNumBitsSet( unsigned int nVar );
+int UTIL_CountNumBitsSet( uint64 nVar );
+
 //-----------------------------------------------------------------------------
 // Holidays
 //-----------------------------------------------------------------------------

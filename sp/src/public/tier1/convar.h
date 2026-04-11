@@ -21,6 +21,7 @@
 #include "tier1/utlvector.h"
 #include "tier1/utlstring.h"
 #include "icvar.h"
+#include "Color.h" // [Mapbase port] needed for ConVar::GetColor()
 
 #ifdef _WIN32
 #define FORCEINLINE_CVAR FORCEINLINE
@@ -350,6 +351,7 @@ public:
 	// Retrieve value
 	FORCEINLINE_CVAR float			GetFloat( void ) const;
 	FORCEINLINE_CVAR int			GetInt( void ) const;
+	FORCEINLINE_CVAR Color			GetColor( void ) const; // [Mapbase port]
 	FORCEINLINE_CVAR bool			GetBool() const {  return !!GetInt(); }
 	FORCEINLINE_CVAR char const	   *GetString( void ) const;
 
@@ -430,9 +432,20 @@ FORCEINLINE_CVAR float ConVar::GetFloat( void ) const
 // Purpose: Return ConVar value as an int
 // Output : int
 //-----------------------------------------------------------------------------
-FORCEINLINE_CVAR int ConVar::GetInt( void ) const 
+FORCEINLINE_CVAR int ConVar::GetInt( void ) const
 {
 	return m_pParent->m_nValue;
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose: Return ConVar value as a color  [Mapbase port]
+// Output : Color
+//-----------------------------------------------------------------------------
+FORCEINLINE_CVAR Color ConVar::GetColor( void ) const
+{
+	unsigned char *pColorElement = ((unsigned char *)&m_pParent->m_nValue);
+	return Color( pColorElement[0], pColorElement[1], pColorElement[2], pColorElement[3] );
 }
 
 

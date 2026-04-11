@@ -1,0 +1,13 @@
+//--------------------------------------------------------
+//
+// Mod-specific Game Instructor lessons for Half-Life: BB.
+//
+// Add custom lessons here. The base "Serverside Hint" lesson is defined in
+// instructor_lessons.txt — env_instructor_hint entities placed in maps will
+// fire through that lesson by default.
+//
+//--------------------------------------------------------
+
+"instructor_lessons"
+{
+}

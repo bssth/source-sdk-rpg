@@ -789,6 +789,9 @@
     <ClInclude Include="achievement_notification_panel.h" />
     <ClInclude Include="..\..\game\shared\mapbase\matchers.h" />
     <ClInclude Include="..\..\game\shared\hl2mp\weapon_slam.h" />
+    <ClInclude Include="c_baselesson.h" />
+    <ClInclude Include="c_gameinstructor.h" />
+    <ClInclude Include="hud_locator_target.h" />
     <ClInclude Include="..\..\game\shared\achievement_saverestore.h" />
     <ClInclude Include="..\..\game\shared\achievementmgr.h" />
     <ClInclude Include="..\..\game\shared\achievements_and_stats_interface.h" />
@@ -841,6 +844,9 @@
     <ClCompile Include="achievement_notification_panel.cpp" />
     <ClCompile Include="..\..\game\shared\mapbase\matchers.cpp" />
     <ClCompile Include="..\..\game\shared\hl2mp\weapon_slam.cpp" />
+    <ClCompile Include="c_baselesson.cpp" />
+    <ClCompile Include="c_gameinstructor.cpp" />
+    <ClCompile Include="hud_locator_target.cpp" />
     <ClCompile Include="..\..\game\shared\achievement_saverestore.cpp" />
     <ClCompile Include="..\..\game\shared\achievementmgr.cpp" />
     <ClCompile Include="..\..\game\shared\achievements_hlx.cpp" />
