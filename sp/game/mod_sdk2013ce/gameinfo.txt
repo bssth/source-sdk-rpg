@@ -47,6 +47,14 @@
 			// (SDK Base 2013 SP doesn't ship this one)
 			game				|gameinfo_path|_steam/hl2_game/hl2_pak.vpk
 
+			// [Mapbase port] HL2 Anniversary hl2_misc + hl2_textures fallbacks.
+			// Mounted AFTER SDK Base so SDK Base content still wins for files
+			// that exist in both — these only fill in missing assets like the
+			// full weapon_slam material set (SDK Base only ships v_slam/new
+			// light1.vmt, the rest live exclusively in Anniversary).
+			game				|gameinfo_path|_steam/hl2_game/hl2_misc.vpk
+			game				|gameinfo_path|_steam/hl2_game/hl2_textures.vpk
+
 			// Platform (from SDK Base)
 			platform			|gameinfo_path|_steam/platform/platform_misc.vpk
 			platform			|gameinfo_path|_steam/platform

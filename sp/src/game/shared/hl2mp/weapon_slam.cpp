@@ -106,9 +106,15 @@ BEGIN_DATADESC( CWeapon_SLAM )
 
 END_DATADESC()
 
-acttable_t	CWeapon_SLAM::m_acttable[] = 
+acttable_t	CWeapon_SLAM::m_acttable[] =
 {
 	{ ACT_RANGE_ATTACK1, ACT_RANGE_ATTACK_SLAM, true },
+#ifdef HL2MP
+	// [Mapbase port] HL2MP-only player gestures. SP citizen / NPC models
+	// don't have these activities baked in, and pushing them through
+	// AddGesture spams "model X missing activity ACT_HL2MP_GESTURE_..."
+	// warnings for every NPC that ever brushes up against the SLAM. Hide
+	// them outside HL2MP builds.
 	{ ACT_HL2MP_IDLE,					ACT_HL2MP_IDLE_SLAM,					false },
 	{ ACT_HL2MP_RUN,					ACT_HL2MP_RUN_SLAM,					false },
 	{ ACT_HL2MP_IDLE_CROUCH,			ACT_HL2MP_IDLE_CROUCH_SLAM,			false },
@@ -116,6 +122,7 @@ acttable_t	CWeapon_SLAM::m_acttable[] =
 	{ ACT_HL2MP_GESTURE_RANGE_ATTACK,	ACT_HL2MP_GESTURE_RANGE_ATTACK_SLAM,	false },
 	{ ACT_HL2MP_GESTURE_RELOAD,			ACT_HL2MP_GESTURE_RELOAD_SLAM,		false },
 	{ ACT_HL2MP_JUMP,					ACT_HL2MP_JUMP_SLAM,					false },
+#endif
 };
 
 IMPLEMENT_ACTTABLE(CWeapon_SLAM);
