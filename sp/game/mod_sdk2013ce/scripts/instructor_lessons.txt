@@ -83,7 +83,10 @@
 				"no_offscreen ?set"			"bool hint_nooffscreen"
 				"force_caption ?set"			"bool hint_forcecaption"
 				"start_sound ?set"			"string hint_start_sound"
-				"icon_target_pos ?set"			"int hint_target_pos"
+				// [Mapbase port] icon_target_pos / m_iIconTargetPos is a MAPBASE-only
+				// scripted lesson variable. Stripped from this SP port — see the
+				// LESSON_VARIABLE_FACTORY commented-out lines in c_baselesson.cpp.
+				// "icon_target_pos ?set"		"int hint_target_pos"
 			}
 			
 			// Local player only version
@@ -113,7 +116,10 @@
 				"no_offscreen ?set"			"bool hint_nooffscreen"
 				"force_caption ?set"			"bool hint_forcecaption"
 				"start_sound ?set"			"string hint_start_sound"
-				"icon_target_pos ?set"			"int hint_target_pos"
+				// [Mapbase port] icon_target_pos / m_iIconTargetPos is a MAPBASE-only
+				// scripted lesson variable. Stripped from this SP port — see the
+				// LESSON_VARIABLE_FACTORY commented-out lines in c_baselesson.cpp.
+				// "icon_target_pos ?set"		"int hint_target_pos"
 			}
 		}
 		
