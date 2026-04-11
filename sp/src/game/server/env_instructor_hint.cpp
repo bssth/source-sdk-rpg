@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: An entity for creating instructor hints entirely with map logic
 //
@@ -27,6 +27,13 @@ class CEnvInstructorHint : public CPointEntity
 {
 public:
 	DECLARE_CLASS( CEnvInstructorHint, CPointEntity );
+	// [Mapbase port] Make the entity networked so its entindex resolves on
+	// the client. Without this, c_baselesson.cpp's C_BaseEntity::Instance()
+	// returns NULL when the lesson tries to read the hint_target field, the
+	// optional ?set is skipped, and the icon ends up bound to the local
+	// player (= centred on screen) instead of hovering at the entity's
+	// world position.
+	DECLARE_SERVERCLASS();
 	DECLARE_DATADESC();
 
 #ifdef MAPBASE
@@ -37,6 +44,10 @@ public:
 #ifdef MAPBASE
 	virtual void OnRestore( void );
 #endif
+
+	// [Mapbase port] Always-transmit so the client can resolve our entindex
+	// regardless of PVS.
+	virtual int UpdateTransmitState( void ) { return SetTransmitState( FL_EDICT_ALWAYS ); }
 
 private:
 	void InputShowHint( inputdata_t &inputdata );
@@ -76,6 +87,12 @@ private:
 };
 
 LINK_ENTITY_TO_CLASS( env_instructor_hint, CEnvInstructorHint );
+
+// [Mapbase port] Empty server class â€” base CBaseEntity SendTable already
+// streams m_vecOrigin, which is all the locator needs. The matching client
+// proxy lives in client/c_env_instructor_hint.cpp.
+IMPLEMENT_SERVERCLASS_ST( CEnvInstructorHint, DT_EnvInstructorHint )
+END_SEND_TABLE()
 
 BEGIN_DATADESC( CEnvInstructorHint )
 
@@ -177,6 +194,14 @@ void CEnvInstructorHint::InputShowHint( inputdata_t &inputdata )
 		if ( pTargetEntity == NULL )
 #endif
 			pTargetEntity = gEntList.FindEntityByName( NULL, m_iszHintTargetEntity );
+
+		// [Mapbase port] If no explicit hint_target was specified, anchor the
+		// hint to the env_instructor_hint itself instead of falling through
+		// to the activator (= local player). The entity is now networked
+		// (DECLARE_SERVERCLASS / FL_EDICT_ALWAYS) so its origin resolves
+		// client-side via C_BaseEntity::Instance(entindex).
+		if ( pTargetEntity == NULL && !m_bStatic )
+			pTargetEntity = this;
 
 		if( pTargetEntity == NULL && !m_bStatic )
 			pTargetEntity = inputdata.pActivator;

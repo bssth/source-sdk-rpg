@@ -845,6 +845,7 @@
     <ClCompile Include="..\..\game\shared\mapbase\matchers.cpp" />
     <ClCompile Include="..\..\game\shared\hl2mp\weapon_slam.cpp" />
     <ClCompile Include="c_baselesson.cpp" />
+    <ClCompile Include="c_env_instructor_hint.cpp" />
     <ClCompile Include="c_gameinstructor.cpp" />
     <ClCompile Include="hud_locator_target.cpp" />
     <ClCompile Include="..\..\game\shared\achievement_saverestore.cpp" />

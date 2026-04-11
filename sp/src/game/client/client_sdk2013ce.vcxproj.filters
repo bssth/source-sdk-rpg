@@ -1918,6 +1918,9 @@
     <ClCompile Include="c_baselesson.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="c_env_instructor_hint.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="c_gameinstructor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
