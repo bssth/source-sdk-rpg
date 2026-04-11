@@ -1751,6 +1751,9 @@
     <ClInclude Include="..\..\game\shared\mapbase\matchers.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\game\shared\hl2mp\weapon_slam.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\game\shared\achievement_saverestore.h">
       <Filter>Source Files</Filter>
     </ClInclude>
@@ -1898,6 +1901,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\game\shared\mapbase\matchers.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\game\shared\hl2mp\weapon_slam.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\game\shared\achievement_saverestore.cpp">

@@ -15,7 +15,11 @@
 #define	WEAPONSLAM_H
 
 #include "basegrenade_shared.h"
+#ifdef HL2MP
 #include "weapon_hl2mpbasehlmpcombatweapon.h"
+#else
+#include "basehlcombatweapon_shared.h"
+#endif
 
 enum
 {
@@ -26,6 +30,11 @@ enum
 
 #ifdef CLIENT_DLL
 #define CWeapon_SLAM C_Weapon_SLAM
+#endif
+
+// [Mapbase port] SP fallback — alias the HL2MP base class to the SP base class.
+#ifndef HL2MP
+#define CBaseHL2MPCombatWeapon CBaseHLCombatWeapon
 #endif
 
 class CWeapon_SLAM : public CBaseHL2MPCombatWeapon

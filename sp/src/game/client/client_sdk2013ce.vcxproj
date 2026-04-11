@@ -788,6 +788,7 @@
     <ClInclude Include="replay\replaycamera.h" />
     <ClInclude Include="achievement_notification_panel.h" />
     <ClInclude Include="..\..\game\shared\mapbase\matchers.h" />
+    <ClInclude Include="..\..\game\shared\hl2mp\weapon_slam.h" />
     <ClInclude Include="..\..\game\shared\achievement_saverestore.h" />
     <ClInclude Include="..\..\game\shared\achievementmgr.h" />
     <ClInclude Include="..\..\game\shared\achievements_and_stats_interface.h" />
@@ -839,6 +840,7 @@
     <ClCompile Include="replay\replaycamera.cpp" />
     <ClCompile Include="achievement_notification_panel.cpp" />
     <ClCompile Include="..\..\game\shared\mapbase\matchers.cpp" />
+    <ClCompile Include="..\..\game\shared\hl2mp\weapon_slam.cpp" />
     <ClCompile Include="..\..\game\shared\achievement_saverestore.cpp" />
     <ClCompile Include="..\..\game\shared\achievementmgr.cpp" />
     <ClCompile Include="..\..\game\shared\achievements_hlx.cpp" />
