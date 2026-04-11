@@ -2998,10 +2998,7 @@ bool Studio_IKAnimationError( const CStudioHdr *pStudioHdr, mstudioikrule_t *pRu
 	int iFrame;
 
 	flWeight = Studio_IKRuleWeight( *pRule, panim, flCycle, iFrame, fraq );
-	Assert( fraq >= 0.0 && fraq < 1.0 );
-	Assert( flWeight >= 0.0f && flWeight <= 1.0f );
 
-	// This shouldn't be necessary, but the Assert should help us catch whoever is screwing this up
 	flWeight = clamp( flWeight, 0.0f, 1.0f );
 
 	if (pRule->type != IK_GROUND && flWeight < 0.0001)

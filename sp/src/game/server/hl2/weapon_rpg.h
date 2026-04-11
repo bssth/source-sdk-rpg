@@ -205,6 +205,14 @@ public:
 	bool	WeaponLOSCondition( const Vector &ownerPos, const Vector &targetPos, bool bSetConditions );
 	int		WeaponRangeAttack1Condition( float flDot, float flDist );
 
+private:
+	// Muzzle clearance check for NPCs. Returns true if the 10-foot hull in front of the
+	// muzzle is clear. If it's blocked, bHitAlly is set to true when the blocker is a
+	// friendly combat character (so callers can refuse to fire even in "relaxed" mode).
+	bool	NPCMuzzleClearance( CAI_BaseNPC *pOwner, const Vector &vecMuzzle, const Vector &vecShootDir, bool &bHitAlly );
+
+public:
+
 	void	Operator_HandleAnimEvent( animevent_t *pEvent, CBaseCombatCharacter *pOperator );
 	void	StartGuiding( void );
 	void	StopGuiding( void );
@@ -252,6 +260,12 @@ protected:
 	CHandle<CMissile>	m_hMissile;
 	CHandle<CSprite>	m_hLaserMuzzleSprite;
 	CHandle<CBeam>		m_hLaserBeam;
+
+	// When NPC LOS/clearance checks start failing, we remember when the streak began so
+	// that after a few seconds we relax the "10 feet of clearance" requirement and just
+	// fire anyway — as long as doing so wouldn't hit a friendly. 0 means "not currently
+	// blocked".
+	float				m_flNPCLOSBlockedStartTime;
 };
 
 #endif // WEAPON_RPG_H

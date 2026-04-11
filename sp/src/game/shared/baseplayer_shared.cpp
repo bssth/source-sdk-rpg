@@ -1520,6 +1520,16 @@ void CBasePlayer::CalcView( Vector &eyeOrigin, QAngle &eyeAngles, float &zNear, 
 		{
 			CalcObserverView( eyeOrigin, eyeAngles, fov );
 		}
+#if defined( CLIENT_DLL )
+		else if ( !IsAlive() )
+		{
+			// In SP the player isn't transitioned into OBS_MODE_DEATHCAM, so the regular
+			// CalcPlayerView would just hand back the frozen EyePosition/EyeAngles and
+			// leave the camera stuck on the death spot. Route through the dedicated death
+			// view which spawns a client ragdoll and does a chase cam around it.
+			CalcThirdPersonDeathView( eyeOrigin, eyeAngles, fov );
+		}
+#endif
 		else
 		{
 			CalcPlayerView( eyeOrigin, eyeAngles, fov );
@@ -1533,12 +1543,6 @@ void CBasePlayer::CalcView( Vector &eyeOrigin, QAngle &eyeAngles, float &zNear, 
 #if defined( CLIENT_DLL )
 	if(IsLocalPlayer() && haptics)
 		haptics->UpdatePlayerFOV(fov);
-#endif
-#ifdef CLIENT_DLL
-	else if (!this->IsAlive() && ::input->CAM_IsThirdPerson())
-	{
-		CalcThirdPersonDeathView(eyeOrigin, eyeAngles, fov);
-	}
 #endif
 }
 

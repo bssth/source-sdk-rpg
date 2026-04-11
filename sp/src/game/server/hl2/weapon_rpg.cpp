@@ -1369,6 +1369,7 @@ BEGIN_DATADESC( CWeaponRPG )
 	DEFINE_FIELD( m_hLaserMuzzleSprite, FIELD_EHANDLE ),
 	DEFINE_FIELD( m_hLaserBeam,			FIELD_EHANDLE ),
 	DEFINE_FIELD( m_bHideGuiding,		FIELD_BOOLEAN ),
+	DEFINE_FIELD( m_flNPCLOSBlockedStartTime, FIELD_TIME ),
 
 END_DATADESC()
 
@@ -1415,6 +1416,7 @@ CWeaponRPG::CWeaponRPG()
 	m_bInitialStateUpdate= false;
 	m_bHideGuiding = false;
 	m_bGuiding = false;
+	m_flNPCLOSBlockedStartTime = 0.0f;
 
 	m_fMinRange1 = m_fMinRange2 = 40;
 	m_fMaxRange1 = m_fMaxRange2 = 1000*12;
@@ -1524,11 +1526,14 @@ void CWeaponRPG::Operator_HandleAnimEvent( animevent_t *pEvent, CBaseCombatChara
 
 			VectorAngles( vecShootDir, vecAngles );
 
-			m_hMissile = CMissile::Create( muzzlePoint, vecAngles, GetOwner()->edict() );		
+			m_hMissile = CMissile::Create( muzzlePoint, vecAngles, GetOwner()->edict() );
 			m_hMissile->m_hOwner = this;
 
 			// NPCs always get a grace period
 			m_hMissile->SetGracePeriod( 0.5 );
+
+			// Shot went out — reset the "stuck" timer so a future bad streak starts fresh.
+			m_flNPCLOSBlockedStartTime = 0.0f;
 
 			pOperator->DoMuzzleFlash();
 
@@ -2004,6 +2009,39 @@ bool CWeaponRPG::Reload( void )
 }
 
 //-----------------------------------------------------------------------------
+// Muzzle clearance hull trace. Returns true if the 10-foot hull in front of the
+// muzzle is clear. If it's blocked, bHitAlly is set to true when the blocker is
+// a friendly combat character — callers should never relax for that case.
+//-----------------------------------------------------------------------------
+bool CWeaponRPG::NPCMuzzleClearance( CAI_BaseNPC *pOwner, const Vector &vecMuzzle, const Vector &vecShootDir, bool &bHitAlly )
+{
+	bHitAlly = false;
+
+	trace_t tr;
+	AI_TraceHull( vecMuzzle, vecMuzzle + vecShootDir * (10.0f*12.0f), Vector( -24, -24, -24 ), Vector( 24, 24, 24 ), MASK_NPCSOLID, NULL, &tr );
+
+	if ( tr.fraction == 1.0f )
+		return true;
+
+	CBaseEntity *pHit = tr.m_pEnt;
+	if ( pHit && pOwner && pHit->MyCombatCharacterPointer() != NULL )
+	{
+		if ( pOwner->IRelationType( pHit ) == D_LI )
+			bHitAlly = true;
+	}
+	return false;
+}
+
+// After this many seconds of being continuously blocked by non-ally clearance
+// failures, NPC RPG users stop searching for the perfect shot and just fire.
+static const float kRPGNPCStuckRelaxTime = 4.0f;
+
+//-----------------------------------------------------------------------------
+// WeaponLOSCondition is called MANY times per tick for candidate positions while
+// the AI is searching for a firing spot. We must not set/reset the stuck timer
+// here — it would thrash on every candidate. We only READ the timer (set by
+// WeaponRangeAttack1Condition from the current position, reset by the anim
+// event on a real fire) to decide whether we're in "relax clearance" mode.
 //-----------------------------------------------------------------------------
 bool CWeaponRPG::WeaponLOSCondition( const Vector &ownerPos, const Vector &targetPos, bool bSetConditions )
 {
@@ -2015,18 +2053,32 @@ bool CWeaponRPG::WeaponLOSCondition( const Vector &ownerPos, const Vector &targe
 
 		if( npcOwner )
 		{
-			trace_t tr;
-
 			Vector vecRelativeShootPosition;
 			VectorSubtract( npcOwner->Weapon_ShootPosition(), npcOwner->GetAbsOrigin(), vecRelativeShootPosition );
 			Vector vecMuzzle = ownerPos + vecRelativeShootPosition;
 			Vector vecShootDir = npcOwner->GetActualShootTrajectory( vecMuzzle );
 
-			// Make sure I have a good 10 feet of wide clearance in front, or I'll blow my teeth out.
-			AI_TraceHull( vecMuzzle, vecMuzzle + vecShootDir * (10.0f*12.0f), Vector( -24, -24, -24 ), Vector( 24, 24, 24 ), MASK_NPCSOLID, NULL, &tr );
+			bool bHitAlly = false;
+			bool bClear = NPCMuzzleClearance( npcOwner, vecMuzzle, vecShootDir, bHitAlly );
 
-			if( tr.fraction != 1.0f )
-				bResult = false;
+			if ( !bClear )
+			{
+				if ( bHitAlly )
+				{
+					// Never accept a firing position that would eat a friendly.
+					bResult = false;
+				}
+				else
+				{
+					// Non-ally clearance failure. Only accept the position if the
+					// owning NPC has already been stuck long enough (timer managed
+					// by WeaponRangeAttack1Condition / Operator_HandleAnimEvent).
+					const bool bRelaxed = ( m_flNPCLOSBlockedStartTime != 0.0f &&
+						gpGlobals->curtime - m_flNPCLOSBlockedStartTime >= kRPGNPCStuckRelaxTime );
+					if ( !bRelaxed )
+						bResult = false;
+				}
+			}
 		}
 	}
 
@@ -2034,9 +2086,9 @@ bool CWeaponRPG::WeaponLOSCondition( const Vector &ownerPos, const Vector &targe
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : flDot - 
-//			flDist - 
+// Purpose:
+// Input  : flDot -
+//			flDist -
 // Output : int
 //-----------------------------------------------------------------------------
 int CWeaponRPG::WeaponRangeAttack1Condition( float flDot, float flDist )
@@ -2066,18 +2118,30 @@ int CWeaponRPG::WeaponRangeAttack1Condition( float flDot, float flDist )
 
 	if( pOwner )
 	{
-		// Make sure I don't shoot the world!
-		trace_t tr;
-
 		Vector vecMuzzle = pOwner->Weapon_ShootPosition();
 		Vector vecShootDir = pOwner->GetActualShootTrajectory( vecMuzzle );
 
-		// Make sure I have a good 10 feet of wide clearance in front, or I'll blow my teeth out.
-		AI_TraceHull( vecMuzzle, vecMuzzle + vecShootDir * (10.0f*12.0f), Vector( -24, -24, -24 ), Vector( 24, 24, 24 ), MASK_NPCSOLID, NULL, &tr );
+		bool bHitAlly = false;
+		bool bClear = NPCMuzzleClearance( pOwner, vecMuzzle, vecShootDir, bHitAlly );
 
-		if( tr.fraction != 1.0 )
+		if ( !bClear )
 		{
-			return COND_WEAPON_SIGHT_OCCLUDED;
+			if ( bHitAlly )
+			{
+				// Never shoot if the blast would hit an ally.
+				return COND_WEAPON_SIGHT_OCCLUDED;
+			}
+
+			// Start the stuck timer on the first tick we're blocked here.
+			if ( m_flNPCLOSBlockedStartTime == 0.0f )
+				m_flNPCLOSBlockedStartTime = gpGlobals->curtime;
+
+			if ( gpGlobals->curtime - m_flNPCLOSBlockedStartTime < kRPGNPCStuckRelaxTime )
+				return COND_WEAPON_SIGHT_OCCLUDED;
+			// else: been stuck long enough — fire anyway, collateral damage be damned.
+			// Don't reset the timer here: that happens in Operator_HandleAnimEvent
+			// once the missile actually launches, otherwise a single clear
+			// candidate would re-arm a fresh 4-second delay.
 		}
 	}
 

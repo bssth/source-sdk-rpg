@@ -1275,72 +1275,102 @@ extern float UTIL_WaterLevel( const Vector &position, float minz, float maxz );
 
 void C_BasePlayer::CalcThirdPersonDeathView(Vector& eyeOrigin, QAngle& eyeAngles, float& fov)
 {
-	if (m_lifeState != LIFE_ALIVE)
+	// Cache state across frames. Keyed on m_flDeathTime so each new death resets it.
+	static EHANDLE	s_hDeathRagdoll;
+	static Vector	s_vecDeathOrigin;
+	static QAngle	s_aDeathAngles;
+	static float	s_flCachedDeathTime = -1.0f;
+
+	if ( s_flCachedDeathTime != m_flDeathTime )
 	{
-		C_BasePlayer* pPlayer = C_BasePlayer::GetLocalPlayer();
-
-		if (!pPlayer)
-			return;
-
-		// Keep a copy of the actual player model.
-		pPlayer->SnatchModelInstance(this);
-
-		// Creates the ragdoll asset from the player's model.
-		m_nRenderFX = kRenderFxRagdoll;
-
-		matrix3x4_t boneDelta0[MAXSTUDIOBONES];
-		matrix3x4_t boneDelta1[MAXSTUDIOBONES];
-		matrix3x4_t currentBones[MAXSTUDIOBONES];
-		const float boneDt = 0.05f;
-
-		if (pPlayer && !pPlayer->IsDormant())
-		{
-			pPlayer->GetRagdollInitBoneArrays(boneDelta0, boneDelta1, currentBones, boneDt);
-		}
-		else
-		{
-			GetRagdollInitBoneArrays(boneDelta0, boneDelta1, currentBones, boneDt);
-		}
-
-		// Sets the ragdoll.
-		InitAsClientRagdoll(boneDelta0, boneDelta1, currentBones, boneDt);
-
-		// Calculate origin of the ragdoll.
-		Vector origin = EyePosition();
-
-		IRagdoll* pRagdoll = GetRepresentativeRagdoll();
-
-		if (pRagdoll)
-		{
-			origin = pRagdoll->GetRagdollOrigin();
-			origin.z += VEC_DEAD_VIEWHEIGHT.z; // look over ragdoll, not through
-		}
-
-		eyeOrigin = origin;
-
-		Vector vForward;
-		AngleVectors(eyeAngles, &vForward);
-
-		VectorNormalize(vForward);
-		VectorMA(origin, -CHASE_CAM_DISTANCE, vForward, eyeOrigin);
-
-		Vector WALL_MIN(-WALL_OFFSET, -WALL_OFFSET, -WALL_OFFSET);
-		Vector WALL_MAX(WALL_OFFSET, WALL_OFFSET, WALL_OFFSET);
-
-		trace_t trace; // clip against world
-		C_BaseEntity::PushEnableAbsRecomputations(false); // HACK don't recompute positions while doing RayTrace
-		UTIL_TraceHull(origin, eyeOrigin, WALL_MIN, WALL_MAX, MASK_SOLID_BRUSHONLY, this, COLLISION_GROUP_NONE, &trace);
-		C_BaseEntity::PopEnableAbsRecomputations();
-
-		if (trace.fraction < 1.0)
-		{
-			eyeOrigin = trace.endpos;
-		}
-
-		fov = GetFOV();
-
-		return;
+		s_flCachedDeathTime = m_flDeathTime;
+		s_hDeathRagdoll = NULL;
+		s_vecDeathOrigin = EyePosition();
+		s_aDeathAngles = EyeAngles();
 	}
+
+	// The player entity itself gets EF_NODRAW on death; the visible corpse is a separate
+	// C_ClientRagdoll entity created by BecomeRagdollOnClient(). Find it once and cache.
+	if ( s_hDeathRagdoll.Get() == NULL )
+	{
+		const float flMaxDistSqr = 512.0f * 512.0f;
+		float flBestSqr = flMaxDistSqr;
+		C_BaseEntity *pBest = NULL;
+		for ( C_BaseEntity *pEnt = ClientEntityList().FirstBaseEntity(); pEnt; pEnt = ClientEntityList().NextBaseEntity( pEnt ) )
+		{
+			C_ClientRagdoll *pRag = dynamic_cast< C_ClientRagdoll * >( pEnt );
+			if ( !pRag )
+				continue;
+			float d = ( pRag->GetAbsOrigin() - s_vecDeathOrigin ).LengthSqr();
+			if ( d < flBestSqr )
+			{
+				flBestSqr = d;
+				pBest = pRag;
+			}
+		}
+		if ( pBest )
+		{
+			s_hDeathRagdoll = pBest;
+			// The default client ragdoll collision group is COLLISION_GROUP_DEBRIS,
+			// which only collides with world and static geometry — so the player's
+			// corpse phases through crates, furniture, NPCs etc. Promote just OUR
+			// ragdoll to full collision so it physically interacts with everything.
+			pBest->SetCollisionGroup( COLLISION_GROUP_NONE );
+
+			// SetCollisionGroup isn't enough on its own: CCollisionEvent::ShouldCollide
+			// also ANDs the physics object's Contents against the other entity's
+			// PhysicsSolidMaskForEntity(). The ragdoll bones were created with contents
+			// that don't intersect MASK_SOLID, so props would still pass through. Force
+			// each bone's contents to a MASK_SOLID-compatible value.
+			IPhysicsObject *pList[VPHYSICS_MAX_OBJECT_LIST_COUNT];
+			int nCount = pBest->VPhysicsGetObjectList( pList, ARRAYSIZE( pList ) );
+			for ( int i = 0; i < nCount; ++i )
+			{
+				if ( pList[i] )
+				{
+					pList[i]->SetContents( CONTENTS_SOLID | CONTENTS_MONSTER );
+					pList[i]->RecheckCollisionFilter();
+				}
+			}
+		}
+	}
+
+	// Orbit center: the ragdoll if we found one, otherwise the frozen death position.
+	Vector origin = s_vecDeathOrigin;
+	if ( C_BaseEntity *pRagEnt = s_hDeathRagdoll.Get() )
+	{
+		origin = pRagEnt->GetAbsOrigin();
+		origin.z += VEC_DEAD_VIEWHEIGHT.z; // look over the body, not through it
+	}
+
+	// Slow yaw orbit + gentle downward pitch blend — keeps the view alive even if there's
+	// no ragdoll (stuck at death position) and frames the corpse nicely when there is one.
+	const float flOrbitSpeedDeg = 12.0f;
+	const float flTimeSinceDeath = MAX( 0.0f, gpGlobals->curtime - m_flDeathTime );
+	const float flPitchBlend = clamp( flTimeSinceDeath / 2.0f, 0.0f, 1.0f );
+
+	QAngle viewAngles;
+	viewAngles.x = Lerp( flPitchBlend, s_aDeathAngles.x, 15.0f );
+	viewAngles.y = s_aDeathAngles.y + flOrbitSpeedDeg * flTimeSinceDeath;
+	viewAngles.z = 0.0f;
+	eyeAngles = viewAngles;
+
+	Vector vForward;
+	AngleVectors( viewAngles, &vForward );
+	VectorNormalize( vForward );
+	VectorMA( origin, -CHASE_CAM_DISTANCE, vForward, eyeOrigin );
+
+	// Clip against world so the camera doesn't fly through walls.
+	Vector WALL_MIN( -WALL_OFFSET, -WALL_OFFSET, -WALL_OFFSET );
+	Vector WALL_MAX( WALL_OFFSET, WALL_OFFSET, WALL_OFFSET );
+	trace_t trace;
+	C_BaseEntity::PushEnableAbsRecomputations( false );
+	UTIL_TraceHull( origin, eyeOrigin, WALL_MIN, WALL_MAX, MASK_SOLID_BRUSHONLY, this, COLLISION_GROUP_NONE, &trace );
+	C_BaseEntity::PopEnableAbsRecomputations();
+	if ( trace.fraction < 1.0f )
+		eyeOrigin = trace.endpos;
+
+	fov = GetFOV();
 }
 
 //-----------------------------------------------------------------------------
@@ -1815,8 +1845,8 @@ void C_BasePlayer::CalcDeathCamView(Vector& eyeOrigin, QAngle& eyeAngles, float&
 		origin.z += VEC_DEAD_VIEWHEIGHT_SCALED( this ).z;
 	}
 	
-	if ( pKiller && pKiller->IsPlayer() && (pKiller != this) ) 
-	{														
+	if ( pKiller && pKiller->IsPlayer() && (pKiller != this) )
+	{
 		Vector vKiller = pKiller->EyePosition() - origin;
 		QAngle aKiller; VectorAngles( vKiller, aKiller );
 		InterpolateAngles( aForward, aKiller, eyeAngles, interpolation );

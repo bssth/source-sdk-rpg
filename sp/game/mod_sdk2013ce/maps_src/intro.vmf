@@ -2,7 +2,7 @@ versioninfo
 {
 	"editorversion" "400"
 	"editorbuild" "8870"
-	"mapversion" "3115"
+	"mapversion" "3116"
 	"formatversion" "100"
 	"prefab" "0"
 }
@@ -137,7 +137,7 @@ bgimages_plus
 world
 {
 	"id" "675742"
-	"mapversion" "3115"
+	"mapversion" "3116"
 	"classname" "worldspawn"
 	"chaptertitle" "CHAPTER4_TITLE"
 	"detailmaterial" "detail/detailsprites"
@@ -136692,8 +136692,8 @@ cameras
 	"activecamera" "0"
 	camera
 	{
-		"position" "[4316.76 6083.84 -114.232]"
-		"look" "[4317.44 6084.57 -114.365]"
+		"position" "[6487.1 10339.3 47.1132]"
+		"look" "[6486.1 10339.2 46.9519]"
 	}
 }
 cordons
