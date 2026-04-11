@@ -14,10 +14,6 @@
 #include "vgui_controls/AnimationController.h"
 #include "c_playerresource.h"
 #include "c_team_objectiveresource.h"
-#if defined( TF_CLIENT_DLL )
-#include "tf_gamerules.h"
-#include "c_tf_player.h"
-#endif // TF_CLIENT_DLL
 #else
 #include "team.h"
 #include "team_objectiveresource.h"
@@ -261,7 +257,7 @@ CTeamRoundTimer::~CTeamRoundTimer( void )
 //-----------------------------------------------------------------------------
 void CTeamRoundTimer::Precache( void )
 {
-#if defined( TF_DLL ) || defined( TF_CLIENT_DLL ) 
+#if defined(TF_DLL)
 	PrecacheScriptSound( ROUND_TIMER_60SECS );
 	PrecacheScriptSound( ROUND_TIMER_30SECS );
 	PrecacheScriptSound( ROUND_TIMER_10SECS );
@@ -282,7 +278,7 @@ void CTeamRoundTimer::Precache( void )
 	PrecacheScriptSound( ROUND_TIMER_TIME_ADDED_LOSER );
 	PrecacheScriptSound( ROUND_TIMER_TIME_ADDED_WINNER );
 	PrecacheScriptSound( ROUND_START_BELL );
-#endif // TF_DLL || TF_CLIENT_DLL
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -636,11 +632,6 @@ const char *CTeamRoundTimer::GetTimeWarningSound( int nWarning )
 //-----------------------------------------------------------------------------
 void CTeamRoundTimer::SendTimeWarning( int nWarning )
 {
-#if defined( TF_CLIENT_DLL )
-	// don't play any time warnings for Helltower
-	if ( TFGameRules() && TFGameRules()->IsHalloweenScenario( CTFGameRules::HALLOWEEN_SCENARIO_HIGHTOWER ) )
-		return;
-#endif
 
 	// don't play sounds if the level designer has turned them off or if it's during the WaitingForPlayers time
 	if ( !m_bTimerPaused && m_bAutoCountdown && !TeamplayRoundBasedRules()->IsInWaitingForPlayers() )
@@ -709,12 +700,6 @@ void CTeamRoundTimer::SendTimeWarning( int nWarning )
 					}
 				}
 
-#ifdef TF_CLIENT_DLL
-				if ( bShouldPlaySound == true )
-				{
-					pPlayer->EmitSound( GetTimeWarningSound( nWarning ) );
-				}
-#endif // TF_CLIENT_DLL
 			}
 		}
 	}

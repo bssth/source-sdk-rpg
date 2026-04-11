@@ -82,9 +82,7 @@ void CReplayPreviewPanelBase::ApplySchemeSettings( IScheme *pScheme )
 
 	LoadControlSettings( "resource/ui/replaybrowser/previewpanel.res", "GAME" );
 
-#if !defined( TF_CLIENT_DLL )
 	m_pClassImage->SetVisible( false );
-#endif
 }
 
 void CReplayPreviewPanelBase::PerformLayout()

@@ -28,9 +28,7 @@
 #include "npc_BaseZombie.h"
 #include "modelentities.h"
 
-#if HL2_EPISODIC
 #include "npc_antlion.h"
-#endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -177,11 +175,9 @@ BEGIN_DATADESC( CNPC_Barnacle )
 	DEFINE_INPUTFUNC( FIELD_VOID, "DropTongue", InputDropTongue ),
 	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetDropTongueSpeed", InputSetDropTongueSpeed ),
 
-#ifdef HL2_EPISODIC
 	DEFINE_INPUTFUNC( FIELD_VOID, "LetGo", InputLetGo ),
 	DEFINE_OUTPUT( m_OnGrab,     "OnGrab" ),
 	DEFINE_OUTPUT( m_OnRelease, "OnRelease" ),
-#endif
 
 	// Function pointers
 	DEFINE_THINKFUNC( BarnacleThink ),
@@ -263,11 +259,7 @@ void CNPC_Barnacle::Spawn()
 	SetSolid( SOLID_BBOX );
 	AddSolidFlags( FSOLID_NOT_STANDABLE );
 	CollisionProp()->SetSurroundingBoundsType( USE_GAME_CODE );
-#if HL2_EPISODIC // the episodic barnacle is solid, so it can be sawbladed.
 	SetMoveType( MOVETYPE_PUSH );
-#else
-	SetMoveType( MOVETYPE_NONE );
-#endif
 	SetBloodColor( BLOOD_COLOR_GREEN );
 	m_iHealth			= sk_barnacle_health.GetFloat();
 	m_flFieldOfView		= 0.5;// indicates the width of this monster's forward view cone ( as a dotproduct result )
@@ -280,13 +272,11 @@ void CNPC_Barnacle::Spawn()
 	m_takedamage		= DAMAGE_YES;
 	m_pConstraint		= NULL;
 	m_nShakeCount = 0;
-#if HL2_EPISODIC // the episodic barnacle is solid, so it can be sawbladed.
 	IPhysicsObject *pPhys = VPhysicsInitShadow( false, false );
 	if (pPhys)
 	{
 		pPhys->SetMass(500);
 	}
-#endif
 	InitBoneControllers();
 	InitTonguePosition();
 
@@ -478,7 +468,6 @@ void CNPC_Barnacle::BarnacleThink ( void )
 			else
 			{
 				// Finished digesting
-#if HL2_EPISODIC
 				// have to save this off because LostPrey() resets it (and if we take damage before hitting that,
 				// then the dead thing will go flying)
 				bool poisoned = m_bSwallowingPoison;
@@ -490,10 +479,6 @@ void CNPC_Barnacle::BarnacleThink ( void )
 				{	// hurt me
 					TakeDamage( CTakeDamageInfo( this, this, m_iHealth, DMG_ACID ) );
 				}
-#else
-				LostPrey( true ); // Remove all evidence
-				m_flDigestFinish = 0;
-#endif
 			}
 		}
 	}
@@ -523,7 +508,6 @@ void CNPC_Barnacle::BarnacleThink ( void )
 			else
 			{
 				// Finished digesting
-#if HL2_EPISODIC
 				// have to save this off because LostPrey() resets it (and if we take damage before hitting that,
 				// then the dead thing will go flying)
 				bool poisoned = m_bSwallowingPoison;
@@ -535,10 +519,6 @@ void CNPC_Barnacle::BarnacleThink ( void )
 				{	// hurt me
 					TakeDamage( CTakeDamageInfo( this, this, m_iHealth, DMG_ACID ) );
 				}
-#else
-				LostPrey( true ); // Remove all evidence
-				m_flDigestFinish = 0;
-#endif
 			}
 		}
 	}
@@ -1232,10 +1212,8 @@ CRagdollProp *CNPC_Barnacle::AttachRagdollToTongue( CBaseAnimating *pAnimating )
 	CRagdollProp *pRagdoll = CreateServerRagdollAttached( pAnimating, vec3_origin, -1, COLLISION_GROUP_NONE, pTonguePhysObject, m_hTongueTip, 0, vecBonePos, m_iGrabbedBoneIndex, vec3_origin );
 	if ( pRagdoll )
 	{
-#if HL2_EPISODIC
 		PhysEnableEntityCollisions( this, pAnimating );
 		PhysDisableEntityCollisions( this, pRagdoll );
-#endif
 
 		pRagdoll->DisableAutoFade();
 		pRagdoll->SetThink( NULL );
@@ -1260,9 +1238,7 @@ void CNPC_Barnacle::InputDropTongue( inputdata_t &inputdata )
 void CNPC_Barnacle::AttachTongueToTarget( CBaseEntity *pTouchEnt, Vector vecGrabPos )
 {
 
-#if HL2_EPISODIC
 	m_OnGrab.Set( pTouchEnt, this, this );
-#endif
 
 	// Reset this valricue each time we attach prey. If it needs to be reduced, code below will do so.
 	m_flBarnaclePullSpeed = BARNACLE_PULL_SPEED;
@@ -1305,10 +1281,8 @@ void CNPC_Barnacle::AttachTongueToTarget( CBaseEntity *pTouchEnt, Vector vecGrab
 	}
 
 	SetEnemy( pTouchEnt );
-#if HL2_EPISODIC
 	// Disable collision between myself and the obejct I've seized.
 	PhysDisableEntityCollisions( this, pTouchEnt );
-#endif
 
 	// teleporting the player in this way is illegitimate -- try it in third person to see the problem
 	if ( /* pTouchEnt->IsPlayer() || */ pTouchEnt->MyNPCPointer() )
@@ -1482,7 +1456,6 @@ void CNPC_Barnacle::BitePrey( void )
 
 	CBaseCombatCharacter *pVictim = GetEnemyCombatCharacterPointer();
 
-#ifdef HL2_EPISODIC
  	if ( pVictim == NULL )
 	{
 		if ( GetEnemy() )
@@ -1504,15 +1477,14 @@ void CNPC_Barnacle::BitePrey( void )
 				pTonguePhys->UpdateShadow( m_hTongueTip->GetAbsOrigin(), m_hTongueTip->GetAbsAngles(), false, 0 );
 				m_hTongueTip->SetMoveType( MOVETYPE_NOCLIP );
 				m_hTongueTip->SetAbsVelocity( Vector(0,0,32) );
-				
+
 
 				SetAltitude( (GetAbsOrigin().z - m_hTongueTip->GetAbsOrigin().z) );
 			}
 		}
-		
+
 		return;
 	}
-#endif
 	
 	Assert( pVictim );
 	if ( !pVictim )
@@ -1545,10 +1517,8 @@ void CNPC_Barnacle::BitePrey( void )
 	}
 
 	
-#if HL2_EPISODIC
 	m_bSwallowingPoison = IsPoisonous(pVictim);
 	unsigned int enemyClass = GetEnemy()->Classify();
-#endif
 	// DMG_CRUSH because we don't wan't to impart physics forces
 
 	pVictim->TakeDamage( CTakeDamageInfo( this, this, nDamage, iDamageType | DMG_CRUSH ) );
@@ -1556,8 +1526,6 @@ void CNPC_Barnacle::BitePrey( void )
 	m_cGibs = 3;
 
 	// In episodic, bite the zombie's headcrab off & drop the body
-#ifdef HL2_EPISODIC
-
 	if ( enemyClass == CLASS_ZOMBIE )
 	{
 		if ( m_hRagdoll )
@@ -1603,8 +1571,6 @@ void CNPC_Barnacle::BitePrey( void )
 
 		return;
 	}
-
-#endif
 
 	// Players are never swallowed, nor is anything we don't have a ragdoll for
 	if ( !m_hRagdoll || pVictim->IsPlayer() )
@@ -1713,15 +1679,11 @@ void CNPC_Barnacle::SwallowPrey( void )
 		m_bSwallowingPrey = false;
 		m_hTongueTip->SetAbsVelocity( vec3_origin );
 
-#if HL2_EPISODIC
 		// digest poisonous things for just a moment before being killed by them (it looks wierd if it's instant)
 		// Parentheses were probably intended around the ?: part of the expression, but putting them there now
 		// would change the behavior which is undesirable, so parentheses were placed around the '+' to suppress
 		// compiler warnings.
 		m_flDigestFinish = ( gpGlobals->curtime + m_bSwallowingPoison ) ? 0.48f : 10.0f;
-#else
-		m_flDigestFinish = gpGlobals->curtime + 10.0;
-#endif
 	}
 
 	if ( npc_barnacle_swallow.GetBool() )
@@ -1778,17 +1740,13 @@ void CNPC_Barnacle::RemoveRagdoll( bool bDestroyRagdoll )
 void CNPC_Barnacle::LostPrey( bool bRemoveRagdoll )
 {
 	
-#if HL2_EPISODIC
 	m_OnRelease.Set( GetEnemy(), this, this );
-#endif
 
 	CBaseEntity * const pEnemy = GetEnemy();
 
  	if ( pEnemy )
 	{
-#if HL2_EPISODIC
 		PhysEnableEntityCollisions( this, pEnemy );
-#endif
 
 		//No one survives being snatched by a barnacle anymore, so leave
 		// this flag set so that their entity gets removed.
@@ -1822,9 +1780,7 @@ void CNPC_Barnacle::LostPrey( bool bRemoveRagdoll )
 	RemoveRagdoll( bRemoveRagdoll );
 	m_bLiftingPrey = false;
 	m_bSwallowingPrey = false;
-#if HL2_EPISODIC
 	m_bSwallowingPoison = false;
-#endif
 	SetEnemy( NULL );
 
 
@@ -2100,10 +2056,9 @@ void CNPC_Barnacle::WaitTillDead ( void )
 	}
 }
 
-#if HL2_EPISODIC
 //=========================================================
 // Some creatures are poisonous to barnacles, and the barnacle
-// will die after consuming them. This determines if a given 
+// will die after consuming them. This determines if a given
 // entity is one of those things.
 // todo: could be a bit faster
 //=========================================================
@@ -2192,8 +2147,6 @@ const impactdamagetable_t &CNPC_Barnacle::GetPhysicsImpactDamageTable( void )
 {
 	return gBarnacleImpactDamageTable;
 }
-
-#endif
 
 
 //=========================================================
@@ -2291,7 +2244,6 @@ public:
 		if ( pServerEntity == m_pLastEnemy )
 			return true;
 
-#ifdef HL2_EPISODIC
 		CBaseEntity *pEntity = EntityFromEntityHandle( pServerEntity );
 
 		if ( pEntity )
@@ -2320,7 +2272,6 @@ public:
 				return false;
 			}
 		}
-#endif
 
 		return BaseClass::ShouldHitEntity( pServerEntity, contentsMask );
 	}
@@ -2339,9 +2290,7 @@ CBaseEntity *CNPC_Barnacle::TongueTouchEnt ( float *pflLength )
 
 	int iMask = MASK_SOLID_BRUSHONLY;
 
-#ifdef HL2_EPISODIC
 	iMask = MASK_NPCSOLID;
-#endif
 
 	// trace once to hit architecture and see if the tongue needs to change position.
 	CBarnacleTongueFilter tongueFilter( m_hLastSpitEnemy, this, COLLISION_GROUP_NONE );
@@ -2415,7 +2364,6 @@ CBaseEntity *CNPC_Barnacle::TongueTouchEnt ( float *pflLength )
 				}
 
 				// Allow the barnacles to grab stuff while their tongue is lowering
-#ifdef HL2_EPISODIC
 				length = fabs( GetAbsOrigin().z - pTest->WorldSpaceCenter().z );
 				// Pull it up a tad
 				length = MAX(8, length - m_flRestUnitsAboveGround);
@@ -2423,7 +2371,6 @@ CBaseEntity *CNPC_Barnacle::TongueTouchEnt ( float *pflLength )
 				{
 					*pflLength = length;
 				}
-#endif
 
 				return pTest;
 			}
@@ -2443,7 +2390,6 @@ CBaseEntity *CNPC_Barnacle::TongueTouchEnt ( float *pflLength )
 		{
 
 			// Allow the barnacles to grab stuff while their tongue is lowering
-#ifdef HL2_EPISODIC
 			length = fabs( GetAbsOrigin().z - pTest->WorldSpaceCenter().z );
 			// Pull it up a tad
 			length = MAX(8, length - m_flRestUnitsAboveGround);
@@ -2451,7 +2397,6 @@ CBaseEntity *CNPC_Barnacle::TongueTouchEnt ( float *pflLength )
 			{
 				*pflLength = length;
 			}
-#endif
 
 			return pTest;
 		}

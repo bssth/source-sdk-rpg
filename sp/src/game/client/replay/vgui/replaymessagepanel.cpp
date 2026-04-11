@@ -11,11 +11,6 @@
 #include "ienginevgui.h"
 #include "vgui_controls/PHandle.h"
 #include "econ/econ_controls.h"
-#if defined( CSTRIKE_DLL )
-#  include "cstrike/clientmode_csnormal.h"
-#elif defined( TF_CLIENT_DLL )
-#  include "tf/clientmode_tf.h"
-#endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include <tier0/memdbgon.h>
@@ -183,10 +178,6 @@ CReplayMessagePanel::CReplayMessagePanel( const char *pLocalizeName, float flDur
 	m_pReplayLabel = new CExLabel( this, "ReplayLabel", "" );
 	m_pIcon = new ImagePanel( this, "Icon" );
 
-#if defined( TF_CLIENT_DLL )
-	const char *pBorderName = bUrgent ? "ReplayFatLineBorderRedBGOpaque" : "ReplayFatLineBorderOpaque";
-	V_strncpy( m_szBorderName, pBorderName, sizeof( m_szBorderName ) );
-#endif
 
 	g_vecReplayMessagePanels.AddToTail( GetReplayMessagePanelHandle( const_cast< CReplayMessagePanel * >( this ) ) );
 
@@ -296,33 +287,15 @@ void CReplayMessagePanel::ApplySchemeSettings( IScheme *pScheme )
 
 	LoadControlSettings( "resource/ui/replaymessage.res", "GAME" );
 
-#if defined( CSTRIKE_DLL )
-	SetPaintBackgroundEnabled( true );
-	SetPaintBorderEnabled( false );
-	SetPaintBackgroundType( 0 );
-	SetBgColor( pScheme->GetColor( m_bUrgent ? "DarkRed" : "DarkGray", Color( 255, 255, 255, 255 ) ) );
-#endif
 }
 
 void CReplayMessagePanel::PerformLayout()
 {
 	BaseClass::PerformLayout();
 
-#if defined( TF_CLIENT_DLL )
-	// Set the border if one was specified
-	if ( m_szBorderName[0] )
-	{
-		SetBorder( scheme()->GetIScheme( GetScheme() )->GetBorder( m_szBorderName ) );
-	}
-#endif
 
 	// Adjust overall panel size depending on min-mode
-#if defined( TF_CLIENT_DLL )
-	extern ConVar cl_hud_minmode;
-	bool bMinMode = cl_hud_minmode.GetBool();
-#else
 	bool bMinMode = false;
-#endif
 	int nVerticalBuffer = bMinMode ? YRES(3) : YRES(5);
 	int nMessageLabelY = nVerticalBuffer;
 	int nVerticalOffsetBetweenPanels = YRES(6);

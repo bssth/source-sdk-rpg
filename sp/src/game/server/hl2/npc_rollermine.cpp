@@ -521,9 +521,7 @@ void CNPC_RollerMine::Precache( void )
 	PrecacheMaterial( "effects/rollerglow" );
 
 	gm_iszDropshipClassname = AllocPooledString( "npc_combinedropship" ); // For fast string compares.
-#ifdef HL2_EPISODIC
 	PrecacheScriptSound( "RagdollBoogie.Zap" );
-#endif
 
 	BaseClass::Precache();
 }

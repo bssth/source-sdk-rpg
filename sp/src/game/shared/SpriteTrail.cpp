@@ -30,7 +30,6 @@ extern CEngineSprite *Draw_SetSpriteTexture( const model_t *pSpriteModel, int fr
 //-----------------------------------------------------------------------------
 #define SCREEN_SPACE_TRAILS 0
 
-
 //-----------------------------------------------------------------------------
 // Save/Restore
 //-----------------------------------------------------------------------------
@@ -78,7 +77,6 @@ BEGIN_DATADESC( CSpriteTrail )
 END_DATADESC()
 
 LINK_ENTITY_TO_CLASS( env_spritetrail, CSpriteTrail );
-
 
 //-----------------------------------------------------------------------------
 // Networking
@@ -232,7 +230,6 @@ void CSpriteTrail::SetSkybox( const Vector &vecSkyboxOrigin, float flSkyboxScale
 	}
 }
 
-
 //-----------------------------------------------------------------------------
 // Is the trail in the skybox?
 //-----------------------------------------------------------------------------
@@ -241,10 +238,7 @@ bool CSpriteTrail::IsInSkybox() const
 	return (m_flSkyboxScale != 1.0f) || (m_vecSkyboxOrigin != vec3_origin);
 }
 
-
-
 #ifdef CLIENT_DLL
-
 
 //-----------------------------------------------------------------------------
 // On data update
@@ -272,7 +266,6 @@ void CSpriteTrail::OnDataChanged( DataUpdateType_t updateType )
 	}
 }
 
-
 //-----------------------------------------------------------------------------
 // Compute position	+ bounding box
 //-----------------------------------------------------------------------------
@@ -283,7 +276,6 @@ void CSpriteTrail::ClientThink()
 	UpdateBoundingBox();
 }
 
-
 //-----------------------------------------------------------------------------
 // Render bounds
 //-----------------------------------------------------------------------------
@@ -292,7 +284,6 @@ void CSpriteTrail::GetRenderBounds( Vector& mins, Vector& maxs )
 	mins = m_vecRenderMins;
 	maxs = m_vecRenderMaxs;
 }
-
 
 //-----------------------------------------------------------------------------
 // Converts the trail when it changes skyboxes
@@ -311,7 +302,6 @@ void CSpriteTrail::ConvertSkybox()
 	}
 }
 
-
 //-----------------------------------------------------------------------------
 // Gets at the nth item in the list
 //-----------------------------------------------------------------------------
@@ -322,7 +312,6 @@ TrailPoint_t *CSpriteTrail::GetTrailPoint( int n )
 	int nIndex = (n + m_nFirstStep) & MAX_SPRITE_TRAIL_MASK; 
 	return &m_vecSteps[nIndex];
 }
-
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -337,7 +326,6 @@ void CSpriteTrail::ComputeScreenPosition( Vector *pScreenPos )
 	*pScreenPos = GetRenderOrigin();
 #endif
 }
-
 
 //-----------------------------------------------------------------------------
 // Compute position	+ bounding box
@@ -371,7 +359,6 @@ void CSpriteTrail::UpdateBoundingBox( void )
 	m_vecRenderMins -= vecRenderOrigin; 
 	m_vecRenderMaxs -= vecRenderOrigin;
 }
-
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -414,7 +401,6 @@ void CSpriteTrail::UpdateTrail( void )
 	// Don't update again for a bit
 	m_flUpdateTime = gpGlobals->curtime + ( m_flLifeTime / (float) MAX_SPRITE_TRAIL_POINTS );
 }
-
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -638,24 +624,7 @@ bool CSpriteTrail::ValidateEntityAttachedToPlayer( bool &bShouldRetry )
 	return true;
 
 	/*
-#if defined( TF_CLIENT_DLL )
-
-	const char *pszModelName = modelinfo->GetModelName( GetModel() );
-	if ( pszModelName && pszModelName[0] )
-	{
-		// We attach sprites directly to players in some cases, such as phase trails on an evading scout
-		for ( int i=0; i<ARRAYSIZE( g_spriteWhiteList ); ++i )
-		{
-			if ( FStrEq( pszModelName, g_spriteWhiteList[i] ) )
-				return true;
-		}
-	}
-	
 	return false;
-
-#else
-	return false;
-#endif
 	*/
 }
 

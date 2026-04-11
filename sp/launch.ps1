@@ -126,6 +126,16 @@ if (-not (Test-Path (Join-Path $ModDir 'gameinfo.txt'))) {
     throw "gameinfo.txt not found in mod dir: $ModDir"
 }
 
+# --- Ensure HL2/EP1/EP2/platform junctions exist ---------------------------
+$SteamRoot = Join-Path $ModDir '_steam'
+if (-not (Test-Path (Join-Path $SteamRoot 'hl2'))) {
+    $setup = Join-Path $ScriptDir 'setup-game-content.ps1'
+    if (Test-Path $setup) {
+        Write-Host ">> First-run: creating game content junctions" -ForegroundColor Cyan
+        & $setup -SdkPath $SdkPath -ModDir $ModDir
+    }
+}
+
 # --- Build (incremental) ---------------------------------------------------
 if (-not $NoBuild) {
     $msbuild = Resolve-MSBuild

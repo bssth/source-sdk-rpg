@@ -35,7 +35,6 @@ extern IFileSystem *filesystem;
 	static ConVar dispcoll_drawplane( "dispcoll_drawplane", "0" );
 #endif
 
-
 // tickcount currently isn't set during prediction, although gpGlobals->curtime and
 // gpGlobals->frametime are. We should probably set tickcount (to player->m_nTickBase),
 // but we're REALLY close to shipping, so we can change that later and people can use
@@ -475,7 +474,6 @@ static void Validate( bool bServer, int nCommandNumber )
 		return;
 	}
 
-
 	if ( g_pDiffMgr )
 	{
 		g_pDiffMgr->Validate( bServer, nCommandNumber );
@@ -702,7 +700,6 @@ bool CGameMovement::CheckInterval( IntervalType_t type )
 	}
 }
 	
-
 //-----------------------------------------------------------------------------
 // Purpose: 
 // Input  : ducked - 
@@ -795,7 +792,6 @@ CBaseHandle CGameMovement::TestPlayerPosition( const Vector& pos, int collisionG
 		return INVALID_EHANDLE_INDEX;
 	}
 }
-
 
 /*
 
@@ -913,7 +909,6 @@ void CBasePlayer::UpdateWetness()
 	}
 }
 */
-
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -1645,7 +1640,7 @@ void CGameMovement::Friction( void )
 			}
 			else
 			{
-#if defined ( TF_DLL ) || defined ( TF_CLIENT_DLL )
+#if defined(TF_DLL)
 				control = (speed < sv_stopspeed.GetFloat()) ? sv_stopspeed.GetFloat() : speed;
 #else
 				control = (speed < sv_stopspeed.GetFloat()) ? (sv_stopspeed.GetFloat() * 2.0f) : speed;
@@ -1797,7 +1792,6 @@ void CGameMovement::AirMove( void )
 	VectorSubtract( mv->m_vecVelocity, player->GetBaseVelocity(), mv->m_vecVelocity );
 }
 
-
 bool CGameMovement::CanAccelerate()
 {
 	// Dead players don't accelerate.
@@ -1810,7 +1804,6 @@ bool CGameMovement::CanAccelerate()
 
 	return true;
 }
-
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -2210,7 +2203,6 @@ void CGameMovement::FullObserverMove( void )
 
 	float maxspeed = sv_maxvelocity.GetFloat(); 
 
-
 	if (wishspeed > maxspeed )
 	{
 		VectorScale (wishvel, mv->m_flMaxSpeed/wishspeed, wishvel);
@@ -2247,7 +2239,6 @@ void CGameMovement::FullObserverMove( void )
 
 	TryPlayerMove();
 }
-
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -2337,7 +2328,6 @@ void CGameMovement::FullNoClipMove( float factor, float maxacceleration )
 	}
 }
 
-
 //-----------------------------------------------------------------------------
 // Checks to see if we should actually jump 
 //-----------------------------------------------------------------------------
@@ -2345,7 +2335,6 @@ void CGameMovement::PlaySwimSound()
 {
 	MoveHelper()->StartSound( mv->GetAbsOrigin(), "Player.Swim" );
 }
-
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -2398,10 +2387,6 @@ bool CGameMovement::CheckJumpButton( void )
 	}
 
 	// Don't allow jumping when the player is in a stasis field.
-#ifndef HL2_EPISODIC
-	if ( player->m_Local.m_bSlowMovement )
-		return false;
-#endif
 
 	if ( mv->m_nOldButtons & IN_JUMP )
 		return false;		// don't pogo stick
@@ -2413,7 +2398,6 @@ bool CGameMovement::CheckJumpButton( void )
 	// Still updating the eye position.
 	if ( player->m_Local.m_flDuckJumpTime > 0.0f )
 		return false;
-
 
 	// In the air now.
     SetGroundEntity( NULL );
@@ -2527,7 +2511,6 @@ bool CGameMovement::CheckJumpButton( void )
 	mv->m_nOldButtons |= IN_JUMP;	// don't jump again until released
 	return true;
 }
-
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -2812,7 +2795,6 @@ int CGameMovement::TryPlayerMove( Vector *pFirstDest, trace_t *pFirstTrace )
 	return blocked;
 }
 
-
 //-----------------------------------------------------------------------------
 // Purpose: Determine whether or not the player is on a ladder (physprop or world).
 //-----------------------------------------------------------------------------
@@ -2839,10 +2821,6 @@ inline bool CGameMovement::OnLadder( trace_t &trace )
 // HPE_BEGIN
 // [sbodenbender] make ladders easier to climb in cstrike
 //=============================================================================
-#if defined (CSTRIKE_DLL)
-ConVar sv_ladder_dampen ( "sv_ladder_dampen", "0.2", FCVAR_REPLICATED, "Amount to dampen perpendicular movement on a ladder", true, 0.0f, true, 1.0f );
-ConVar sv_ladder_angle( "sv_ladder_angle", "-0.707", FCVAR_REPLICATED, "Cos of angle of incidence to ladder perpendicular for applying ladder_dampen", true, -1.0f, true, 1.0f );
-#endif
 //=============================================================================
 // HPE_END
 //=============================================================================
@@ -2976,21 +2954,6 @@ bool CGameMovement::LadderMove( void )
 			// HPE_BEGIN
 			// [sbodenbender] make ladders easier to climb in cstrike
 			//=============================================================================
-#if defined (CSTRIKE_DLL)
-			// break lateral into direction along tmp (up the ladder) and direction along perp (perpendicular to ladder)
-			float tmpDist = DotProduct ( tmp, lateral );
-			float perpDist = DotProduct ( perp, lateral );
-
-			Vector angleVec = perp * perpDist;
-			angleVec += cross;
-			// angleVec is our desired movement in the ladder normal/perpendicular plane
-			VectorNormalize(angleVec);
-			float angleDot = DotProduct(angleVec, pm.plane.normal);
-			// angleDot is our angle of incidence to the laddernormal in the ladder normal/perpendicular plane
-
-			if (angleDot < sv_ladder_angle.GetFloat())
-				lateral = (tmp * tmpDist) + (perp * sv_ladder_dampen.GetFloat() * perpDist);
-#endif // CSTRIKE_DLL
 			//=============================================================================
 			// HPE_END
 			//=============================================================================
@@ -3110,7 +3073,6 @@ void CGameMovement::AddGravity( void )
 	CheckVelocity();
 }
 
-
 //-----------------------------------------------------------------------------
 // Purpose: 
 // Input  : push - 
@@ -3131,7 +3093,6 @@ void CGameMovement::PushEntity( Vector& push, trace_t *pTrace )
 		MoveHelper( )->AddToTouched( *pTrace, mv->m_vecVelocity );
 	}
 }	
-
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -3156,7 +3117,6 @@ int CGameMovement::ClipVelocity( Vector& in, Vector& normal, Vector& out, float 
 	if (!angle)				// If the plane has no Z, it is vertical (wall/step)
 		blocked |= 0x02;	// 
 	
-
 	// Determine how far along plane to slide based on incoming direction.
 	backoff = DotProduct (in, normal) * overbounce;
 
@@ -3465,7 +3425,6 @@ bool CGameMovement::InWater( void )
 	return ( player->GetWaterLevel() > WL_Feet );
 }
 
-
 void CGameMovement::ResetGetPointContentsCache()
 {
 	for ( int slot = 0; slot < MAX_PC_CACHE_SLOTS; ++slot )
@@ -3476,7 +3435,6 @@ void CGameMovement::ResetGetPointContentsCache()
 		}
 	}
 }
-
 
 int CGameMovement::GetPointContentsCached( const Vector &point, int slot )
 {
@@ -3500,7 +3458,6 @@ int CGameMovement::GetPointContentsCached( const Vector &point, int slot )
 		return enginetrace->GetPointContents ( point );
 	}
 }
-
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -4474,7 +4431,6 @@ void CGameMovement::Duck( void )
 					}
 				}
 				
-
 				// Check to see if we are capable of unducking.
 				if ( CanUnduck() )
 				{
@@ -4678,7 +4634,6 @@ void CGameMovement::PlayerMove( void )
 	}
 }
 
-
 //-----------------------------------------------------------------------------
 // Performs the collision resolution for fliers.
 //-----------------------------------------------------------------------------
@@ -4746,7 +4701,6 @@ void CGameMovement::PerformFlyCollisionResolution( trace_t &pm, Vector &move )
 		VectorSubtract( mv->m_vecVelocity, base, mv->m_vecVelocity );
 	}
 }
-
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -4890,7 +4844,6 @@ void CGameMovement::IsometricMove( void )
 
 #pragma warning (default : 4701)
 
-
 bool CGameMovement::GameHasLadders() const
 {
 	return true;
@@ -4909,8 +4862,6 @@ void CGameMovement::TracePlayerBBox( const Vector& start, const Vector& end, uns
 
 }
 
-
-
 //-----------------------------------------------------------------------------
 // Purpose: overridded by game classes to limit results (to standable objects for example)
 //-----------------------------------------------------------------------------
@@ -4922,4 +4873,3 @@ void  CGameMovement::TryTouchGround( const Vector& start, const Vector& end, con
 	ray.Init( start, end, mins, maxs );
 	UTIL_TraceRay( ray, fMask, mv->m_nPlayerHandle.Get(), collisionGroup, &pm );
 }
-

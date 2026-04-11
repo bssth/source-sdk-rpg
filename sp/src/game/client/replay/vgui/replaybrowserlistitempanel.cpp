@@ -880,16 +880,7 @@ void CReplayThumbnailCollection::ApplySchemeSettings( IScheme *pScheme )
 {
 	BaseClass::ApplySchemeSettings( pScheme );
 
-#if defined( TF_CLIENT_DLL )
-	if ( m_pUnconvertedBg )
-	{
-		vgui::IBorder *pBorder = pScheme->GetBorder( "ButtonBorder" );
-		m_pUnconvertedBg->SetBorder( pBorder );
-		SetPaintBorderEnabled( true );
-	}
-#else
 	SetPaintBorderEnabled( false );
-#endif
 
 	// Get current key binding for "save_replay", if any.
 	const char *pBoundKey = engine->Key_LookupBinding( "save_replay" );

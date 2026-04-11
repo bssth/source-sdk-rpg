@@ -20,9 +20,6 @@
 #include "replay/ireplaymanager.h"
 #include "econ/econ_controls.h"
 
-#if defined( TF_CLIENT_DLL )
-#include "tf_item_inventory.h"
-#endif
 
 using namespace vgui;
 
@@ -191,18 +188,6 @@ void CReplayInputPanel::OnCommand( const char *command )
 		// hide the gameui panel, but we have to call CheckForRoomAndForceDiscard() (as ShowItemsPickedUp()
 		// does if no items are picked up).  Otherwise, skip the "gameui_hide" call and show the item pickup
 		// panel.
-#if defined( TF_CLIENT_DLL )
-		if ( TFInventoryManager()->GetNumItemPickedUpItems() == 0 )
-		{
-			TFInventoryManager()->CheckForRoomAndForceDiscard();
-			engine->ClientCmd_Unrestricted( "gameui_hide" );
-		}
-		else if ( bLocalPlayerDead )
-		{
-			// Now show the items pickup screen if player's dead
-			TFInventoryManager()->ShowItemsPickedUp();
-		}
-#endif
 	}
 
 	BaseClass::OnCommand( command );

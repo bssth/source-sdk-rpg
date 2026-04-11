@@ -27,9 +27,6 @@
 #include "tier0/memdbgon.h"
 
 #ifdef STAGING_ONLY
-#ifdef TF_CLIENT_DLL
-extern ConVar tf_unusual_effect_offset;
-#endif
 #endif
 
 //-----------------------------------------------------------------------------
@@ -58,7 +55,6 @@ BEGIN_NETWORK_TABLE_NOBASE( CParticleProperty, DT_ParticleProperty )
 //SendPropVector( SENDINFO(m_vecMins), 0, SPROP_NOSCALE),
 #endif
 END_NETWORK_TABLE()
-
 
 //-----------------------------------------------------------------------------
 // Constructor, destructor
@@ -226,7 +222,6 @@ void CParticleProperty::AddControlPoint( int iEffectIndex, int iPoint, C_BaseEnt
 	UpdateParticleEffect( pEffect, true, iIndex );
 }
 
-
 //-----------------------------------------------------------------------------
 // Used to replace a particle effect with a different one; attaches the control point updating to the new one
 //-----------------------------------------------------------------------------
@@ -242,7 +237,6 @@ void CParticleProperty::ReplaceParticleEffect( CNewParticleEffect *pOldEffect, C
 		UpdateParticleEffect( &m_ParticleEffects[i], true );
 	}
 }
-
 
 //-----------------------------------------------------------------------------
 // Purpose: Set the parent of a given control point to the index of some other
@@ -372,7 +366,6 @@ void CParticleProperty::StopParticlesNamed( const char *pszEffectName, bool bFor
 	if (!pDef)
 		return;
 
-
 	// If we return from dormancy and are then told to stop emitting,
 	// we should have died while dormant. Remove ourselves immediately.
 	bool bRemoveInstantly = (m_iDormancyChangedAtFrame == gpGlobals->framecount);
@@ -397,7 +390,6 @@ void CParticleProperty::StopParticlesWithNameAndAttachment( const char *pszEffec
 	AssertMsg1(pDef, "Could not find particle definition %s", pszEffectName );
 	if (!pDef)
 		return;
-
 
 	// If we return from dormancy and are then told to stop emitting,
 	// we should have died while dormant. Remove ourselves immediately.
@@ -505,7 +497,6 @@ int CParticleProperty::FindEffect( const char *pEffectName, int nStart /*= 0*/ )
 	return -1;
 }
 
-
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -558,43 +549,6 @@ void CParticleProperty::UpdateControlPoint( ParticleEffectList_t *pEffect, int i
 
 	float flOffset = 0.0f;
 	bool bUsingHeadOrigin = false;
-
-#ifdef TF_CLIENT_DLL
-
-	CBaseEntity *pWearable = (CBaseEntity*) pPoint->hEntity.Get();
-	if ( pWearable && dynamic_cast<IHasAttributes*>( pWearable ) && !pWearable->IsPlayer() )
-	{
-		C_BaseAnimating *pAnimating = pPoint->hEntity->GetBaseAnimating();
-		if ( pAnimating )
-		{
-			int bUseHeadOrigin = 0;
-			CALL_ATTRIB_HOOK_INT_ON_OTHER( pAnimating, bUseHeadOrigin, particle_effect_use_head_origin );
-			if ( bUseHeadOrigin > 0 )
-			{
-				int iBone = Studio_BoneIndexByName( pAnimating->GetModelPtr(), "bip_head" );
-				if ( iBone < 0 )
-				{
-					iBone = Studio_BoneIndexByName( pAnimating->GetModelPtr(), "prp_helmet" );
-					if ( iBone < 0 )
-					{
-						iBone = Studio_BoneIndexByName( pAnimating->GetModelPtr(), "prp_hat" );
-					}
-				}
-				if ( iBone < 0 )
-				{
-					iBone = 0;
-				}
-
-				bUsingHeadOrigin = true;
-				const matrix3x4_t headBone = pAnimating->GetBone( iBone );
-				MatrixVectors( headBone, &vecForward, &vecRight, &vecUp );
-				MatrixPosition( headBone, vecOrigin );
-
-				CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pAnimating, flOffset, particle_effect_vertical_offset );	
-			}
-		}
-	}
-#endif
 
 	if ( !bUsingHeadOrigin )
 	{

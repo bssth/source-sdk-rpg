@@ -16,7 +16,6 @@
 
 CGameRulesRegister* CGameRulesRegister::s_pHead = NULL;
 
-
 CGameRulesRegister::CGameRulesRegister( const char *pClassName, CreateGameRulesFn fn )
 {
 	m_pClassName = pClassName;
@@ -40,7 +39,6 @@ CGameRulesRegister* CGameRulesRegister::FindByName( const char *pName )
 	}
 	return NULL;
 }
-
 
 // ------------------------------------------------------------------------------------------ //
 // Functions to dispatch the messages to create the game rules object on the client.
@@ -97,10 +95,6 @@ CGameRulesRegister* CGameRulesRegister::FindByName( const char *pName )
 		// Create the string tables
 		g_StringTableGameRules = networkstringtable->CreateStringTable( GAMERULES_STRINGTABLE_NAME, 1 );
 
-#ifdef CSTRIKE_DLL
-		void CreateBlackMarketString( void );
-		CreateBlackMarketString();
-#endif
 	}
 
 	void CreateGameRulesObject( const char *pClassName )

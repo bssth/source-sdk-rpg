@@ -46,11 +46,9 @@ ConVar	g_debug_antlionguard( "g_debug_antlionguard", "0" );
 ConVar	sk_antlionguard_dmg_charge( "sk_antlionguard_dmg_charge", "0" );
 ConVar	sk_antlionguard_dmg_shove( "sk_antlionguard_dmg_shove", "0" );
 
-#if HL2_EPISODIC
 // When enabled, add code to have the antlion bleed profusely as it is badly injured.
 #define ANTLIONGUARD_BLOOD_EFFECTS 2
 ConVar	g_antlionguard_hemorrhage( "g_antlionguard_hemorrhage", "1", FCVAR_NONE, "If 1, guard will emit a bleeding particle effect when wounded." );
-#endif
 
 // Spawnflags 
 #define	SF_ANTLIONGUARD_SERVERSIDE_RAGDOLL	( 1 << 16 )
@@ -84,9 +82,7 @@ ConVar	g_antlionguard_hemorrhage( "g_antlionguard_hemorrhage", "1", FCVAR_NONE, 
 #define	ANTLIONGUARD_FOV_NORMAL			-0.4f
 
 // cavern guard's poisoning behavior
-#if HL2_EPISODIC
 #define ANTLIONGUARD_POISON_TO			12 // we only poison Gordon down to twelve to give him a chance to regen up to 20 by the next charge
-#endif
 
 #define	ANTLIONGUARD_CHARGE_MIN			256
 #define	ANTLIONGUARD_CHARGE_MAX			2048
@@ -288,7 +284,6 @@ public:
 	virtual Activity	NPC_TranslateActivity( Activity baseAct );
 	char* GetReadableName(void) { return "Antlion Guard"; }
 
-#if HL2_EPISODIC
 	//---------------------------------
 	// Navigation & Movement -- prevent stopping paths for the guard
 	//---------------------------------
@@ -304,7 +299,6 @@ public:
 		bool GetStoppingPath( CAI_WaypointList *pClippedWaypoints );
 	};
 	CAI_Navigator *	CreateNavigator()	{ return new CNavigator( this );	}
-#endif
 
 	DEFINE_CUSTOM_AI;
 
@@ -684,7 +678,6 @@ void CNPC_AntlionGuard::Precache( void )
 		PrecacheScriptSound( "NPC_AntlionGuard.StepHeavy" );
 	}
 
-#if HL2_EPISODIC
 	PrecacheScriptSound( "NPC_AntlionGuard.NearStepLight" );
 	PrecacheScriptSound( "NPC_AntlionGuard.NearStepHeavy" );
 	PrecacheScriptSound( "NPC_AntlionGuard.FarStepLight" );
@@ -693,7 +686,6 @@ void CNPC_AntlionGuard::Precache( void )
 	PrecacheScriptSound( "NPC_AntlionGuard.ShellCrack" );
 	PrecacheScriptSound( "NPC_AntlionGuard.Pain_Roar" );
 	PrecacheModel( "sprites/grubflare1.vmt" );
-#endif // HL2_EPISODIC
 
 	PrecacheScriptSound( "NPC_AntlionGuard.Anger" );
 	PrecacheScriptSound( "NPC_AntlionGuard.Roar" );
@@ -1473,16 +1465,13 @@ void CNPC_AntlionGuard::Shove( void )
 			pHurt->ApplyAbsVelocityImpulse( forward * 400 + up * 150 );
 
 			// in the episodes, the cavern guard poisons the player
-#if HL2_EPISODIC
 			// If I am a cavern guard attacking the player, and he still lives, then poison him too.
 			if ( m_bInCavern && pHurt->IsPlayer() && pHurt->IsAlive() && pHurt->m_iHealth > ANTLIONGUARD_POISON_TO)
 			{
 				// That didn't finish them. Take them down to one point with poison damage. It'll heal.
 				pHurt->TakeDamage( CTakeDamageInfo( this, this, pHurt->m_iHealth - ANTLIONGUARD_POISON_TO, DMG_POISON ) );
 			}
-#endif
-
-		}	
+		}
 		else
 		{
 			CBaseCombatCharacter *pVictim = ToBaseCombatCharacter( pHurt );
@@ -1862,19 +1851,11 @@ void CNPC_AntlionGuard::HandleAnimEvent( animevent_t *pEvent )
 	{
 		if ( HasSpawnFlags(SF_ANTLIONGUARD_INSIDE_FOOTSTEPS) )
 		{
-#if HL2_EPISODIC
 			Footstep( false );
-#else 
-			EmitSound("NPC_AntlionGuard.Inside.StepLight", pEvent->eventtime );
-#endif // HL2_EPISODIC
 		}
 		else
 		{
-#if HL2_EPISODIC
 			Footstep( false );
-#else 
-			EmitSound("NPC_AntlionGuard.StepLight", pEvent->eventtime );
-#endif // HL2_EPISODIC
 		}
 		return;
 	}
@@ -1883,19 +1864,11 @@ void CNPC_AntlionGuard::HandleAnimEvent( animevent_t *pEvent )
 	{
 		if ( HasSpawnFlags(SF_ANTLIONGUARD_INSIDE_FOOTSTEPS) )
 		{
-#if HL2_EPISODIC
 			Footstep( true );
-#else 
-			EmitSound( "NPC_AntlionGuard.Inside.StepHeavy", pEvent->eventtime );
-#endif // HL2_EPISODIC
 		}
 		else
 		{
-#if HL2_EPISODIC
 			Footstep( true );
-#else 
-			EmitSound( "NPC_AntlionGuard.StepHeavy", pEvent->eventtime );
-#endif // HL2_EPISODIC
 		}
 		return;
 	}
@@ -2539,7 +2512,6 @@ void ApplyChargeDamage( CBaseEntity *pAntlionGuard, CBaseEntity *pTarget, float 
 	CTakeDamageInfo	info( pAntlionGuard, pAntlionGuard, vecForce, offset, flDamage, DMG_CLUB );
 	pTarget->TakeDamage( info );
 
-#if HL2_EPISODIC
 	// If I am a cavern guard attacking the player, and he still lives, then poison him too.
 	Assert( dynamic_cast<CNPC_AntlionGuard *>(pAntlionGuard) );
 
@@ -2548,8 +2520,6 @@ void ApplyChargeDamage( CBaseEntity *pAntlionGuard, CBaseEntity *pTarget, float 
 		// That didn't finish them. Take them down to one point with poison damage. It'll heal.
 		pTarget->TakeDamage( CTakeDamageInfo( pAntlionGuard, pAntlionGuard, pTarget->m_iHealth - ANTLIONGUARD_POISON_TO, DMG_POISON ) );
 	}
-#endif
-
 }
 
 //-----------------------------------------------------------------------------
@@ -4385,7 +4355,6 @@ bool CNPC_AntlionGuard::OverrideMoveFacing( const AILocalMoveGoal_t &move, float
 		pFaceTarget = m_hChargeTarget;
 		bFaceTarget = true;
 	}
-#ifdef HL2_EPISODIC
 	else if ( GetEnemy() && IsCurSchedule( SCHED_ANTLIONGUARD_CANT_ATTACK ) )
 	{
 		// Always face our enemy when randomly patrolling around
@@ -4393,7 +4362,6 @@ bool CNPC_AntlionGuard::OverrideMoveFacing( const AILocalMoveGoal_t &move, float
 		pFaceTarget = GetEnemy();
 		bFaceTarget = true;
 	}
-#endif	// HL2_EPISODIC
 	else if ( GetEnemy() && GetNavigator()->GetMovementActivity() == ACT_RUN )
   	{
 		Vector vecEnemyLKP = GetEnemyLKP();
@@ -4498,7 +4466,6 @@ bool CNPC_AntlionGuard::QueryHearSound( CSound *pSound )
 }
 
 
-#if HL2_EPISODIC
 //---------------------------------------------------------
 // Prevent the cavern guard from using stopping paths, as it occasionally forces him off the navmesh.
 //---------------------------------------------------------
@@ -4513,7 +4480,6 @@ bool CNPC_AntlionGuard::CNavigator::GetStoppingPath( CAI_WaypointList *pClippedW
 		return BaseClass::GetStoppingPath( pClippedWaypoints );
 	}
 }
-#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -4799,10 +4765,8 @@ AI_BEGIN_CUSTOM_NPC( npc_antlionguard, CNPC_AntlionGuard )
 	//		If we're here, the guard can't chase enemy, can't find a physobject to attack with, and can't summon
 	//==================================================
 
-#ifdef HL2_EPISODIC
-
 	DEFINE_SCHEDULE
-	( 
+	(
 		SCHED_ANTLIONGUARD_CANT_ATTACK,
 
 		"	Tasks"
@@ -4818,20 +4782,6 @@ AI_BEGIN_CUSTOM_NPC( npc_antlionguard, CNPC_AntlionGuard )
 		"		COND_ANTLIONGUARD_PHYSICS_TARGET"
 		"		COND_HEAVY_DAMAGE"
 	)
-
-#else
-
-	DEFINE_SCHEDULE
-	( 
-	SCHED_ANTLIONGUARD_CANT_ATTACK,
-
-	"	Tasks"
-	"		TASK_WAIT								5"
-	""
-	"	Interrupts"
-	)
-
-#endif
 
 	//==================================================
 	// SCHED_ANTLIONGUARD_PHYSICS_DAMAGE_HEAVY

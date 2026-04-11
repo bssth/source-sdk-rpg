@@ -59,7 +59,6 @@ public:
 	// allows derived classes to exclude entities from trace
 	virtual void	TryTouchGround( const Vector& start, const Vector& end, const Vector& mins, const Vector& maxs, unsigned int fMask, int collisionGroup, trace_t& pm );
 
-
 #define BRUSH_ONLY true
 	virtual unsigned int PlayerSolidMask( bool brushOnly = false );	///< returns the solid mask for the given player, so bots can have a more-restrictive set
 	CBasePlayer		*player;
@@ -75,7 +74,6 @@ protected:
 	Vector			m_vecForward;
 	Vector			m_vecRight;
 	Vector			m_vecUp;
-
 
 	// Does most of the player movement logic.
 	// Returns with origin, angles, and velocity modified in place.
@@ -138,7 +136,6 @@ protected:
 	// spaces the events onto different frames for different players so they don't all hit their spikes
 	// simultaneously.
 	bool			CheckInterval( IntervalType_t type );
-
 
 	// Decompoosed gravity
 	void			StartGravity( void );
@@ -250,7 +247,6 @@ protected:
 	// when we step on ground that's too steep, search to see if there's any ground nearby that isn't too steep
 	void			TryTouchGroundInQuadrants( const Vector& start, const Vector& end, unsigned int fMask, int collisionGroup, trace_t& pm );
 
-
 protected:
 
 	// Performs the collision resolution for fliers.
@@ -279,13 +275,9 @@ protected:
 	float			m_flStuckCheckTime[MAX_PLAYERS+1][2]; // Last time we did a full test
 
 	// special function for teleport-with-duck for episodic
-#ifdef HL2_EPISODIC
 public:
 	void			ForceDuck( void );
 
-#endif
 };
-
-
 
 #endif // GAMEMOVEMENT_H

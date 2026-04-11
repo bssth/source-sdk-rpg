@@ -100,7 +100,7 @@ enum stalemate_reasons_t
 };
 
 
-#if defined(TF_CLIENT_DLL) || defined(TF_DLL)
+#if defined(TF_DLL)
 
 /// Info about a player in a PVE game or any other mode that we
 /// might eventually decide to use the lobby system for.
@@ -244,7 +244,7 @@ public:
 
 	virtual int		GetBonusRoundTime( void );
 
-#if defined(TF_CLIENT_DLL) || defined(TF_DLL)
+#if defined(TF_DLL)
 
 	// Get list of all the players, including those in the lobby but who have
 	// not yet joined.
@@ -393,7 +393,7 @@ protected:
 	bool		 CheckMaxRounds( void );
 
 	void		 CheckReadyRestart( void );
-#if defined(TF_CLIENT_DLL) || defined(TF_DLL)
+#if defined(TF_DLL)
 	bool		 AreDefendingPlayersReady();
 #endif
 

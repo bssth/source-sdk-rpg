@@ -134,9 +134,6 @@ IMPLEMENT_SERVERCLASS_ST(CTeamTrainWatcher, DT_TeamTrainWatcher)
 	SendPropInt( SENDINFO( m_iTrainSpeedLevel ), 4 ),
 	SendPropTime( SENDINFO( m_flRecedeTime ) ),
 	SendPropInt( SENDINFO( m_nNumCappers ) ),
-#ifdef GLOWS_ENABLE
-	SendPropEHandle( SENDINFO( m_hGlowEnt ) ),
-#endif // GLOWS_ENABLE
 
 END_SEND_TABLE()
 
@@ -314,10 +311,6 @@ CTeamTrainWatcher::CTeamTrainWatcher()
 
 	m_nTrainRecedeTime = 0;
 
-#ifdef GLOWS_ENABLE
-	m_hGlowEnt.Set( NULL );
-#endif // GLOWS_ENABLE
-
 #ifdef TF_DLL
 	ChangeTeam( TF_TEAM_BLUE );
 #else
@@ -386,10 +379,6 @@ void CTeamTrainWatcher::InputDisable( inputdata_t &inputdata )
 	m_bWaitingToRecede = false;
 
 	m_Sparks.Purge();
-
-#ifdef GLOWS_ENABLE
-	m_hGlowEnt.Set( NULL );
-#endif // GLOWS_ENABLE
 
 	// if we're moving the train, let's shut it down
 	if ( m_bHandleTrainMovement )
@@ -737,66 +726,6 @@ void CTeamTrainWatcher::InputOnStartOvertime( inputdata_t &inputdata )
 	}
 }
 
-#ifdef GLOWS_ENABLE
-void CTeamTrainWatcher::FindGlowEntity( void )
-{
-	if ( m_hTrain && ( m_hTrain->GetEntityName() != NULL_STRING ) )
-	{
-		string_t iszTrainName = m_hTrain->GetEntityName();
-		CBaseEntity *pGlowEnt = NULL;
-
-		// first try to find a phys_constraint relationship with the train
-		CPhysFixed *pPhysConstraint = dynamic_cast<CPhysFixed*>( gEntList.FindEntityByClassname( NULL, "phys_constraint" ) );
-		while ( pPhysConstraint )
-		{
-			string_t iszName1 = pPhysConstraint->GetNameAttach1();
-			string_t iszName2 = pPhysConstraint->GetNameAttach2();
-
-			if ( iszTrainName == iszName1 )
-			{
-				pGlowEnt = gEntList.FindEntityByName( NULL, STRING( iszName2 ) );
-				break;
-			}
-			else if ( iszTrainName == iszName2 )
-			{
-				pGlowEnt = gEntList.FindEntityByName( NULL, STRING( iszName1 ) );
-				break;
-			}
-			
-			pPhysConstraint = dynamic_cast<CPhysFixed*>( gEntList.FindEntityByClassname( pPhysConstraint, "phys_constraint" ) );
-		}
-
-		if ( !pGlowEnt )
-		{
-			// if we're here, we haven't found the glow entity yet...try all of the prop_dynamic entities
-			CDynamicProp *pPropDynamic = dynamic_cast<CDynamicProp*>( gEntList.FindEntityByClassname( NULL, "prop_dynamic" ) );
-			while ( pPropDynamic )
-			{
-				if ( pPropDynamic->GetParent() == m_hTrain )
-				{
-					pGlowEnt = pPropDynamic;
-					break;
-				}
-
-				pPropDynamic = dynamic_cast<CDynamicProp*>( gEntList.FindEntityByClassname( pPropDynamic, "prop_dynamic" ) );
-			}
-		}
-
-		// if we still haven't found a glow entity, just have the CFuncTrackTrain glow
-		if ( !pGlowEnt )
-		{
-			pGlowEnt = m_hTrain.Get();
-		}
-
-		if ( pGlowEnt )
-		{
-			pGlowEnt->SetTransmitState( FL_EDICT_ALWAYS );
-			m_hGlowEnt.Set( pGlowEnt );
-		}
-	}
-}
-#endif // GLOWS_ENABLE
-
 // ==========================================================
 // given a start node and a list of goal nodes
 // calculate the distance between each
@@ -1008,10 +937,6 @@ void CTeamTrainWatcher::WatcherActivate( void )
 		ObjectiveResource()->SetTrainPathDistance( iCPIndex, m_CPLinks[i].flDistanceFromStart / m_flTotalPathDistance );
 #endif
 	}
-
-#ifdef GLOWS_ENABLE
-	FindGlowEntity();
-#endif // GLOWS_ENABLE
 
 	InternalSetSpeedForwardModifier( m_flSpeedForwardModifier );
 

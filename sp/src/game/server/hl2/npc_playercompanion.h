@@ -17,10 +17,8 @@
 #include "ai_behavior_actbusy.h"
 #include "ai_behavior_fear.h"
 
-#ifdef HL2_EPISODIC
 #include "ai_behavior_operator.h"
 #include "ai_behavior_passenger_companion.h"
-#endif
 
 #if defined( _WIN32 )
 #pragma once
@@ -191,7 +189,6 @@ public:
 
 	void			InputGiveWeapon( inputdata_t &inputdata );
 
-#ifdef HL2_EPISODIC
 	//---------------------------------
 	// Vehicle passenger
 	//---------------------------------
@@ -211,8 +208,6 @@ public:
 
 	virtual bool CanRunAScriptedNPCInteraction( bool bForced = false );
 	virtual bool IsAllowedToDodge( void );
-
-#endif // HL2_EPISODIC
 
 public:
 
@@ -302,9 +297,7 @@ public:
 	void			InputSetReadinessMedium( inputdata_t &inputdata );
 	void			InputSetReadinessHigh( inputdata_t &inputdata );
 	void			InputLockReadiness( inputdata_t &inputdata );
-#if HL2_EPISODIC
 	void			InputClearAllOuputs( inputdata_t &inputdata ); ///< annihilate every output on this npc
-#endif
 
 	bool			AllowReadinessValueChange( void );
 
@@ -367,11 +360,9 @@ protected:
 	CAI_StandoffBehavior			m_StandoffBehavior;
 	CAI_LeadBehavior				m_LeadBehavior;
 	CAI_ActBusyBehavior				m_ActBusyBehavior;
-#ifdef HL2_EPISODIC
 	CAI_OperatorBehavior			m_OperatorBehavior;
 	CAI_PassengerBehaviorCompanion	m_PassengerBehavior;
 	CAI_FearBehavior				m_FearBehavior;
-#endif
 	//-----------------------------------------------------
 
 	bool	ShouldAlwaysTransition( void );
@@ -400,9 +391,7 @@ protected:
 
 	EHANDLE m_hAimTarget;
 
-#ifdef HL2_EPISODIC
 	CHandle<CPhysicsProp>	m_hFlare;
-#endif // HL2_EPISODIC
 
 	//-----------------------------------------------------
 

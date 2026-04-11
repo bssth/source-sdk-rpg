@@ -144,7 +144,6 @@ void CHUDAutoAim::VidInit( void )
 //-----------------------------------------------------------------------------
 bool CHUDAutoAim::ShouldDraw( void )
 {	
-#ifndef HL1_CLIENT_DLL
 	C_BaseHLPlayer *pLocalPlayer = (C_BaseHLPlayer *)C_BasePlayer::GetLocalPlayer();
 	if ( pLocalPlayer )
 	{
@@ -153,7 +152,6 @@ bool CHUDAutoAim::ShouldDraw( void )
 			return false;
 		}
 	}
-#endif
 
 	return ( (hud_draw_fixed_reticle.GetBool() || hud_draw_active_reticle.GetBool()) && CHudElement::ShouldDraw() && !engine->IsDrawingLoadingImage() );
 }

@@ -44,7 +44,6 @@ extern ConVar muzzleflash_light;
 #define TENT_WIND_ACCEL 50
 
 //Precache the effects
-#ifndef TF_CLIENT_DLL
 CLIENTEFFECT_REGISTER_BEGIN( PrecacheEffectMuzzleFlash )
 
 	CLIENTEFFECT_MATERIAL( "effects/muzzleflash1" )
@@ -55,15 +54,12 @@ CLIENTEFFECT_REGISTER_BEGIN( PrecacheEffectMuzzleFlash )
 	CLIENTEFFECT_MATERIAL( "effects/muzzleflash2_noz" )
 	CLIENTEFFECT_MATERIAL( "effects/muzzleflash3_noz" )
 	CLIENTEFFECT_MATERIAL( "effects/muzzleflash4_noz" )
-#ifndef CSTRIKE_DLL
 	CLIENTEFFECT_MATERIAL( "effects/combinemuzzle1" )
 	CLIENTEFFECT_MATERIAL( "effects/combinemuzzle2" )
 	CLIENTEFFECT_MATERIAL( "effects/combinemuzzle1_noz" )
 	CLIENTEFFECT_MATERIAL( "effects/combinemuzzle2_noz" )
 	CLIENTEFFECT_MATERIAL( "effects/strider_muzzle" )
-#endif
 CLIENTEFFECT_REGISTER_END()
-#endif
 
 //Whether or not to eject brass from weapons
 ConVar cl_ejectbrass( "cl_ejectbrass", "1" );
@@ -72,12 +68,10 @@ ConVar func_break_max_pieces( "func_break_max_pieces", "15", FCVAR_ARCHIVE | FCV
 
 ConVar cl_fasttempentcollision( "cl_fasttempentcollision", "5" );
 
-#if !defined( HL1_CLIENT_DLL )		// HL1 implements a derivative of CTempEnts
 // Temp entity interface
 static CTempEnts g_TempEnts;
 // Expose to rest of the client .dll
 ITempEnts *tempents = ( ITempEnts * )&g_TempEnts;
-#endif
 
 
 
@@ -96,7 +90,7 @@ C_LocalTempEntity::C_LocalTempEntity()
 }
 
 
-#if defined( CSTRIKE_DLL ) || defined (SDK_DLL )
+#if defined( SDK_DLL )
 
 #define TE_RIFLE_SHELL 1024
 #define TE_PISTOL_SHELL 2048
@@ -1803,12 +1797,6 @@ void CTempEnts::MuzzleFlash( int type, ClientEntityHandle_t hEntity, int attachm
 //-----------------------------------------------------------------------------
 void CTempEnts::MuzzleFlash( const Vector& pos1, const QAngle& angles, int type, ClientEntityHandle_t hEntity, bool firstPerson )
 {
-#ifdef CSTRIKE_DLL
-
-	return;
-
-#else
-
 	//NOTENOTE: This function is becoming obsolete as the muzzles are moved over to being local to attachments
 
 	switch ( type )
@@ -1868,11 +1856,8 @@ void CTempEnts::MuzzleFlash( const Vector& pos1, const QAngle& angles, int type,
 	
 	default:
 		// There's no supported muzzle flash for the type specified!
-		Assert(0);
 		break;
 	}
-
-#endif
 
 }
 
@@ -2191,26 +2176,6 @@ void CTempEnts::PlaySound ( C_LocalTempEntity *pTemp, float damp )
 		}
 		break;
 
-#ifdef CSTRIKE_DLL
-
-		case TE_PISTOL_SHELL:
-		{
-			soundname = "Bounce.PistolShell";
-		}
-		break;
-
-		case TE_RIFLE_SHELL:
-		{
-			soundname = "Bounce.RifleShell";
-		}
-		break;
-
-		case TE_SHOTGUN_SHELL:
-		{
-			soundname = "Bounce.ShotgunShell";
-		}
-		break;
-#endif
 	}
 
 	zvel = abs( pTemp->GetVelocity()[2] );
@@ -2389,7 +2354,6 @@ void CTempEnts::Update(void)
 // Recache tempents which might have been flushed
 void CTempEnts::LevelInit()
 {
-#ifndef TF_CLIENT_DLL
 	m_pSpriteMuzzleFlash[0] = (model_t *)engine->LoadModel( "sprites/ar2_muzzle1.vmt" );
 	m_pSpriteMuzzleFlash[1] = (model_t *)engine->LoadModel( "sprites/muzzleflash4.vmt" );
 	m_pSpriteMuzzleFlash[2] = (model_t *)engine->LoadModel( "sprites/muzzleflash4.vmt" );
@@ -2405,14 +2369,8 @@ void CTempEnts::LevelInit()
 	m_pShells[0] = (model_t *) engine->LoadModel( "models/weapons/shell.mdl" );
 	m_pShells[1] = (model_t *) engine->LoadModel( "models/weapons/rifleshell.mdl" );
 	m_pShells[2] = (model_t *) engine->LoadModel( "models/weapons/shotgun_shell.mdl" );
-#endif
 
-#if defined( HL1_CLIENT_DLL )
-	m_pHL1Shell			= (model_t *)engine->LoadModel( "models/shell.mdl" );
-	m_pHL1ShotgunShell	= (model_t *)engine->LoadModel( "models/shotgunshell.mdl" );
-#endif
-
-#if defined( CSTRIKE_DLL ) || defined ( SDK_DLL )
+#if defined( SDK_DLL )
 	m_pCS_9MMShell		= (model_t *)engine->LoadModel( "models/Shells/shell_9mm.mdl" );
 	m_pCS_57Shell		= (model_t *)engine->LoadModel( "models/Shells/shell_57.mdl" );
 	m_pCS_12GaugeShell	= (model_t *)engine->LoadModel( "models/Shells/shell_12gauge.mdl" );
@@ -2444,12 +2402,7 @@ void CTempEnts::Init (void)
 	m_pShells[1] = NULL;
 	m_pShells[2] = NULL;
 
-#if defined( HL1_CLIENT_DLL )
-	m_pHL1Shell			= NULL;
-	m_pHL1ShotgunShell	= NULL;
-#endif
-
-#if defined( CSTRIKE_DLL ) || defined ( SDK_DLL )
+#if defined( SDK_DLL )
 	m_pCS_9MMShell		= NULL;
 	m_pCS_57Shell		= NULL;
 	m_pCS_12GaugeShell	= NULL;
@@ -3273,18 +3226,6 @@ void CTempEnts::HL1EjectBrass( const Vector &vecPosition, const QAngle &angAngle
 {
 	const model_t *pModel = NULL;
 
-#if defined( HL1_CLIENT_DLL )
-	switch ( nType )
-	{
-	case 0:
-	default:
-		pModel = m_pHL1Shell;
-		break;
-	case 1:
-		pModel = m_pHL1ShotgunShell;
-		break;
-	}
-#endif
 	if ( pModel == NULL )
 		return;
 
@@ -3332,7 +3273,7 @@ void CTempEnts::CSEjectBrass( const Vector &vecPosition, const QAngle &angVeloci
 	const model_t *pModel = NULL;
 	int hitsound = TE_BOUNCE_SHELL;
 
-#if defined ( CSTRIKE_DLL ) || defined ( SDK_DLL )
+#if defined ( SDK_DLL )
 
 	switch( shellType )
 	{

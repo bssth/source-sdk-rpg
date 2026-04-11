@@ -2666,7 +2666,6 @@ void CBaseEntity::VPhysicsCollision( int index, gamevcollisionevent_t *pEvent )
 	}
 	PhysCollisionScreenShake( pEvent, index );
 
-#if HL2_EPISODIC
 	// episodic does something different for when advisor shields are struck
 	if ( phit->game.material == 'Z' || pprops->game.material == 'Z')
 	{
@@ -2676,9 +2675,6 @@ void CBaseEntity::VPhysicsCollision( int index, gamevcollisionevent_t *pEvent )
 	{
 		PhysCollisionDust( pEvent, phit );
 	}
-#else
-	PhysCollisionDust( pEvent, phit );
-#endif
 }
 
 void CBaseEntity::VPhysicsFriction( IPhysicsObject *pObject, float energy, int surfaceProps, int surfacePropsHit )
@@ -3244,7 +3240,6 @@ void CBaseEntity::OnSave( IEntitySaveUtils *pUtils )
 //-----------------------------------------------------------------------------
 void CBaseEntity::OnRestore()
 {
-#if defined( PORTAL ) || defined( HL2_EPISODIC ) || defined ( HL2_DLL ) || defined( HL2_LOSTCOAST )
 	// We had a short period during the 2013 beta where the FL_* flags had a bogus value near the top, so detect
 	// these bad saves and just give up. Only saves from the short beta period should have been effected.
 	if ( GetFlags() & FL_FAKECLIENT )
@@ -3252,10 +3247,9 @@ void CBaseEntity::OnRestore()
 		char szMsg[256];
 		V_snprintf( szMsg, sizeof(szMsg), "\nInvalid save, unable to load. Please run \"map %s\" to restart this level manually\n\n", gpGlobals->mapname.ToCStr() );
 		Msg( "%s", szMsg );
-		
+
 		engine->ServerCommand("wait;wait;disconnect;showconsole\n");
 	}
-#endif
 
 	SimThink_EntityChanged( this );
 
@@ -3268,11 +3262,9 @@ void CBaseEntity::OnRestore()
 
 	// disable touch functions while we recreate the touch links between entities
 	// NOTE: We don't do this on transitions, because we'd miss the OnStartTouch call!
-#if !defined(HL2_DLL) || ( defined(HL2_DLL) && defined(HL2_EPISODIC) )
 	CBaseEntity::sm_bDisableTouchFuncs = ( gpGlobals->eLoadType != MapLoad_Transition );
 	PhysicsTouchTriggers();
 	CBaseEntity::sm_bDisableTouchFuncs = false;
-#endif // HL2_EPISODIC
 
 	//Adrian: If I'm restoring with these fields it means I've become a client side ragdoll.
 	//Don't create another one, just wait until is my time of being removed.

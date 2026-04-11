@@ -30,9 +30,6 @@ IPhysics			*physics = NULL;
 IPhysicsObject		*g_PhysWorldObject = NULL;
 IPhysicsCollision	*physcollision = NULL;
 IPhysicsEnvironment	*physenv = NULL;
-#ifdef PORTAL
-IPhysicsEnvironment	*physenv_main = NULL;
-#endif
 IPhysicsSurfaceProps *physprops = NULL;
 // UNDONE: This hash holds both entity & IPhysicsObject pointer pairs
 // UNDONE: Split into separate hashes?
@@ -54,7 +51,6 @@ const objectparams_t g_PhysDefaultObjectParams =
 	1.0f, // drag coefficient
 	true,// enable collisions?
 };
-
 
 void CSolidSetDefaults::ParseKeyValue( void *pData, const char *pKey, const char *pValue )
 {
@@ -133,7 +129,6 @@ IPhysicsObject *PhysModelCreateBox( CBaseEntity *pEntity, const Vector &mins, co
 	return PhysModelCreateCustom( pEntity, pCollide, origin, vec3_angle, STRING(pEntity->GetModelName()), isStatic, &solid );
 }
 
-
 //-----------------------------------------------------------------------------
 // Purpose: 
 // Input  : *pEntity - 
@@ -172,7 +167,6 @@ IPhysicsObject *PhysModelCreateOBB( CBaseEntity *pEntity, const Vector &mins, co
 	
 	return PhysModelCreateCustom( pEntity, pCollide, origin, angle, STRING(pEntity->GetModelName()), isStatic, &solid );
 }
-
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -404,7 +398,6 @@ IPhysicsObject *PhysModelCreateUnmoveable( CBaseEntity *pEntity, int modelIndex,
 	return pObject;
 }
 
-
 //-----------------------------------------------------------------------------
 // Purpose: Create a vphysics object based on an existing collision model
 // Input  : *pEntity - 
@@ -490,7 +483,6 @@ void PhysDestroyObject( IPhysicsObject *pObject, CBaseEntity *pEntity )
 {
 	g_pPhysSaveRestoreManager->ForgetModel( pObject );
 
-	
 	if ( pObject )
 		pObject->SetGameData( NULL );
 
@@ -699,7 +691,6 @@ IPhysicsObject *PhysCreateWorld_Shared( CBaseEntity *pWorld, vcollide_t *pWorldC
 	return pWorldPhysics;
 }
 
-
 //=============================================================================
 //
 // Physics Game Trace
@@ -784,7 +775,6 @@ void PhysDisableEntityCollisions( CBaseEntity *pEntity0, CBaseEntity *pEntity1 )
 	pEntity1->CollisionRulesChanged();
 #endif
 }
-
 
 void PhysEnableEntityCollisions( CBaseEntity *pEntity0, CBaseEntity *pEntity1 )
 {
@@ -913,7 +903,6 @@ bool PhysHasContactWithOtherInDirection( IPhysicsObject *pPhysics, const Vector 
 	return hit;
 }
 
-
 void PhysForceClearVelocity( IPhysicsObject *pPhys )
 {
 	IPhysicsFrictionSnapshot *pSnapshot = pPhys->CreateFrictionSnapshot();
@@ -932,7 +921,6 @@ void PhysForceClearVelocity( IPhysicsObject *pPhys )
 	}
 	pPhys->DestroyFrictionSnapshot( pSnapshot );
 }
-
 
 void PhysFrictionEffect( Vector &vecPos, Vector vecVel, float energy, int surfaceProps, int surfacePropsHit )
 {
@@ -1051,5 +1039,3 @@ void PrecachePhysicsSounds()
 		pprop->soundhandles.strainSound = PrecachePhysicsSoundByStringIndex( pprop->sounds.strainSound );
 	}
 }
-
-

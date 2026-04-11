@@ -74,14 +74,12 @@ BEGIN_DATADESC( CNPC_PlayerCompanion )
 	DEFINE_INPUTFUNC( FIELD_FLOAT,	"LockReadiness",		InputLockReadiness ),
 
 //------------------------------------------------------------------------------
-#ifdef HL2_EPISODIC
 	DEFINE_FIELD( m_hFlare, FIELD_EHANDLE ),
 
 	DEFINE_INPUTFUNC( FIELD_STRING,	"EnterVehicle",				InputEnterVehicle ),
 	DEFINE_INPUTFUNC( FIELD_STRING, "EnterVehicleImmediately",	InputEnterVehicleImmediately ),
 	DEFINE_INPUTFUNC( FIELD_VOID,	"ExitVehicle",				InputExitVehicle ),
 	DEFINE_INPUTFUNC( FIELD_VOID,	"CancelEnterVehicle",		InputCancelEnterVehicle ),
-#endif	// HL2_EPISODIC
 //------------------------------------------------------------------------------
 
 	DEFINE_INPUTFUNC( FIELD_STRING, "GiveWeapon",			InputGiveWeapon ),
@@ -111,9 +109,7 @@ BEGIN_DATADESC( CNPC_PlayerCompanion )
 	DEFINE_INPUTFUNC( FIELD_VOID, "DisableWeaponPickup", InputDisableWeaponPickup ),
 
 
-#if HL2_EPISODIC
 	DEFINE_INPUTFUNC( FIELD_VOID, "ClearAllOutputs", InputClearAllOuputs ),
-#endif
 
 	DEFINE_OUTPUT( m_OnWeaponPickup, "OnWeaponPickup" ),
 
@@ -135,25 +131,16 @@ string_t CNPC_PlayerCompanion::gm_iszRollerMineClassname;
 
 bool CNPC_PlayerCompanion::CreateBehaviors()
 {
-#ifdef HL2_EPISODIC
 	AddBehavior( &m_FearBehavior );
 	AddBehavior( &m_PassengerBehavior );
-#endif // HL2_EPISODIC	
 
 	AddBehavior( &m_ActBusyBehavior );
 
-#ifdef HL2_EPISODIC
 	AddBehavior( &m_OperatorBehavior );
 	AddBehavior( &m_StandoffBehavior );
 	AddBehavior( &m_AssaultBehavior );
 	AddBehavior( &m_FollowBehavior );
 	AddBehavior( &m_LeadBehavior );
-#else
-	AddBehavior( &m_AssaultBehavior );
-	AddBehavior( &m_StandoffBehavior );
-	AddBehavior( &m_FollowBehavior );
-	AddBehavior( &m_LeadBehavior );
-#endif//HL2_EPISODIC
 	
 	return BaseClass::CreateBehaviors();
 }
@@ -170,10 +157,8 @@ void CNPC_PlayerCompanion::Precache()
 
 	PrecacheModel( STRING( GetModelName() ) );
 	
-#ifdef HL2_EPISODIC
 	// The flare we're able to pull out
 	PrecacheModel( "models/props_junk/flare.mdl" );
-#endif // HL2_EPISODIC
 
 	BaseClass::Precache();
 }
@@ -245,14 +230,12 @@ int CNPC_PlayerCompanion::Restore( IRestore &restore )
 		m_StandoffBehavior.SetActive( false );
 	}
 
-#ifdef HL2_EPISODIC
 	// We strip this flag because it's been made obsolete by the StartScripting behavior
 	if ( HasSpawnFlags( SF_NPC_ALTCOLLISION ) )
 	{
 		Warning( "NPC %s using alternate collision! -- DISABLED\n", STRING( GetEntityName() ) );
 		RemoveSpawnFlags( SF_NPC_ALTCOLLISION );
 	}
-#endif // HL2_EPISODIC
 
 	return baseResult;
 }
@@ -489,11 +472,7 @@ void CNPC_PlayerCompanion::DoCustomSpeechAI( void )
 	CBasePlayer *pPlayer = AI_GetSinglePlayer();
 	
 	// Don't allow this when we're getting in the car
-#ifdef HL2_EPISODIC
 	bool bPassengerInTransition = ( IsInAVehicle() && ( m_PassengerBehavior.GetPassengerState() == PASSENGER_STATE_ENTERING || m_PassengerBehavior.GetPassengerState() == PASSENGER_STATE_EXITING ) );
-#else
-	bool bPassengerInTransition = false;
-#endif
 
 	Vector vecEyePosition = EyePosition();
 	if ( bPassengerInTransition == false && pPlayer && pPlayer->FInViewCone( vecEyePosition ) && pPlayer->FVisible( vecEyePosition ) )
@@ -638,15 +617,13 @@ bool CNPC_PlayerCompanion::ShouldIgnoreSound( CSound *pSound )
 		if ( pSound->IsSoundType( SOUND_DANGER ) && !SoundIsVisible(pSound) )
 			return true;
 
-#ifdef HL2_EPISODIC
 		// Ignore vehicle sounds when we're driving in them
 		if ( pSound->m_hOwner && pSound->m_hOwner->GetServerVehicle() != NULL )
 		{
-			if ( m_PassengerBehavior.GetPassengerState() == PASSENGER_STATE_INSIDE && 
+			if ( m_PassengerBehavior.GetPassengerState() == PASSENGER_STATE_INSIDE &&
 				m_PassengerBehavior.GetTargetVehicle() == pSound->m_hOwner->GetServerVehicle()->GetVehicleEnt() )
 				return true;
 		}
-#endif // HL2_EPISODIC
 	}
 
 	return false;
@@ -658,14 +635,12 @@ int CNPC_PlayerCompanion::SelectSchedule()
 {
 	m_bMovingAwayFromPlayer = false;
 
-#ifdef HL2_EPISODIC
 	// Always defer to passenger if it's running
 	if ( ShouldDeferToPassengerBehavior() )
 	{
 		DeferSchedulingToBehavior( &m_PassengerBehavior );
 		return BaseClass::SelectSchedule();
 	}
-#endif // HL2_EPISODIC
 
 	if ( m_ActBusyBehavior.IsRunning() && m_ActBusyBehavior.NeedsToPlayExitAnim() )
 	{
@@ -1344,7 +1319,6 @@ Activity CNPC_PlayerCompanion::NPC_TranslateActivity( Activity activity )
 //------------------------------------------------------------------------------
 void CNPC_PlayerCompanion::HandleAnimEvent( animevent_t *pEvent )
 {
-#ifdef HL2_EPISODIC
 	// Create a flare and parent to our hand
 	if ( pEvent->event == AE_COMPANION_PRODUCE_FLARE )
 	{
@@ -1402,7 +1376,6 @@ void CNPC_PlayerCompanion::HandleAnimEvent( animevent_t *pEvent )
 
 		return;
 	}
-#endif // HL2_EPISODIC
 
 	switch( pEvent->event )
 	{
@@ -1526,13 +1499,6 @@ bool CNPC_PlayerCompanion::IsReadinessCapable()
 {
 	if ( GlobalEntity_GetState("gordon_precriminal") == GLOBAL_ON )
 		return false;
-
-#ifndef HL2_EPISODIC
-	// Allow episodic companions to use readiness even if unarmed. This allows for the panicked 
-	// citizens in ep1_c17_05 (sjb)
-	if( !GetActiveWeapon() )
-		return false;
-#endif
 
 	if( GetActiveWeapon() && LookupActivity("ACT_IDLE_AIM_RIFLE_STIMULATED") == ACT_INVALID )
 		return false;
@@ -2812,10 +2778,8 @@ bool CNPC_PlayerCompanion::OverrideMove( float flInterval )
 		string_t iszEnvFire = AllocPooledString( "env_fire" );
 		string_t iszBounceBomb = AllocPooledString( "combine_mine" );
 
-#ifdef HL2_EPISODIC			
 		string_t iszNPCTurretFloor = AllocPooledString( "npc_turret_floor" );
 		string_t iszEntityFlame = AllocPooledString( "entityflame" );
-#endif // HL2_EPISODIC
 
 		if ( IsCurSchedule( SCHED_TAKE_COVER_FROM_BEST_SOUND ) )
 		{
@@ -2846,13 +2810,12 @@ bool CNPC_PlayerCompanion::OverrideMove( float flInterval )
 					}
 				}
 			}
-#ifdef HL2_EPISODIC			
 			else if ( pEntity->m_iClassname == iszNPCTurretFloor )
 			{
 				UTIL_TraceLine( WorldSpaceCenter(), pEntity->WorldSpaceCenter(), MASK_BLOCKLOS, pEntity, COLLISION_GROUP_NONE, &tr );
 				if (tr.fraction == 1.0 && !tr.startsolid)
 				{
-					float radius = 1.4 * pEntity->CollisionProp()->BoundingRadius2D(); 
+					float radius = 1.4 * pEntity->CollisionProp()->BoundingRadius2D();
 					GetLocalNavigator()->AddObstacle( pEntity->WorldSpaceCenter(), radius, AIMST_AVOID_OBJECT );
 				}
 			}
@@ -2871,7 +2834,6 @@ bool CNPC_PlayerCompanion::OverrideMove( float flInterval )
 					}
 				}
 			}
-#endif // HL2_EPISODIC
 			else if ( pEntity->m_iClassname == iszBounceBomb )
 			{
 				CBounceBomb *pBomb = static_cast<CBounceBomb *>(pEntity);
@@ -3189,10 +3151,9 @@ void CNPC_PlayerCompanion::UnlockReadiness( void )
 }
 
 //------------------------------------------------------------------------------
-#ifdef HL2_EPISODIC
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 // Output : Returns true on success, false on failure.
 //-----------------------------------------------------------------------------
 bool CNPC_PlayerCompanion::ShouldDeferToPassengerBehavior( void )
@@ -3397,7 +3358,6 @@ bool CNPC_PlayerCompanion::IsAllowedToDodge( void )
 	return BaseClass::IsAllowedToDodge();
 }
 
-#endif	//HL2_EPISODIC
 //------------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------
@@ -3452,7 +3412,6 @@ void CNPC_PlayerCompanion::InputGiveWeapon( inputdata_t &inputdata )
 	}
 }
 
-#if HL2_EPISODIC
 //------------------------------------------------------------------------------
 // Purpose: Delete all outputs from this NPC.
 //------------------------------------------------------------------------------
@@ -3482,7 +3441,6 @@ void CNPC_PlayerCompanion::InputClearAllOuputs( inputdata_t &inputdata )
 		dmap = dmap->baseMap;
 	}
 }
-#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: Player in our squad killed something

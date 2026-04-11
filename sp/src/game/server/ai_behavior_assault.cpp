@@ -79,18 +79,11 @@ int CRallyPoint::DrawDebugTextOverlays()
 //---------------------------------------------------------
 bool CRallyPoint::IsExclusive()
 {
-#ifndef HL2_EPISODIC // IF NOT EPISODIC
-	// This 'exclusivity' concept is new to EP2. We're only willing to
-	// risk causing problems in EP1, so emulate the old behavior if 
-	// we are not EPISODIC. We must do this by setting m_sExclusivity
-	// so that ent_text will properly report the state.
-	m_sExclusivity = RALLY_EXCLUSIVE_NO;
-#else
 	if( m_sExclusivity == RALLY_EXCLUSIVE_NOT_EVALUATED )
 	{
 		// We need to evaluate! Walk the chain of assault points
 		// and if *ANY* assault points  on this assault chain
-		// are set to Never Time Out then set this rally point to 
+		// are set to Never Time Out then set this rally point to
 		// be exclusive to stop other NPC's walking down the chain
 		// and ending up clumped up at the infinite rally point.
 		CAssaultPoint *pAssaultEnt = (CAssaultPoint *)gEntList.FindEntityByName( NULL, m_AssaultPointName );
@@ -120,12 +113,11 @@ bool CRallyPoint::IsExclusive()
 				}
 
 				pAssaultEnt = (CAssaultPoint *)gEntList.FindEntityByName( NULL, pAssaultEnt->m_NextAssaultPointName );
-				
+
 			} while( (pAssaultEnt != NULL) && (pAssaultEnt != pFirstAssaultEnt) );
 
 		}
 	}
-#endif// HL2_EPISODIC 
 
 	return (m_sExclusivity == RALLY_EXCLUSIVE_YES);
 }
@@ -1478,11 +1470,10 @@ int CAI_AssaultBehavior::SelectSchedule()
 		}
 	}
 
-#ifdef HL2_EPISODIC
 	// This ugly patch fixes a bug where Combine Soldiers on an assault would not shoot through glass, because of the way
 	// that shooting through glass is implemented in their AI. (sjb)
 	if( HasCondition(COND_SEE_ENEMY) && HasCondition(COND_WEAPON_SIGHT_OCCLUDED) && !HasCondition(COND_LOW_PRIMARY_AMMO) )
-	{	
+	{
 		// If they are hiding behind something that we can destroy, start shooting at it.
 		CBaseEntity *pBlocker = GetOuter()->GetEnemyOccluder();
 		if ( pBlocker && pBlocker->GetHealth() > 0 )
@@ -1493,7 +1484,6 @@ int CAI_AssaultBehavior::SelectSchedule()
 			}
 		}
 	}
-#endif//HL2_EPISODIC
 	
 	return BaseClass::SelectSchedule();
 }
@@ -1660,10 +1650,9 @@ AI_BEGIN_CUSTOM_SCHEDULE_PROVIDER(CAI_AssaultBehavior)
 	)
 
 
-#ifdef HL2_EPISODIC
 	//=========================================================
 	//=========================================================
-	DEFINE_SCHEDULE 
+	DEFINE_SCHEDULE
 	(
 		SCHED_HOLD_RALLY_POINT,
 
@@ -1683,31 +1672,6 @@ AI_BEGIN_CUSTOM_SCHEDULE_PROVIDER(CAI_AssaultBehavior)
 		"		COND_HEAR_BULLET_IMPACT"
 		"		COND_NO_PRIMARY_AMMO"
 	)
-#else
-	//=========================================================
-	//=========================================================
-	DEFINE_SCHEDULE 
-	(
-	SCHED_HOLD_RALLY_POINT,
-
-	"	Tasks"
-	"		TASK_FACE_RALLY_POINT					0"
-	"		TASK_AWAIT_CUE							0"
-	"		TASK_WAIT_ASSAULT_DELAY					0"
-	"	"
-	"	Interrupts"
-	"		COND_NEW_ENEMY"
-	"		COND_CAN_RANGE_ATTACK1"
-	"		COND_CAN_MELEE_ATTACK1"
-	"		COND_LIGHT_DAMAGE"
-	"		COND_HEAVY_DAMAGE"
-	"		COND_PLAYER_PUSHING"
-	"		COND_HEAR_DANGER"
-	"		COND_HEAR_BULLET_IMPACT"
-	"		COND_NO_PRIMARY_AMMO"
-	"		COND_TOO_CLOSE_TO_ATTACK"
-	)
-#endif//HL2_EPISODIC
 
 	//=========================================================
 	//=========================================================

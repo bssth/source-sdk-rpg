@@ -21,7 +21,7 @@
 #endif
 // NVNT end extra includes
 
-#if defined ( TF_DLL ) || defined ( TF_CLIENT_DLL )
+#if defined(TF_DLL)
 #include "tf_shareddefs.h"
 #endif
 
@@ -48,7 +48,7 @@
 
 extern bool UTIL_ItemCanBeTouchedByPlayer( CBaseEntity *pItem, CBasePlayer *pPlayer );
 
-#if defined ( TF_CLIENT_DLL ) || defined ( TF_DLL )
+#if defined(TF_DLL)
 #ifdef _DEBUG
 ConVar tf_weapon_criticals_force_random( "tf_weapon_criticals_force_random", "0", FCVAR_REPLICATED | FCVAR_CHEAT );
 #endif // _DEBUG
@@ -94,7 +94,7 @@ CBaseCombatWeapon::CBaseCombatWeapon()
 	UseClientSideAnimation();
 #endif
 
-#if defined ( TF_CLIENT_DLL ) || defined ( TF_DLL )
+#if defined(TF_DLL)
 	m_flCritTokenBucket = tf_weapon_criticals_bucket_default.GetFloat();
 	m_nCritChecks = 1;
 	m_nCritSeedRequests = 0;
@@ -245,7 +245,7 @@ void CBaseCombatWeapon::Precache( void )
 			{
 				Msg("ERROR: Weapon (%s) using undefined primary ammo type (%s)\n",GetClassname(), GetWpnData().szAmmo1);
 			}
- #if defined ( TF_DLL ) || defined ( TF_CLIENT_DLL )
+ #if defined(TF_DLL)
 			// Ammo override
 			int iModUseMetalOverride = 0;
 			CALL_ATTRIB_HOOK_INT( iModUseMetalOverride, mod_use_metal_ammo_type );
@@ -343,7 +343,7 @@ const char *CBaseCombatWeapon::GetPrintName( void ) const
 //-----------------------------------------------------------------------------
 int CBaseCombatWeapon::GetMaxClip1( void ) const
 {
-#if defined ( TF_DLL ) || defined ( TF_CLIENT_DLL )
+#if defined(TF_DLL)
 	int iModMaxClipOverride = 0;
 	CALL_ATTRIB_HOOK_INT( iModMaxClipOverride, mod_max_primary_clip_override );
 	if ( iModMaxClipOverride != 0 )
@@ -617,7 +617,6 @@ bool CBaseCombatWeapon::VisibleInWeaponSelection( void )
 	return true;
 }
 
-
 //-----------------------------------------------------------------------------
 // Purpose: 
 // Output : Returns true on success, false on failure.
@@ -707,7 +706,6 @@ void CBaseCombatWeapon::Drop( const Vector &vecVelocity )
 	}
 #endif
 }
-
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -913,7 +911,6 @@ void CBaseCombatWeapon::RescindReloadHudHint()
 #endif//CLIENT_DLL
 }
 
-
 void CBaseCombatWeapon::SetPickupTouch( void )
 {
 #if !defined( CLIENT_DLL )
@@ -930,7 +927,6 @@ void CBaseCombatWeapon::SetPickupTouch( void )
 
 #endif
 }
-
 
 //-----------------------------------------------------------------------------
 // Purpose: Become a child of the owner (MOVETYPE_FOLLOW)
@@ -957,7 +953,6 @@ void CBaseCombatWeapon::Equip( CBaseCombatCharacter *pOwner )
 		m_pConstraint = NULL;
 	}
 #endif
-
 
 	m_flNextPrimaryAttack		= gpGlobals->curtime;
 	m_flNextSecondaryAttack		= gpGlobals->curtime;
@@ -1519,7 +1514,7 @@ bool CBaseCombatWeapon::CanReload( void )
 	return true;
 }
 
-#if defined ( TF_CLIENT_DLL ) || defined ( TF_DLL )
+#if defined(TF_DLL)
 //-----------------------------------------------------------------------------
 // Purpose: Anti-hack
 //-----------------------------------------------------------------------------
@@ -1577,9 +1572,6 @@ void CBaseCombatWeapon::ItemPreFrame( void )
 	MaintainIdealActivity();
 
 #ifndef CLIENT_DLL
-#ifndef HL2_EPISODIC
-	if ( IsX360() )
-#endif
 	{
 		// If we haven't displayed the hint enough times yet, it's time to try to 
 		// display the hint, and the player is not standing still, try to show a hud hint.
@@ -2020,7 +2012,7 @@ bool CBaseCombatWeapon::DefaultReload( int iClipSize1, int iClipSize2, int iActi
 
 bool CBaseCombatWeapon::ReloadsSingly( void ) const
 {
-#if defined ( TF_DLL ) || defined ( TF_CLIENT_DLL )
+#if defined(TF_DLL)
 	float fHasReload = 1.0f;
 	CALL_ATTRIB_HOOK_FLOAT( fHasReload, mod_no_reload_display_only );
 	if ( fHasReload != 1.0f )
@@ -2034,7 +2026,7 @@ bool CBaseCombatWeapon::ReloadsSingly( void ) const
 	{
 		return false;
 	}
-#endif // TF_DLL || TF_CLIENT_DLL
+#endif
 
 	return m_bReloadsSingly;
 }
@@ -2056,7 +2048,6 @@ void CBaseCombatWeapon::WeaponIdle( void )
 		SendWeaponAnim( ACT_VM_IDLE );
 	}
 }
-
 
 //=========================================================
 Activity CBaseCombatWeapon::GetPrimaryAttackActivity( void )
@@ -2396,7 +2387,6 @@ void CBaseCombatWeapon::GetControlPanelClassName( int nPanelIndex, const char *&
 {
 	pPanelName = "vgui_screen";
 }
-
 
 //-----------------------------------------------------------------------------
 // Locking a weapon is an exclusive action. If you lock a weapon, that means 

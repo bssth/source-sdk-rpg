@@ -63,11 +63,6 @@ BEGIN_DATADESC( CAI_ScriptConditions )
 
 	DEFINE_KEYFIELD(m_flRequiredTime, 				FIELD_FLOAT, 	"RequiredTime" 				),
 
-#ifndef HL2_EPISODIC
-	DEFINE_FIELD( m_hActor, FIELD_EHANDLE ),
-	DEFINE_EMBEDDED(m_Timer ),
-	DEFINE_EMBEDDED(m_Timeout ),
-#endif
 
 	DEFINE_KEYFIELD(m_fMinState, 					FIELD_INTEGER,	"MinimumState" 				),
 	DEFINE_KEYFIELD(m_fMaxState, 					FIELD_INTEGER,	"MaximumState" 				),
@@ -140,11 +135,9 @@ CAI_ScriptConditions::EvaluatorInfo_t CAI_ScriptConditions::gm_Evaluators[] =
 		EVALUATOR( PlayerActorLOS ),
 		EVALUATOR( PlayerTargetLOS ),
 
-#ifdef HL2_EPISODIC
 		EVALUATOR( ActorInPVS ),
 		EVALUATOR( PlayerInVehicle ),
 		EVALUATOR( ActorInVehicle ),
-#endif
 
 };
 
@@ -152,26 +145,6 @@ void CAI_ScriptConditions::OnRestore( void )
 {
 	BaseClass::OnRestore();
 
-#ifndef HL2_EPISODIC
-	//Old HL2 save game! Fix up to new system.
-	if ( m_hActor )
-	{
-		CAI_ScriptConditionsElement conditionactor;
-
-		conditionactor.SetActor( m_hActor );
-		conditionactor.SetTimeOut( m_Timeout );
-		conditionactor.SetTimer( m_Timer );
- 
-		m_ElementList.AddToTail( conditionactor );
-
-		m_hActor = NULL;
-	}
-
-	if ( m_ElementList.Count() == 0 && m_Actor == NULL_STRING && m_fDisabled == false )
-	{
-		AddNewElement( NULL );
-	}
-#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -254,13 +227,9 @@ bool CAI_ScriptConditions::EvalActorSeeTarget( const EvalArgs_t &args )
 
 		CAI_BaseNPC *pNPCActor = args.pActor->MyNPCPointer();
 
-#ifdef HL2_EPISODIC
 		// This is the code we want to have written for HL2, but HL2 shipped without the QuerySeeEntity() call. This #ifdef really wants to be
 		// something like #ifndef HL2_RETAIL, since this change does want to be in any products that are built henceforth. (sjb)
 		bool fSee = pNPCActor->FInViewCone( args.pTarget ) && pNPCActor->FVisible( args.pTarget ) && pNPCActor->QuerySeeEntity( args.pTarget );
-#else
-		bool fSee = pNPCActor->FInViewCone( args.pTarget ) && pNPCActor->FVisible( args.pTarget );
-#endif//HL2_EPISODIC
 
 		if( fSee )
 		{
@@ -449,9 +418,7 @@ void CAI_ScriptConditions::Activate()
 	if( !m_fDisabled )
 		Enable();
 
-#ifdef HL2_EPISODIC
 	gEntList.AddListenerEntity( this );
-#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -494,12 +461,10 @@ void CAI_ScriptConditions::EvaluationThink()
 		CBaseEntity *pActor = pConditionElement->GetActor();
 		CBaseEntity *pActivator = this;
 
-#ifdef HL2_EPISODIC
 		if ( pActor && HasSpawnFlags( SF_ACTOR_AS_ACTIVATOR ) )
 		{
 			pActivator = pActor;
 		}
-#endif
 
 		AssertMsg( !m_fDisabled, ("Violated invariant between CAI_ScriptConditions disabled state and think func setting") );
 

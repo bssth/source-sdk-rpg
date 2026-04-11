@@ -1169,7 +1169,6 @@ void CClientLeafSystem::InsertIntoTree( ClientRenderHandle_t &handle )
 	Vector absMins, absMaxs;
 	
 	CalcRenderableWorldSpaceAABB_Fast( pRenderable, absMins, absMaxs );
-	Assert( absMins.IsValid() && absMaxs.IsValid() );
 
 	ISpatialQuery* pQuery = engine->GetBSPTreeQuery();
 	pQuery->EnumerateLeavesInBox( absMins, absMaxs, this, (int)&list );
@@ -1591,25 +1590,6 @@ void CClientLeafSystem::CollateRenderablesInLeaf( int leaf, int worldListLeafInd
 			if ( engine->IsOccluded( absMins, absMaxs ) )
 				continue;
 		}
-
-#ifdef INVASION_CLIENT_DLL
-		if (info.m_flRenderDistSq != 0.0f)
-		{
-			Vector mins, maxs;
-			renderable.m_pRenderable->GetRenderBounds( mins, maxs );
-
-			if ((maxs.z - mins.z) < 100)
-			{
-				Vector vCenter;
-				VectorLerp( mins, maxs, 0.5f, vCenter );
-				vCenter += renderable.m_pRenderable->GetRenderOrigin();
-
-				float flDistSq = info.m_vecRenderOrigin.DistToSqr( vCenter );
-				if (info.m_flRenderDistSq <= flDistSq)
-					continue;
-			}
-		}
-#endif
 
 		if( renderable.m_RenderGroup != RENDER_GROUP_TRANSLUCENT_ENTITY )
 		{

@@ -360,15 +360,13 @@ bool CBaseTrigger::PassesTriggerFilters(CBaseEntity *pOther)
 		(HasSpawnFlags(SF_TRIGGER_ALLOW_CLIENTS) && (pOther->GetFlags() & FL_CLIENT)) ||
 		(HasSpawnFlags(SF_TRIGGER_ALLOW_NPCS) && (pOther->GetFlags() & FL_NPC)) ||
 		(HasSpawnFlags(SF_TRIGGER_ALLOW_PUSHABLES) && FClassnameIs(pOther, "func_pushable")) ||
-		(HasSpawnFlags(SF_TRIGGER_ALLOW_PHYSICS) && pOther->GetMoveType() == MOVETYPE_VPHYSICS) 
-#if defined( HL2_EPISODIC ) || defined( TF_DLL )		
+		(HasSpawnFlags(SF_TRIGGER_ALLOW_PHYSICS) && pOther->GetMoveType() == MOVETYPE_VPHYSICS)
 		||
-		(	HasSpawnFlags(SF_TRIG_TOUCH_DEBRIS) && 
+		(	HasSpawnFlags(SF_TRIG_TOUCH_DEBRIS) &&
 			(pOther->GetCollisionGroup() == COLLISION_GROUP_DEBRIS ||
-			pOther->GetCollisionGroup() == COLLISION_GROUP_DEBRIS_TRIGGER || 
+			pOther->GetCollisionGroup() == COLLISION_GROUP_DEBRIS_TRIGGER ||
 			pOther->GetCollisionGroup() == COLLISION_GROUP_INTERACTIVE_DEBRIS)
 		)
-#endif
 		)
 	{
 		if ( pOther->GetFlags() & FL_NPC )
@@ -2813,7 +2811,6 @@ private:
 	int	  m_iAttachmentIndex;
 	bool  m_bSnapToGoal;
 
-#if HL2_EPISODIC
 	bool  m_bInterpolatePosition;
 
 	// these are interpolation vars used for interpolating the camera over time
@@ -2821,7 +2818,6 @@ private:
 	float m_flInterpStartTime;
 
 	const static float kflPosInterpTime; // seconds
-#endif
 
 	int   m_nPlayerButtons;
 	int m_nOldTakeDamage;
@@ -2830,9 +2826,7 @@ private:
 	COutputEvent m_OnEndFollow;
 };
 
-#if HL2_EPISODIC
 const float CTriggerCamera::kflPosInterpTime = 2.0f;
-#endif
 
 LINK_ENTITY_TO_CLASS( point_viewcontrol, CTriggerCamera );
 
@@ -2855,12 +2849,10 @@ BEGIN_DATADESC( CTriggerCamera )
 	DEFINE_KEYFIELD( m_iszTargetAttachment, FIELD_STRING, "targetattachment" ),
 	DEFINE_FIELD( m_iAttachmentIndex, FIELD_INTEGER ),
 	DEFINE_FIELD( m_bSnapToGoal, FIELD_BOOLEAN ),
-#if HL2_EPISODIC
 	DEFINE_KEYFIELD( m_bInterpolatePosition, FIELD_BOOLEAN, "interpolatepositiontoplayer" ),
 	DEFINE_FIELD( m_vStartPos, FIELD_VECTOR ),
 	DEFINE_FIELD( m_vEndPos, FIELD_VECTOR ),
 	DEFINE_FIELD( m_flInterpStartTime, FIELD_TIME ),
-#endif
 	DEFINE_FIELD( m_nPlayerButtons, FIELD_INTEGER ),
 	DEFINE_FIELD( m_nOldTakeDamage, FIELD_INTEGER ),
 
@@ -3090,7 +3082,6 @@ void CTriggerCamera::Enable( void )
 
 	// copy over player information. If we're interpolating from
 	// the player position, do something more elaborate.
-#if HL2_EPISODIC
 	if (m_bInterpolatePosition)
 	{
 		// initialize the values we'll spline between
@@ -3103,7 +3094,6 @@ void CTriggerCamera::Enable( void )
 		SetAbsVelocity( vec3_origin );
 	}
 	else
-#endif
 	if (HasSpawnFlags(SF_CAMERA_PLAYER_POSITION ) )
 	{
 		UTIL_SetOrigin( this, m_hPlayer->EyePosition() );
@@ -3307,14 +3297,8 @@ void CTriggerCamera::Move()
 	}
 
 	// In vanilla HL2, the camera is either on a path, or doesn't move. In episodic
-	// we add the capacity for interpolation to the start point. 
-#if HL2_EPISODIC
+	// we add the capacity for interpolation to the start point.
 	if (m_pPath)
-#else
-	// Not moving on a path, return
-	if (!m_pPath)
-		return;
-#endif
 	{
 		// Subtract movement from the previous frame
 		m_moveDistance -= m_flSpeed * gpGlobals->frametime;
@@ -3351,7 +3335,6 @@ void CTriggerCamera::Move()
 		float fraction = 2 * gpGlobals->frametime;
 		SetAbsVelocity( ((m_vecMoveDir * m_flSpeed) * fraction) + (GetAbsVelocity() * (1-fraction)) );
 	}
-#if HL2_EPISODIC
 	else if (m_bInterpolatePosition)
 	{
 		// get the interpolation parameter [0..1]
@@ -3374,7 +3357,6 @@ void CTriggerCamera::Move()
 			SetAbsVelocity( desiredVel );
 		}
 	}
-#endif
 }
 
 

@@ -202,11 +202,7 @@ void CNPC_Zombine::Spawn( void )
 	m_fIsTorso = false;
 	m_fIsHeadless = false;
 	
-#ifdef HL2_EPISODIC
 	SetBloodColor( BLOOD_COLOR_ZOMBIE );
-#else
-	SetBloodColor( BLOOD_COLOR_GREEN );
-#endif // HL2_EPISODIC
 
 	m_iHealth			= sk_zombie_soldier_health.GetFloat();
 	SetMaxHealth( m_iHealth );

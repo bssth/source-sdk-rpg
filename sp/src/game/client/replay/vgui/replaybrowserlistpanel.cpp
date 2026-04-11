@@ -70,9 +70,7 @@ void CReplayListPanel::ApplySchemeSettings( vgui::IScheme *pScheme )
 
 	LoadControlSettings( "resource/ui/replaybrowser/replaylistpanel.res", "GAME" );
 
-#if !defined( TF_CLIENT_DLL )
 	SetPaintBorderEnabled( false );
-#endif
 
 	MoveScrollBarToTop();
 

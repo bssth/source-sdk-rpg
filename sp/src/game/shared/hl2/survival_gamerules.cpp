@@ -1,8 +1,6 @@
 //========= Copyright Valve Corporation, All rights reserved. ============//
 #include "cbase.h"
 
-#ifdef HL2_EPISODIC
-
 #include "hl2_gamerules.h"
 #include "ammodef.h"
 #include "hl2_shareddefs.h"
@@ -107,7 +105,6 @@ REGISTER_GAMERULES_CLASS( CHalfLife2Survival );
 
 BEGIN_NETWORK_TABLE_NOBASE( CHalfLife2Survival, DT_HL2SurvivalGameRules )
 END_NETWORK_TABLE()
-
 
 LINK_ENTITY_TO_CLASS( hl2_survival_gamerules, CHalfLife2SurvivalProxy );
 IMPLEMENT_NETWORKCLASS_ALIASED( HalfLife2SurvivalProxy, DT_HalfLife2SurvivalProxy )
@@ -267,7 +264,5 @@ void CHalfLife2Survival::CreateStandardEntities( void )
 {
 	ReadSurvivalScriptFile();
 }
-
-#endif
 
 #endif

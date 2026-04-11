@@ -16,7 +16,7 @@
 #include "checksum_crc.h"
 #include "tier0/icommandline.h"
 
-#if defined( TF_CLIENT_DLL ) || defined( TF_DLL )
+#if defined(TF_DLL)
 #include "tf_shareddefs.h"
 #include "tf_classdata.h"
 #endif
@@ -272,7 +272,7 @@ public:
 
 		// Load in any map specific overrides
 		char scriptfile[ 512 ];
-#if defined( TF_CLIENT_DLL ) || defined( TF_DLL )
+#if defined(TF_DLL)
 		if( V_stristr( mapname, "mvm" ) )
 		{
 			V_strncpy( scriptfile, "scripts/mvm_level_sounds.txt", sizeof( scriptfile ) );
@@ -482,7 +482,6 @@ public:
 			params.pitch = ep.m_nPitch;
 		}
 
-
 		if( ep.m_nFlags & SND_CHANGE_VOL )
 		{
 			params.volume = ep.m_flVolume;
@@ -540,7 +539,6 @@ public:
 
 		TraceEmitSound( "EmitSound:  '%s' emitted as '%s' (ent %i)\n",
 			ep.m_pSoundName, params.soundname, entindex );
-
 
 		// Don't caption modulations to the sound
 		if ( !( ep.m_nFlags & ( SND_CHANGE_PITCH | SND_CHANGE_VOL ) ) )
@@ -906,7 +904,6 @@ public:
 
 		StopSoundByHandle( entindex, soundname, handle );
 	}
-
 
 	void StopSound( int iEntIndex, int iChannel, const char *pSample )
 	{
@@ -1340,7 +1337,6 @@ soundlevel_t CBaseEntity::LookupSoundLevel( const char *soundname )
 	return soundemitterbase->LookupSoundLevel( soundname );
 }
 
-
 soundlevel_t CBaseEntity::LookupSoundLevel( const char *soundname, HSOUNDSCRIPTHANDLE& handle )
 {
 	return soundemitterbase->LookupSoundLevelByHandle( soundname, handle );
@@ -1521,4 +1517,3 @@ void CBaseEntity::PrefetchSound( const char *name )
 {
 	 enginesound->PrefetchSound( name );
 }
-

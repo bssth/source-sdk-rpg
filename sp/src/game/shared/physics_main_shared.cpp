@@ -19,10 +19,6 @@
 #include "utlmultilist.h"
 #include "tier1/callqueue.h"
 
-#ifdef PORTAL
-	#include "portal_util_shared.h"
-#endif
-
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -75,8 +71,6 @@ ConVar debug_touchlinks( "debug_touchlinks", "0", 0, "Spew touch link activity" 
 #define DebugTouchlinks() false
 #endif
 
-
-
 //-----------------------------------------------------------------------------
 // Portal-specific hack designed to eliminate re-entrancy in touch functions
 //-----------------------------------------------------------------------------
@@ -112,7 +106,6 @@ CPortalTouchScope::~CPortalTouchScope()
 		m_CallQueue.CallQueued();
 	}
 }
-
 
 //-----------------------------------------------------------------------------
 // Purpose: System for hanging objects off of CBaseEntity, etc.
@@ -356,7 +349,6 @@ void CWatcherList::RemoveWatcher( CBaseEntity *pEntity )
 	}
 }
 
-
 void CWatcherList::AddToList( CBaseEntity *pWatcher )
 {
 	unsigned short node = Find( pWatcher );
@@ -494,7 +486,6 @@ static inline float GetActualGravity( CBaseEntity *pEnt )
 	return ent_gravity * GetCurrentGravity();
 }
 
-
 //-----------------------------------------------------------------------------
 // Purpose: 
 // Output : inline touchlink_t
@@ -625,9 +616,6 @@ void CBaseEntity::PhysicsCheckForEntityUntouch( void )
 	touchlink_t *root = ( touchlink_t * )GetDataObject( TOUCHLINK );
 	if ( root )
 	{
-#ifdef PORTAL
-		CPortalTouchScope scope;
-#endif
 		bool saveCleanup = g_bCleanupDatObject;
 		g_bCleanupDatObject = false;
 
@@ -738,9 +726,6 @@ void CBaseEntity::PhysicsRemoveToucher( CBaseEntity *otherEntity, touchlink_t *l
 //-----------------------------------------------------------------------------
 void CBaseEntity::PhysicsRemoveTouchedList( CBaseEntity *ent )
 {
-#ifdef PORTAL
-	CPortalTouchScope scope;
-#endif
 
 	touchlink_t *link, *nextLink;
 
@@ -953,8 +938,6 @@ void CBaseEntity::PhysicsStartTouch( CBaseEntity *pentOther )
 	}
 }
 
-
-
 //-----------------------------------------------------------------------------
 // Purpose: Marks in an entity that it is touching another entity, and calls
 //			it's Touch() function if it is a new touch.
@@ -994,10 +977,6 @@ touchlink_t *CBaseEntity::PhysicsMarkEntityAsTouched( CBaseEntity *other )
 	{
 		return NULL;
 	}
-
-#ifdef PORTAL
-	CPortalTouchScope scope;
-#endif
 
 	// check if the edict is already in the list
 	touchlink_t *root = ( touchlink_t * )GetDataObject( TOUCHLINK );
@@ -1066,7 +1045,6 @@ const trace_t &CBaseEntity::GetTouchTrace( void )
 	return g_TouchTrace;
 }
 
-
 //-----------------------------------------------------------------------------
 // Purpose: Marks the fact that two edicts are in contact
 // Input  : *other - other entity
@@ -1130,7 +1108,6 @@ unsigned int CBaseEntity::PhysicsSolidMaskForEntity( void ) const
 	return MASK_SOLID;
 }
 
-
 //-----------------------------------------------------------------------------
 // Computes the water level + type
 //-----------------------------------------------------------------------------
@@ -1179,7 +1156,6 @@ void CBaseEntity::UpdateWaterState()
 		}
 	}
 }
-
 
 //-----------------------------------------------------------------------------
 // Purpose: Check if entity is in the water and applies any current to velocity
@@ -1232,7 +1208,6 @@ bool CBaseEntity::PhysicsCheckWater( void )
 	return GetWaterLevel() > 1;
 }
 
-
 //-----------------------------------------------------------------------------
 // Purpose: Bounds velocity
 //-----------------------------------------------------------------------------
@@ -1282,7 +1257,6 @@ void CBaseEntity::PhysicsCheckVelocity( void )
 	}
 }
 
-
 //-----------------------------------------------------------------------------
 // Purpose: Applies gravity to falling objects
 //-----------------------------------------------------------------------------
@@ -1314,7 +1288,6 @@ void CBaseEntity::PhysicsAddGravityMove( Vector &move )
 	// Bound velocity
 	PhysicsCheckVelocity();
 }
-
 
 #define	STOP_EPSILON	0.1
 //-----------------------------------------------------------------------------
@@ -1507,7 +1480,6 @@ void CBaseEntity::ResolveFlyCollisionSlide( trace_t &trace, Vector &vecVelocity 
 	}
 }
 
-
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
@@ -1627,7 +1599,6 @@ void CBaseEntity::SimulateAngles( float flFrameTime )
 	SetLocalAngles( angles );
 }
 
-
 //-----------------------------------------------------------------------------
 // Purpose: Toss, bounce, and fly movement.  When onground, do nothing.
 //-----------------------------------------------------------------------------
@@ -1715,7 +1686,6 @@ void CBaseEntity::PhysicsToss( void )
 	PhysicsCheckWaterTransition();
 }
 
-
 //-----------------------------------------------------------------------------
 // Simulation in local space of rigid children
 //-----------------------------------------------------------------------------
@@ -1750,7 +1720,6 @@ void CBaseEntity::PhysicsRigidChild( void )
 	VPROF_SCOPE_END();
 }
 
-
 //-----------------------------------------------------------------------------
 // Computes the base velocity
 //-----------------------------------------------------------------------------
@@ -1778,7 +1747,6 @@ void CBaseEntity::UpdateBaseVelocity( void )
 	}
 #endif
 }
-
 
 //-----------------------------------------------------------------------------
 // Purpose: Runs a frame of physics for a specific edict (and all it's children)
@@ -1843,7 +1811,6 @@ void CBaseEntity::PhysicsSimulate( void )
 			PhysicsPusher();
 		}
 		break;
-
 
 	case MOVETYPE_VPHYSICS:
 		{
@@ -2193,7 +2160,6 @@ void CBaseEntity::EndGroundContact( CBaseEntity *ground )
 //	Msg( "--- %s ending contact with ground %s\n", GetClassname(), ground->GetClassname() );
 }
 
-
 void CBaseEntity::SetGroundChangeTime( float flTime )
 {
 	m_flGroundChangeTime = flTime;
@@ -2203,8 +2169,6 @@ float CBaseEntity::GetGroundChangeTime( void )
 {
 	return m_flGroundChangeTime;
 }
-
-
 
 // Remove this as ground entity for all object resting on this object
 //-----------------------------------------------------------------------------

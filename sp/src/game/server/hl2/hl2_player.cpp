@@ -735,11 +735,9 @@ void CHL2_Player::PreThink(void)
 		if ( m_nButtons & IN_ZOOM )
 		{
 			//FIXME: Held weapons like the grenade get sad when this happens
-	#ifdef HL2_EPISODIC
 			// Episodic allows players to zoom while using a func_tank
 			CBaseCombatWeapon* pWep = GetActiveWeapon();
 			if ( !m_hUseEntity || ( pWep && pWep->IsWeaponVisible() ) )
-	#endif
 			m_nButtons &= ~(IN_ATTACK|IN_ATTACK2);
 		}
 	}

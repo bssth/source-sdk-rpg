@@ -17,16 +17,6 @@
 #include "vguiscreen.h"
 #endif
 
-#if defined( CLIENT_DLL ) && defined( SIXENSE )
-#include "sixense/in_sixense.h"
-#include "sixense/sixense_convars_extern.h"
-#endif
-
-#ifdef SIXENSE
-extern ConVar in_forceuser;
-#include "iclientmode.h"
-#endif
-
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -85,11 +75,6 @@ void CBaseViewModel::Spawn( void )
 	SetSize( Vector( -8, -4, -2), Vector(8, 4, 2) );
 	SetSolid( SOLID_NONE );
 }
-
-
-#if defined ( CSTRIKE_DLL ) && !defined ( CLIENT_DLL )
-#define VGUI_CONTROL_PANELS
-#endif
 
 #if defined ( TF_DLL )
 #define VGUI_CONTROL_PANELS
@@ -400,18 +385,13 @@ void CBaseViewModel::CalcViewModelView( CBasePlayer *owner, const Vector& eyePos
 		{
 			// add weapon-specific bob 
 			pWeapon->AddViewmodelBob( this, vmorigin, vmangles );
-#if defined ( CSTRIKE_DLL )
-			CalcViewModelLag( vmorigin, vmangles, vmangoriginal );
-#endif
 		}
 	}
 	// Add model-specific bob even if no weapon associated (for head bob for off hand models)
 	AddViewModelBob( owner, vmorigin, vmangles );
-#if !defined ( CSTRIKE_DLL )
 	// This was causing weapon jitter when rotating in updated CS:S; original Source had this in above InPrediction block  07/14/10
 	// Add lag
 	CalcViewModelLag( vmorigin, vmangles, vmangoriginal );
-#endif
 
 #if defined( CLIENT_DLL )
 	if ( !prediction->InPrediction() )
@@ -429,32 +409,6 @@ void CBaseViewModel::CalcViewModelView( CBasePlayer *owner, const Vector& eyePos
 	SetLocalOrigin( vmorigin );
 	SetLocalAngles( vmangles );
 
-#ifdef SIXENSE
-	if( g_pSixenseInput->IsEnabled() && (owner->GetObserverMode()==OBS_MODE_NONE) && !UseVR() )
-	{
-		const float max_gun_pitch = 20.0f;
-
-		float viewmodel_fov_ratio = g_pClientMode->GetViewModelFOV()/owner->GetFOV();
-		QAngle gun_angles = g_pSixenseInput->GetViewAngleOffset() * -viewmodel_fov_ratio;
-
-		// Clamp pitch a bit to minimize seeing back of viewmodel
-		if( gun_angles[PITCH] < -max_gun_pitch )
-		{ 
-			gun_angles[PITCH] = -max_gun_pitch; 
-		}
-
-#ifdef WIN32 // ShouldFlipViewModel comes up unresolved on osx? Mabye because it's defined inline? fixme
-		if( ShouldFlipViewModel() ) 
-		{
-			gun_angles[YAW] *= -1.0f;
-		}
-#endif
-
-		vmangles = EyeAngles() +  gun_angles;
-
-		SetLocalAngles( vmangles );
-	}
-#endif
 #endif
 
 }
@@ -550,7 +504,6 @@ static void RecvProxy_Weapon( const CRecvProxyData *pData, void *pStruct, void *
 }
 #endif
 
-
 LINK_ENTITY_TO_CLASS( viewmodel, CBaseViewModel );
 
 IMPLEMENT_NETWORKCLASS_ALIASED( BaseViewModel, DT_BaseViewModel )
@@ -572,7 +525,7 @@ BEGIN_NETWORK_TABLE_NOBASE(CBaseViewModel, DT_BaseViewModel)
 	SendPropInt( SENDINFO( m_nResetEventsParity ), EF_PARITY_BITS, SPROP_UNSIGNED ),
 	SendPropInt( SENDINFO( m_nMuzzleFlashParity ), EF_MUZZLEFLASH_BITS, SPROP_UNSIGNED ),
 
-#if !defined( INVASION_DLL ) && !defined( INVASION_CLIENT_DLL )
+#if !defined(INVASION_DLL)
 	SendPropArray	(SendPropFloat(SENDINFO_ARRAY(m_flPoseParameter),	8, 0, 0.0f, 1.0f), m_flPoseParameter),
 #endif
 #else
@@ -591,7 +544,7 @@ BEGIN_NETWORK_TABLE_NOBASE(CBaseViewModel, DT_BaseViewModel)
 	RecvPropInt( RECVINFO( m_nResetEventsParity )),
 	RecvPropInt( RECVINFO( m_nMuzzleFlashParity )),
 
-#if !defined( INVASION_DLL ) && !defined( INVASION_CLIENT_DLL )
+#if !defined(INVASION_DLL)
 	RecvPropArray(RecvPropFloat(RECVINFO(m_flPoseParameter[0]) ), m_flPoseParameter ),
 #endif
 #endif

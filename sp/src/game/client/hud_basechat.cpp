@@ -230,14 +230,7 @@ void CBaseHudChatLine::ApplySchemeSettings(vgui::IScheme *pScheme)
 
 	m_hFont = pScheme->GetFont( "Default" );
 
-#ifdef HL1_CLIENT_DLL
-	SetBgColor( Color( 0, 0, 0, 0 ) );
-	SetFgColor( Color( 0, 0, 0, 0 ) );
-
-	SetBorder( NULL );
-#else
 	SetBgColor( Color( 0, 0, 0, 100 ) );
-#endif
 
 
 	m_hFontMarlett = pScheme->GetFont( "Marlett" );
@@ -409,9 +402,6 @@ void CBaseHudChatInputLine::ApplySchemeSettings(vgui::IScheme *pScheme)
 
 	m_pInput->SetMouseInputEnabled( true );
 
-#ifdef HL1_CLIENT_DLL
-	m_pInput->SetBgColor( Color( 255, 255, 255, 0 ) );
-#endif
 
 	SetBgColor( Color( 0, 0, 0, 0) );
 
@@ -703,10 +693,6 @@ void CBaseHudChat::ApplySchemeSettings( vgui::IScheme *pScheme )
 	SetMouseInputEnabled( false );
 	m_nVisibleHeight = 0;
 
-#ifdef HL1_CLIENT_DLL
-	SetBgColor( Color( 0, 0, 0, 0 ) );
-	SetFgColor( Color( 0, 0, 0, 0 ) );
-#endif
 
 	Color cColor = pScheme->GetColor( "DullWhite", GetBgColor() );
 	SetBgColor( Color ( cColor.r(), cColor.g(), cColor.b(), CHAT_HISTORY_ALPHA ) );
@@ -716,10 +702,8 @@ void CBaseHudChat::ApplySchemeSettings( vgui::IScheme *pScheme )
 
 void CBaseHudChat::Reset( void )
 {
-#ifndef HL1_CLIENT_DLL
 	m_nVisibleHeight = 0;
 	Clear();
-#endif
 }
 
 #ifdef _XBOX

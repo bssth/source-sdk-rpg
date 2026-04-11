@@ -27,9 +27,7 @@
 #include "physics_npc_solver.h"
 #include "physics_prop_ragdoll.h"
 
-#ifdef HL2_EPISODIC
 #include "episodic/ai_behavior_passenger_zombie.h"
-#endif	// HL2_EPISODIC
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -48,13 +46,9 @@
 // If flying at an enemy, and this close or closer, start playing the maul animation!!
 #define FASTZOMBIE_MAUL_RANGE	300
 
-#ifdef HL2_EPISODIC
-
 int AE_PASSENGER_PHYSICS_PUSH;
 int AE_FASTZOMBIE_VEHICLE_LEAP;
 int AE_FASTZOMBIE_VEHICLE_SS_DIE;	// Killed while doing scripted sequence on vehicle
-
-#endif // HL2_EPISODIC
 
 enum
 {
@@ -356,10 +350,8 @@ BEGIN_DATADESC( CFastZombie )
 	DEFINE_ENTITYFUNC( ClimbTouch ),
 	DEFINE_SOUNDPATCH( m_pLayer2 ),
 
-#ifdef HL2_EPISODIC
 	DEFINE_ENTITYFUNC( VehicleLeapAttackTouch ),
 	DEFINE_INPUTFUNC( FIELD_STRING, "AttachToVehicle", InputAttachToVehicle ),
-#endif	// HL2_EPISODIC
 
 END_DATADESC()
 
@@ -383,14 +375,12 @@ static const char *s_pLegsModel = "models/gibs/fast_zombie_legs.mdl";
 void CFastZombie::Precache( void )
 {
 	PrecacheModel("models/zombie/fast.mdl");
-#ifdef HL2_EPISODIC
 	PrecacheModel("models/zombie/Fast_torso.mdl");
 	PrecacheScriptSound( "NPC_FastZombie.CarEnter1" );
 	PrecacheScriptSound( "NPC_FastZombie.CarEnter2" );
 	PrecacheScriptSound( "NPC_FastZombie.CarEnter3" );
 	PrecacheScriptSound( "NPC_FastZombie.CarEnter4" );
 	PrecacheScriptSound( "NPC_FastZombie.CarScream" );
-#endif
 	PrecacheModel( "models/gibs/fast_zombie_torso.mdl" );
 	PrecacheModel( "models/gibs/fast_zombie_legs.mdl" );
 	
@@ -438,16 +428,12 @@ int CFastZombie::SelectSchedule ( void )
 {
 
 // ========================================================
-#ifdef HL2_EPISODIC
-
 	// Defer all decisions to the behavior if it's running
 	if ( m_PassengerBehavior.CanSelectSchedule() )
 	{
 		DeferSchedulingToBehavior( &m_PassengerBehavior );
 		return BaseClass::SelectSchedule();
 	}
-
-#endif //HL2_EPISODIC
 // ========================================================
 
 	if ( HasCondition( COND_ZOMBIE_RELEASECRAB ) )
@@ -657,11 +643,7 @@ void CFastZombie::Spawn( void )
 		m_fIsTorso = true;
 	}
 
-#ifdef HL2_EPISODIC
 	SetBloodColor( BLOOD_COLOR_ZOMBIE );
-#else
-	SetBloodColor( BLOOD_COLOR_YELLOW );
-#endif // HL2_EPISODIC
 
 	m_iHealth			= 50;
 	m_flFieldOfView		= 0.2;
@@ -1092,8 +1074,6 @@ void CFastZombie::HandleAnimEvent( animevent_t *pEvent )
 	}
 
 //=============================================================================
-#ifdef HL2_EPISODIC
-
 	// Do the leap attack
 	if ( pEvent->event == AE_FASTZOMBIE_VEHICLE_LEAP )
 	{
@@ -1129,8 +1109,6 @@ void CFastZombie::HandleAnimEvent( animevent_t *pEvent )
 		}
 		return;
 	}
-
-#endif // HL2_EPISODIC
 //=============================================================================
 
 	BaseClass::HandleAnimEvent( pEvent );
@@ -1757,9 +1735,7 @@ void CFastZombie::BuildScheduleTestBits( void )
 	if ( GetRunningBehavior() )
 		GetRunningBehavior()->BridgeBuildScheduleTestBits(); 
 
-#ifdef HL2_EPISODIC
 	SetCustomInterruptCondition( COND_PROVOKED );
-#endif	// HL2_EPISODIC
 
 	// Any schedule that makes us climb should break if we touch player
 	if ( GetActivity() == ACT_CLIMB_UP || GetActivity() == ACT_CLIMB_DOWN || GetActivity() == ACT_CLIMB_DISMOUNT)
@@ -1829,8 +1805,6 @@ bool CFastZombie::ShouldBecomeTorso( const CTakeDamageInfo &info, float flDamage
 }
 
 //=============================================================================
-#ifdef HL2_EPISODIC
-
 //-----------------------------------------------------------------------------
 // Purpose: Add the passenger behavior to our repertoire
 //-----------------------------------------------------------------------------
@@ -1983,7 +1957,6 @@ void CFastZombie::UpdateEfficiency( bool bInPVS )
 	BaseClass::UpdateEfficiency( bInPVS );
 }
 
-#endif	// HL2_EPISODIC
 //=============================================================================
 
 //-----------------------------------------------------------------------------
@@ -2012,12 +1985,10 @@ AI_BEGIN_CUSTOM_NPC( npc_fastzombie, CFastZombie )
 	DECLARE_ANIMEVENT( AE_FASTZOMBIE_CLIMB_LEFT )
 	DECLARE_ANIMEVENT( AE_FASTZOMBIE_CLIMB_RIGHT )
 
-#ifdef HL2_EPISODIC
 	// FIXME: Move!
 	DECLARE_ANIMEVENT( AE_PASSENGER_PHYSICS_PUSH )
 	DECLARE_ANIMEVENT( AE_FASTZOMBIE_VEHICLE_LEAP )
 	DECLARE_ANIMEVENT( AE_FASTZOMBIE_VEHICLE_SS_DIE )
-#endif	// HL2_EPISODIC
 
 	//=========================================================
 	// 

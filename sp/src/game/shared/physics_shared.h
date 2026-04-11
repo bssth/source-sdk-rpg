@@ -18,14 +18,10 @@ class IPhysicsObject;
 class IPhysicsObjectPairHash;
 class CSoundPatch;
 
-
 extern IPhysicsObject		*g_PhysWorldObject;
 extern IPhysics				*physics;
 extern IPhysicsCollision	*physcollision;
 extern IPhysicsEnvironment	*physenv;
-#ifdef PORTAL
-extern IPhysicsEnvironment	*physenv_main;
-#endif
 extern IPhysicsSurfaceProps *physprops;
 extern IPhysicsObjectPairHash *g_EntityCollisionHash;
 
@@ -115,7 +111,6 @@ inline unsigned short PhysClearGameFlags( IPhysicsObject *pPhys, unsigned short 
 	
 	return flags;
 }
-
 
 // Create a vphysics object based on a model
 IPhysicsObject *PhysModelCreate( CBaseEntity *pEntity, int modelIndex, const Vector &origin, const QAngle &angles, solid_t *pSolid = NULL );

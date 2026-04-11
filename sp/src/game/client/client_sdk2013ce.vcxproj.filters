@@ -37,9 +37,6 @@
     <Filter Include="Source Files\Precompiled Header">
       <UniqueIdentifier>{A7D26A13-21F4-C6B5-5922-8A4FB05AF07D}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Sixense">
-      <UniqueIdentifier>{5595354B-BE1B-8C7C-B3CB-72257228B6D3}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\Temporary Entities">
       <UniqueIdentifier>{9EECF4A3-83FE-A929-1B71-69EABF89B7EA}</UniqueIdentifier>
     </Filter>
@@ -738,9 +735,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\game\shared\GameEventListener.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="glow_outline_effect.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="glow_overlay.h">
@@ -1880,15 +1874,6 @@
     <ClInclude Include="..\..\game\shared\episodic\npc_advisor_shared.h">
       <Filter>Source Files\HL2 DLL</Filter>
     </ClInclude>
-    <ClInclude Include="sixense\in_sixense.h">
-      <Filter>Source Files\Sixense</Filter>
-    </ClInclude>
-    <ClInclude Include="sixense\in_sixense_gesture_bindings.h">
-      <Filter>Source Files\Sixense</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\game\shared\sixense\sixense_convars_extern.h">
-      <Filter>Source Files\Sixense</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\public\tools\bonelist.h">
       <Filter>Tool Framework</Filter>
     </ClInclude>
@@ -2408,9 +2393,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="geiger.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="glow_outline_effect.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="glow_overlay.cpp">
@@ -3204,15 +3186,6 @@
     </ClCompile>
     <ClCompile Include="stdafx.cpp">
       <Filter>Source Files\Precompiled Header</Filter>
-    </ClCompile>
-    <ClCompile Include="sixense\in_sixense.cpp">
-      <Filter>Source Files\Sixense</Filter>
-    </ClCompile>
-    <ClCompile Include="sixense\in_sixense_gesture_bindings.cpp">
-      <Filter>Source Files\Sixense</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\game\shared\sixense\sixense_convars.cpp">
-      <Filter>Source Files\Sixense</Filter>
     </ClCompile>
     <ClCompile Include="c_basetempentity.cpp">
       <Filter>Source Files\Temporary Entities</Filter>

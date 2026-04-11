@@ -13,10 +13,6 @@
 #include "particle_parse.h"
 #include "rendertexture.h"
 
-#ifdef PORTAL
-	#include "PortalRender.h"
-#endif
-
 #pragma warning( disable: 4355 )  // warning C4355: 'this' : used in base member initializer list
 
 class CClientTools;
@@ -27,7 +23,6 @@ void DrawSpriteModel( IClientEntity *baseentity, CEngineSprite *psprite,
 						const Vector& forward, const Vector& right, const Vector& up, float flHDRColorScale = 1.0f );
 float StandardGlowBlend( const pixelvis_queryparams_t &params, pixelvis_handle_t *queryHandle,
 						int rendermode, int renderfx, int alpha, float *pscale );
-
 
 // Interface from engine to tools for manipulating entities
 class CClientTools : public IClientTools, public IClientEntityListener
@@ -150,12 +145,10 @@ private:
 	bool m_bInRecordingMode;
 };
 
-
 //-----------------------------------------------------------------------------
 // Statics
 //-----------------------------------------------------------------------------
 int CClientTools::s_nNextHandle = 1;
-
 
 //-----------------------------------------------------------------------------
 // Singleton instance
@@ -163,7 +156,6 @@ int CClientTools::s_nNextHandle = 1;
 static CClientTools s_ClientTools;
 IClientTools *clienttools = &s_ClientTools;
 EXPOSE_SINGLE_INTERFACE_GLOBALVAR( CClientTools, IClientTools, VCLIENTTOOLS_INTERFACE_VERSION, s_ClientTools );
-
 
 //-----------------------------------------------------------------------------
 // Constructor
@@ -173,7 +165,6 @@ CClientTools::CClientTools() : m_Handles( 0, 0, HandleLessFunc )
 	m_bInRecordingMode = false;
 	cl_entitylist->AddListenerEntity( this );
 }
-
 
 //-----------------------------------------------------------------------------
 // Global toggle for recording
@@ -188,7 +179,6 @@ bool CClientTools::IsInRecordingMode() const
 	return m_bInRecordingMode;
 }
 
-
 //-----------------------------------------------------------------------------
 // Trigger a temp entity
 //-----------------------------------------------------------------------------
@@ -196,7 +186,6 @@ void CClientTools::TriggerTempEntity( KeyValues *pKeyValues )
 {
 	te->TriggerTempEntity( pKeyValues );
 }
-
 
 //-----------------------------------------------------------------------------
 // get owning weapon (for viewmodels)
@@ -384,7 +373,6 @@ void CClientTools::DetachFromEntity( EntitySearchResult entityToDetach )
 	m_ActiveHandles.FindAndRemove( handle );
 }
 
-
 //-----------------------------------------------------------------------------
 // Purpose: 
 // Input  : handle - 
@@ -415,7 +403,6 @@ HTOOLHANDLE CClientTools::GetRecordable( int index )
 	return m_ActiveHandles[ index ];
 }
 
-
 //-----------------------------------------------------------------------------
 // Iterates through ALL entities (separate list for client vs. server)
 //-----------------------------------------------------------------------------
@@ -432,7 +419,6 @@ EntitySearchResult CClientTools::NextEntity( EntitySearchResult currentEnt )
 	}
 	return reinterpret_cast< EntitySearchResult >( ent );
 }
-
 
 //-----------------------------------------------------------------------------
 // Use this to turn on/off the presence of an underlying game entity
@@ -454,7 +440,6 @@ void CClientTools::SetEnabled( HTOOLHANDLE handle, bool enabled )
 
 	ent->EnableInToolView( enabled );
 }
-
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -482,7 +467,6 @@ bool CClientTools::ShouldRecord( HTOOLHANDLE handle )
 	return entry.m_hEntity && entry.m_hEntity->ShouldRecordInTools();
 }
 
-
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -501,7 +485,6 @@ int CClientTools::GetModelIndex( HTOOLHANDLE handle )
 	return 0;
 }
 
-
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -519,7 +502,6 @@ const char* CClientTools::GetModelName( HTOOLHANDLE handle )
 	Assert( 0 );
 	return NULL;
 }
-
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -717,7 +699,6 @@ QAngle CClientTools::GetAbsAngles( HTOOLHANDLE handle )
 	return vec3_angle;
 }
 
-
 //-----------------------------------------------------------------------------
 // Sends a mesage from the tool to the client
 //-----------------------------------------------------------------------------
@@ -745,21 +726,7 @@ void CClientTools::PostToolMessage( KeyValues *pKeyValues )
 		return;
 	}
 
-#ifdef PORTAL
-	if ( !Q_stricmp( pKeyValues->GetName(), "portals" ) )
-	{
-		g_pPortalRender->HandlePortalPlaybackMessage( pKeyValues );
-		return;
-	}
-	
-	if ( !Q_stricmp( pKeyValues->GetName(), "query CPortalRenderer" ) )
-	{
-		pKeyValues->SetInt( "IsRenderingPortal", g_pPortalRender->IsRenderingPortal() ? 1 : 0 );
-		return;
-	}
-#endif
 }
-
 
 //-----------------------------------------------------------------------------
 // Indicates whether the client should render particle systems
@@ -769,7 +736,6 @@ void CClientTools::EnableParticleSystems( bool bEnable )
 	ParticleMgr()->RenderParticleSystems( bEnable );
 }
 
-
 //-----------------------------------------------------------------------------
 // Is the game rendering in 3rd person mode?
 //-----------------------------------------------------------------------------
@@ -777,7 +743,6 @@ bool CClientTools::IsRenderingThirdPerson() const
 {			  
 	return !C_BasePlayer::LocalPlayerInFirstPersonView();
 }
-
 
 //-----------------------------------------------------------------------------
 // Reload particle definitions

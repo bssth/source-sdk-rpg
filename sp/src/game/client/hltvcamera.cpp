@@ -18,9 +18,6 @@
 #include "game/client/iviewport.h"
 #include <KeyValues.h>
 
-#ifdef CSTRIKE_DLL
-	#include "c_cs_player.h"
-#endif
 
 ConVar spec_autodirector( "spec_autodirector", "1", FCVAR_CLIENTDLL | FCVAR_CLIENTCMD_CAN_EXECUTE, "Auto-director chooses best view modes while spectating" );
 

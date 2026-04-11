@@ -9,7 +9,7 @@
 #include "movevars_shared.h"
 #include "util_shared.h"
 #include "datacache/imdlcache.h"
-#if defined ( TF_DLL ) || defined ( TF_CLIENT_DLL )
+#if defined(TF_DLL)
 #include "tf_gamerules.h"
 #endif
 
@@ -41,19 +41,12 @@
 	
 #endif
 
-#if defined( CSTRIKE_DLL )
-#include "weapon_c4.h"
-#endif // CSTRIKE_DLL
-
 #include "in_buttons.h"
 #include "engine/IEngineSound.h"
 #include "tier0/vprof.h"
 #include "SoundEmitterSystem/isoundemittersystembase.h"
 #include "decals.h"
 #include "obstacle_pushaway.h"
-#ifdef SIXENSE
-#include "sixense/in_sixense.h"
-#endif
 
 // NVNT haptic utils
 #include "haptics/haptic_utils.h"
@@ -79,12 +72,6 @@
 			// Only impact on physics objects
 			if ( !pEntity->VPhysicsGetObject() )
 				return false;
-
-#if defined( CSTRIKE_DLL )
-			// don't push the bomb!
-			if ( dynamic_cast<CC4*>( pEntity ) )
-				return false;
-#endif // CSTRIKE_DLL
 
 			return g_pGameRules->CanEntityBeUsePushed( pEntity );
 		}
@@ -258,7 +245,6 @@ void CBasePlayer::ItemPostFrame()
 			return;
 	}
 
-
 	// check if the player is using something
 	if ( m_hUseEntity != NULL )
 	{
@@ -300,7 +286,6 @@ void CBasePlayer::ItemPostFrame()
 #endif
 }
 
-
 //-----------------------------------------------------------------------------
 // Eye angles
 //-----------------------------------------------------------------------------
@@ -323,7 +308,6 @@ const QAngle &CBasePlayer::EyeAngles( )
 	MatrixAngles( eyesToWorld, angEyeWorld );
 	return angEyeWorld;
 }
-
 
 const QAngle &CBasePlayer::LocalEyeAngles()
 {
@@ -358,7 +342,6 @@ Vector CBasePlayer::EyePosition( )
 		return BaseClass::EyePosition();
 	}
 }
-
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -552,13 +535,6 @@ void CBasePlayer::UpdateStepSound( surfacedata_t *psurface, const Vector &vecOri
 	bool movingalongground = ( groundspeed > 0.0001f );
 	bool moving_fast_enough =  ( speed >= velwalk );
 
-#ifdef PORTAL
-	// In Portal we MUST play footstep sounds even when the player is moving very slowly
-	// This is used to count the number of footsteps they take in the challenge mode
-	// -Jeep
-	moving_fast_enough = true;
-#endif
-
 	// To hear step sounds you must be either on a ladder or moving along the ground AND
 	// You must be moving fast enough
 
@@ -584,11 +560,7 @@ void CBasePlayer::UpdateStepSound( surfacedata_t *psurface, const Vector &vecOri
 
 		SetStepSoundTime( STEPSOUNDTIME_ON_LADDER, bWalking );
 	}
-#ifdef CSTRIKE_DLL
-	else if ( enginetrace->GetPointContents( knee ) & MASK_WATER )  // we want to use the knee for Cstrike, not the waist
-#else
 	else if ( GetWaterLevel() == WL_Waist )
-#endif // CSTRIKE_DLL
 	{
 		static int iSkipStep = 0;
 
@@ -731,7 +703,7 @@ void CBasePlayer::PlayStepSound( Vector &vecOrigin, surfacedata_t *psurface, flo
 	EmitSound_t ep;
 	ep.m_nChannel = CHAN_BODY;
 	ep.m_pSoundName = params.soundname;
-#if defined ( TF_DLL ) || defined ( TF_CLIENT_DLL )
+#if defined(TF_DLL)
 	if( TFGameRules()->IsMannVsMachineMode() )
 	{
 		ep.m_flVolume = params.volume;
@@ -829,7 +801,6 @@ void CBasePlayer::SetAnimationExtension( const char *pExtension )
 	Q_strncpy( m_szAnimExtension, pExtension, sizeof(m_szAnimExtension) );
 }
 
-
 //-----------------------------------------------------------------------------
 // Purpose: Set the weapon to switch to when the player uses the 'lastinv' command
 //-----------------------------------------------------------------------------
@@ -875,7 +846,6 @@ void CBasePlayer::SelectLastItem(void)
 	SelectItem( m_hLastWeapon.Get()->GetClassname(), m_hLastWeapon.Get()->GetSubType() );
 }
 
-
 //-----------------------------------------------------------------------------
 // Purpose: Abort any reloads we're in
 //-----------------------------------------------------------------------------
@@ -913,7 +883,6 @@ void CBasePlayer::RemoveFromPlayerSimulationList( CBaseEntity *other )
 
 	Assert( other->IsPlayerSimulated() );
 	Assert( other->GetSimulatingPlayer() == this );
-
 
 	CHandle< CBaseEntity > h;
 	h = other;
@@ -1081,10 +1050,6 @@ CBaseEntity *CBasePlayer::FindUseEntity()
 	// NOTE: Some debris objects are useable too, so hit those as well
 	// A button, etc. can be made out of clip brushes, make sure it's +useable via a traceline, too.
 	int useableContents = MASK_SOLID | CONTENTS_DEBRIS | CONTENTS_PLAYERCLIP;
-
-#ifdef CSTRIKE_DLL
-	useableContents = MASK_NPCSOLID_BRUSHONLY | MASK_OPAQUE_AND_NPCS;
-#endif
 
 #ifdef HL1_DLL
 	useableContents = MASK_SOLID;
@@ -1577,7 +1542,6 @@ void CBasePlayer::CalcView( Vector &eyeOrigin, QAngle &eyeAngles, float &zNear, 
 #endif
 }
 
-
 void CBasePlayer::CalcViewModelView( const Vector& eyeOrigin, const QAngle& eyeAngles)
 {
 	for ( int i = 0; i < MAX_VIEWMODELS; i++ )
@@ -1601,18 +1565,7 @@ void CBasePlayer::CalcPlayerView( Vector& eyeOrigin, QAngle& eyeAngles, float& f
 #endif
 
 	VectorCopy( EyePosition(), eyeOrigin );
-#ifdef SIXENSE
-	if ( g_pSixenseInput->IsEnabled() )
-	{
-		VectorCopy( EyeAngles() + GetEyeAngleOffset(), eyeAngles );
-	}
-	else
-	{
-		VectorCopy( EyeAngles(), eyeAngles );
-	}
-#else
 	VectorCopy( EyeAngles(), eyeAngles );
-#endif
 
 #if defined( CLIENT_DLL )
 	if ( !prediction->InPrediction() )
@@ -1696,7 +1649,6 @@ void CBasePlayer::CalcVehicleView(
 
 }
 
-
 void CBasePlayer::CalcObserverView( Vector& eyeOrigin, QAngle& eyeAngles, float& fov )
 {
 #if defined( CLIENT_DLL )
@@ -1777,7 +1729,6 @@ void CBasePlayer::CalcViewRoll( QAngle& eyeAngles )
 	eyeAngles[ROLL] += side;
 }
 
-
 void CBasePlayer::DoMuzzleFlash()
 {
 	for ( int i = 0; i < MAX_VIEWMODELS; i++ )
@@ -1791,7 +1742,6 @@ void CBasePlayer::DoMuzzleFlash()
 
 	BaseClass::DoMuzzleFlash();
 }
-
 
 float CBasePlayer::GetFOVDistanceAdjustFactor()
 {
@@ -1825,7 +1775,6 @@ void CBasePlayer::MakeTracer( const Vector &vecTracerSrc, const trace_t &tr, int
 
 	BaseClass::MakeTracer( vecTracerSrc, tr, iTracerType );
 }
-
 
 void CBasePlayer::SharedSpawn()
 {
@@ -1865,7 +1814,6 @@ void CBasePlayer::SharedSpawn()
 		haptics->LocalPlayerReset();
 #endif
 }
-
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -2059,7 +2007,6 @@ void CBasePlayer::SetPlayerUnderwater( bool state )
 	}
 }
 
-
 void CBasePlayer::SetPreviouslyPredictedOrigin( const Vector &vecAbsOrigin )
 {
 	m_vecPreviouslyPredictedOrigin = vecAbsOrigin;
@@ -2091,4 +2038,3 @@ bool fogparams_t::operator !=( const fogparams_t& other ) const
 
 	return false;
 }
-

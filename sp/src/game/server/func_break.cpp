@@ -22,12 +22,6 @@
 #include "physics_impact_damage.h"
 #include "tier0/icommandline.h"
 
-#ifdef PORTAL
-	#include "portal_shareddefs.h"
-	#include "portal_util_shared.h"
-	#include "prop_portal_shared.h"
-#endif
-
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -433,11 +427,9 @@ void CBreakable::Precache( void )
 		break;
 #endif
 
-#if HL2_EPISODIC 
 	case matNone:
 		pGibName = "";
 		break;
-#endif
 
 	default:
 		Warning("%s (%s) at (%.3f %.3f %.3f) using obsolete or unknown material type.\n", GetClassname(), GetDebugName(), GetAbsOrigin().x, GetAbsOrigin().y, GetAbsOrigin().z );
@@ -889,30 +881,6 @@ void CBreakable::ResetOnGroundFlags(void)
 		}
 	}
 
-#ifdef PORTAL
-	// !!! HACK  This should work!
-	// Tell touching portals to fizzle
-	int iPortalCount = CProp_Portal_Shared::AllPortals.Count();
-	if( iPortalCount != 0 )
-	{
-		Vector vMin, vMax;
-		CollisionProp()->WorldSpaceAABB( &vMin, &vMax );
-
-		Vector vBoxCenter = ( vMin + vMax ) * 0.5f;
-		Vector vBoxExtents = ( vMax - vMin ) * 0.5f;
-
-		CProp_Portal **pPortals = CProp_Portal_Shared::AllPortals.Base();
-		for( int i = 0; i != iPortalCount; ++i )
-		{
-			CProp_Portal *pTempPortal = pPortals[i];
-			if( UTIL_IsBoxIntersectingPortal( vBoxCenter, vBoxExtents, pTempPortal ) )
-			{
-				pTempPortal->DoFizzleEffect( PORTAL_FIZZLE_KILLED, false );
-				pTempPortal->Fizzle();
-			}
-		}
-	}
-#endif
 }
 
 

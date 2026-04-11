@@ -579,7 +579,6 @@ bool CAI_Expresser::SpeakRawScene( const char *pszScene, float delay, AI_Respons
 	{
 		SpeechMsg( GetOuter(), "SpeakRawScene( %s, %f) %f\n", pszScene, delay, sceneLength );
 
-#if defined( HL2_EPISODIC ) || defined( TF_DLL )
 		char szInstanceFilename[256];
 		GetOuter()->GenderExpandString( pszScene, szInstanceFilename, sizeof( szInstanceFilename ) );
 		// Only mark ourselves as speaking if the scene has speech
@@ -587,9 +586,6 @@ bool CAI_Expresser::SpeakRawScene( const char *pszScene, float delay, AI_Respons
 		{
 			NoteSpeaking( sceneLength, delay );
 		}
-#else
-		NoteSpeaking( sceneLength, delay );
-#endif
 
 		return true;
 	}
@@ -975,7 +971,6 @@ void CAI_ExpresserHost_NPC_DoModifyOrAppendCriteria( CAI_BaseNPC *pSpeaker, AI_C
 // HPE_BEGIN:
 // [Forrest] Remove npc_speakall from Counter-Strike.
 //=============================================================================
-#ifndef CSTRIKE_DLL
 extern CBaseEntity *FindPickerEntity( CBasePlayer *pPlayer );
 CON_COMMAND( npc_speakall, "Force the npc to try and speak all their responses" )
 {
@@ -1011,7 +1006,6 @@ CON_COMMAND( npc_speakall, "Force the npc to try and speak all their responses" 
 		}
 	}
 }
-#endif
 //=============================================================================
 // HPE_END
 //=============================================================================

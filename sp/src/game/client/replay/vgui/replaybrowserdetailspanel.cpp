@@ -226,9 +226,7 @@ void CRecordsPanel::PerformLayout()
 		GetPos( nX, nY );
 		m_pClassImage->SetBounds( nX + nMargin, nY - flScale * nImageHeight + GetTall() - nMargin, nImageWidth * flScale, nImageHeight * flScale );
 
-#if !defined( TF_CLIENT_DLL )
 		m_pClassImage->SetVisible( false );
-#endif
 	}
 
 	SetTall( nHeight );
@@ -375,18 +373,6 @@ CKillsPanel::CKillsPanel( Panel *pParent, ReplayHandle_t hReplay )
 			// Construct path for image
 			char szImgPath[MAX_OSPATH] = "";
 
-#if defined( TF_CLIENT_DLL )
-			// Get the kill info
-			const CGenericClassBasedReplay::KillData_t *pKill = pReplay->GetKill( i );
-
-			char const *pClass = pKill->m_nPlayerClass == TF_CLASS_DEMOMAN
-				? "demo"
-				: g_aPlayerClassNames_NonLocalized[ pKill->m_nPlayerClass ];
-
-			V_snprintf( szImgPath, sizeof( szImgPath ), "../hud/leaderboard_class_%s", pClass );
-#elif defined( CSTRIKE_DLL )
-			V_strcpy( szImgPath, "../hud/scoreboard_dead" );
-#endif
 
 			// Get the image
 			IImage *pImage = scheme()->GetImage( szImgPath, true );
@@ -545,9 +531,7 @@ void CTitleEditPanel::ApplySchemeSettings( IScheme *pScheme )
 	m_pTitleEntry = dynamic_cast< TextEntry * >( FindChildByName( "TitleInput" ) );
 	m_pTitleEntry->SelectAllOnFocusAlways( true );
 	
-#if !defined( TF_CLIENT_DLL )
 	m_pTitleEntry->SetPaintBorderEnabled( false );
-#endif
 
 	// Setup title entry text
 	IQueryableReplayItem *pReplayItem = m_pItemManager->GetItem( m_hReplayItem );
@@ -858,9 +842,7 @@ CCutsPanel::CCutsPanel( Panel *pParent, ReplayHandle_t hReplay, int iSelectedPer
 		pNewButton->InvalidateLayout( true, true );
 		pNewButton->AddActionSignalTarget( this );
 		pNewButton->SetSelected( i == 0 );
-#if !defined( TF_CLIENT_DLL )
 		pNewButton->SetSelectedColor( Color( 0, 0, 0, 0 ), Color( 122, 25, 16, 255 ) );
-#endif
 
 		const int iPerformance = i - 1;
 		m_aButtons[ i ].m_pButton = pNewButton;
@@ -904,9 +886,7 @@ void CCutsPanel::ApplySchemeSettings( IScheme *pScheme )
 	FOR_EACH_BUTTON( i )
 	{
 		CExImageButton *pCurButton = m_aButtons[ i ].m_pButton;
-#if !defined( TF_CLIENT_DLL )
 		pCurButton->SetPaintBorderEnabled( false );
-#endif
 		pCurButton->InvalidateLayout( true, true );
 	}
 }
@@ -1403,12 +1383,10 @@ CReplayDetailsPanel::CReplayDetailsPanel( Panel *pParent, QueryableReplayItemHan
 	m_pInfoPanel = new EditablePanel( this, "InfoContainerPanel" );
 	m_pScrollPanel = new vgui::ScrollableEditablePanel( GetInset(), m_pInfoPanel, "StatsScroller" );
 	m_pScrollPanel->GetScrollbar()->SetAutohideButtons( true );
-#if !defined( TF_CLIENT_DLL )
 	for ( int i = 0; i < 2; ++i )
 	{
 		m_pScrollPanel->GetScrollbar()->GetButton( i )->SetPaintBorderEnabled( false );
 	}
-#endif
 	
 	m_pBasicInfoPanel = new CBasicLifeInfoPanel( m_pInfoPanel, m_hReplay );
 	m_pStatsPanel = new CStatsPanel( m_pInfoPanel, m_hReplay );
@@ -1507,17 +1485,6 @@ void CReplayDetailsPanel::PerformLayout()
 	int nInfoPanelsCurrentY = nInfoPanelsStartY;
 	int nRightColumnWidth = nInsetWidth - nScreenshotWidth - nLeftRightBuffer - XRES(20);
 
-#if defined( TF_CLIENT_DLL )
-	if ( m_pRecordsPanel->ShouldShow() )
-	{
-		m_pRecordsPanel->SetPos( nScreenshotWidth + nLeftRightBuffer, nInfoPanelsStartY );
-		m_pRecordsPanel->SetWide( nRightColumnWidth );
-		m_pRecordsPanel->InvalidateLayout( true, true );
-		m_pRecordsPanel->SetVisible( true );
-		nInfoPanelsCurrentY += m_pRecordsPanel->GetTall() + nBuffer;
-	}
-	else
-#endif
 	{
 		m_pRecordsPanel->SetVisible( false );
 	}

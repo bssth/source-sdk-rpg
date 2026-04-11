@@ -14,17 +14,12 @@
 #include "c_pixel_visibility.h"
 #endif
 
-#ifdef TF_CLIENT_DLL
-#include "tf_shareddefs.h"
-#endif
-
 #ifdef GAME_DLL
 #include "ai_utils.h"
 #endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
-
 
 //-----------------------------------------------------------------------------
 // Interface to allow the particle system to call back into the game code
@@ -56,7 +51,6 @@ public:
 
 	virtual int GetCollisionGroupFromName( const char *pszCollisionGroupName );
 
-
 	virtual int GetControllingObjectHitBoxInfo(
 		CParticleCollection *pParticles,
 		int nControlPointNumber,
@@ -74,10 +68,8 @@ public:
 	virtual void SetUpLightingEnvironment( const Vector& pos );
 };
 
-
 static CParticleSystemQuery s_ParticleSystemQuery;
 IParticleSystemQuery *g_pParticleSystemQuery = &s_ParticleSystemQuery;
-
 
 //-----------------------------------------------------------------------------
 // Exposes the interface (so tools can get at it)
@@ -179,7 +171,6 @@ static float GetSurfaceCoord( float flRand, float flMinX, float flMaxX )
 
 }
 
-
 void CParticleSystemQuery::GetRandomPointsOnControllingObjectHitBox( 
 	CParticleCollection *pParticles,
 	int nControlPointNumber, 
@@ -194,7 +185,6 @@ void CParticleSystemQuery::GetRandomPointsOnControllingObjectHitBox(
 {
 
 	bool bSucesss = false;
-
 
 #ifndef GAME_DLL
 
@@ -260,7 +250,6 @@ void CParticleSystemQuery::GetRandomPointsOnControllingObjectHitBox(
 
 								VectorTransform( vecLocalPosition, *hitboxbones[pBox->bone], vecTryWorldPosition );
 								
-								
 								float flPointGoodness = pParticles->RandomFloat( 0, 72 )
 									+ DotProduct( vecTryWorldPosition - vecBasePos, 
 												  vecDirectionalBias );
@@ -305,8 +294,6 @@ void CParticleSystemQuery::GetRandomPointsOnControllingObjectHitBox(
 			pMoveParent->GetRenderBounds( vecMin, vecMax  );
 			VecOrigin = pMoveParent->GetRenderOrigin();
 			matOrientation = pMoveParent->EntityToWorldTransform();
-
-			
 
 			Vector vecWorldPosition;
 			float u = 0, v = 0, w = 0;
@@ -384,7 +371,6 @@ void CParticleSystemQuery::GetRandomPointsOnControllingObjectHitBox(
 	}
 }
 
-
 int CParticleSystemQuery::GetControllingObjectHitBoxInfo(
 	CParticleCollection *pParticles,
 	int nControlPointNumber,
@@ -456,8 +442,6 @@ int CParticleSystemQuery::GetControllingObjectHitBoxInfo(
 #endif
 	return nRet;
 }
-
-
 
 bool CParticleSystemQuery::IsPointInControllingObjectHitBox( 
 	CParticleCollection *pParticles,
@@ -536,13 +520,11 @@ bool CParticleSystemQuery::IsPointInControllingObjectHitBox(
 	return bSuccess;
 }
 
-
 struct CollisionGroupNameRecord_t
 {
 	const char *m_pszGroupName;
 	int m_nGroupID;
 };
-
 
 static CollisionGroupNameRecord_t s_NameMap[]={
 	{ "NONE", COLLISION_GROUP_NONE },
@@ -551,11 +533,7 @@ static CollisionGroupNameRecord_t s_NameMap[]={
 	{ "NPC", COLLISION_GROUP_NPC },
 	{ "ACTOR", COLLISION_GROUP_NPC_ACTOR },
 	{ "PASSABLE", COLLISION_GROUP_PASSABLE_DOOR },	
-#if defined( TF_CLIENT_DLL )
-	{ "ROCKETS", TFCOLLISION_GROUP_ROCKETS },
-#endif
 };
-
 
 int CParticleSystemQuery::GetCollisionGroupFromName( const char *pszCollisionGroupName )
 {

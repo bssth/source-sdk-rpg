@@ -5,7 +5,6 @@
 //
 //=============================================================================//
 
-
 #include "cbase.h"
 #include "props_shared.h"
 #include "filesystem.h"
@@ -489,7 +488,6 @@ const char *CPropData::GetRandomChunkModel( const char *pszBreakableSection, int
 	return STRING(m_BreakableChunks[i].iszChunkModels[iRandom]);
 }
 
-
 // ensure that a model name from a qc file is properly formatted
 static const char *FixupModelName( char *pOut, int sizeOut, const char *pModelNameIn )
 {
@@ -512,7 +510,6 @@ static const char *FixupModelName( char *pOut, int sizeOut, const char *pModelNa
 
 	return pOut;
 }
-
 
 //-----------------------------------------------------------------------------
 // breakable prop functions
@@ -777,7 +774,6 @@ END_DATADESC()
 
 LINK_ENTITY_TO_CLASS( game_gib_manager, CGameGibManager );
 
-
 void CGameGibManager::Activate( void )
 {
 	m_LRU.Purge();
@@ -803,7 +799,6 @@ void CGameGibManager::UpdateMaxPieces()
 		m_iCurrentMaxPieces = m_iMaxPieces;
 	}
 }
-
 
 bool CGameGibManager::AllowedToSpawnGib( void )
 {
@@ -879,9 +874,6 @@ EHANDLE g_hGameGibManager;
 
 CGameGibManager *GetGibManager( void )
 {
-#ifndef HL2_EPISODIC
-	return NULL;
-#endif
 
 	if ( g_hGameGibManager == NULL )
 	{
@@ -1211,7 +1203,6 @@ void PropBreakableCreateAll( int modelindex, IPhysicsObject *pPhysics, const bre
 		}
 	}
 }
-
 
 void PropBreakableCreateAll( int modelindex, IPhysicsObject *pPhysics, const Vector &origin, const QAngle &angles, const Vector &velocity, const AngularImpulse &angularVelocity, float impactEnergyScale, float defBurstScale, int defCollisionGroup, CBaseEntity *pEntity, bool defaultLocation )
 {
@@ -1635,4 +1626,3 @@ CBaseEntity *CreateGibsFromList( CUtlVector<breakmodel_t> &list, int modelindex,
 
 	return pFirstBreakable;
 }
-

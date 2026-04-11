@@ -241,7 +241,7 @@ CHudElement::CHudElement( const char *pElementName )
 	m_bIsParentedToClientDLLRootPanel = false;
 
 	// Make this for all hud elements, but when its a bit safer
-#if defined( TF_CLIENT_DLL ) || defined( DOD_DLL )
+#if defined( DOD_DLL )
 	RegisterForRenderGroup( "global" );
 #endif
 }
@@ -378,9 +378,6 @@ CHud gHUD;  // global HUD object
 
 DECLARE_MESSAGE(gHUD, ResetHUD);
 
-#ifdef CSTRIKE_DLL
-DECLARE_MESSAGE(gHUD, SendAudio);
-#endif
 
 CHud::CHud()
 {
@@ -396,9 +393,6 @@ void CHud::Init( void )
 {
 	HOOK_HUD_MESSAGE( gHUD, ResetHUD );
 	
-#ifdef CSTRIKE_DLL
-	HOOK_HUD_MESSAGE( gHUD, SendAudio );
-#endif
 
 	InitFonts();
 
@@ -976,13 +970,6 @@ bool CHud::IsHidden( int iHudFlags )
 		return true;
 
 	// Hide all HUD elements during screenshot if the user's set hud_freezecamhide ( TF2 )
-#if defined( TF_CLIENT_DLL )
-	extern bool IsTakingAFreezecamScreenshot();
-	extern ConVar hud_freezecamhide;
-
-	if ( IsTakingAFreezecamScreenshot() && hud_freezecamhide.GetBool() )
-		return true;
-#endif
 
 	return ( ( iHudFlags & iHideHud ) != 0);
 }

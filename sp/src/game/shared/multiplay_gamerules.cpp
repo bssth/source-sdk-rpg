@@ -47,7 +47,6 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-
 REGISTER_GAMERULES_CLASS( CMultiplayRules );
 
 ConVar mp_chattime(
@@ -129,11 +128,11 @@ ConVar mp_clan_ready_signal( "mp_clan_ready_signal", "ready", FCVAR_GAMEDLL, "Te
 ConVar nextlevel( "nextlevel", 
 				  "", 
 				  FCVAR_GAMEDLL | FCVAR_NOTIFY,
-#if defined( CSTRIKE_DLL ) || defined( TF_DLL )
+#if defined(TF_DLL)
 				  "If set to a valid map name, will trigger a changelevel to the specified map at the end of the round" );
 #else
 				  "If set to a valid map name, will change to this map during the next changelevel" );
-#endif // CSTRIKE_DLL || TF_DLL
+#endif
 					  					  
 #endif
 
@@ -320,9 +319,7 @@ bool CMultiplayRules::Init()
 	return BaseClass::Init();
 }
 
-
 #ifdef CLIENT_DLL
-
 
 #else 
 
@@ -347,16 +344,13 @@ bool CMultiplayRules::Init()
 // HPE_BEGIN:
 // [menglish] CS doesn't have the suitcharger either
 //=============================================================================
-#ifndef CSTRIKE_DLL
 ConVarRef suitcharger( "sk_suitcharger" );
 		suitcharger.SetValue( 30 );
- #endif
 //=============================================================================
 // HPE_END
 //=============================================================================
 #endif
 	}
-
 
 	//=========================================================
 	//=========================================================
@@ -442,7 +436,6 @@ ConVarRef suitcharger( "sk_suitcharger" );
 			}
 		}
 	}
-
 
 	//=========================================================
 	//=========================================================
@@ -995,7 +988,6 @@ ConVarRef suitcharger( "sk_suitcharger" );
 		return GR_ITEM_RESPAWN_YES;
 	}
 
-
 	//=========================================================
 	// At what time in the future may this Item respawn?
 	//=========================================================
@@ -1037,14 +1029,12 @@ ConVarRef suitcharger( "sk_suitcharger" );
 		return true;
 	}
 
-
 	//=========================================================
 	//=========================================================
 	float CMultiplayRules::FlHealthChargerRechargeTime( void )
 	{
 		return 60;
 	}
-
 
 	float CMultiplayRules::FlHEVChargerRechargeTime( void )
 	{
@@ -1079,7 +1069,6 @@ ConVarRef suitcharger( "sk_suitcharger" );
 
 		return pentSpawnSpot;
 	}
-
 
 	//=========================================================
 	//=========================================================
@@ -1372,7 +1361,7 @@ ConVarRef suitcharger( "sk_suitcharger" );
 			g_pStringTableServerMapCycle->AddString( CBaseEntity::IsServer(), "ServerMapCycle", sFileList.Length() + 1, sFileList.String() );
 		}
 
-#if defined ( TF_DLL ) || defined ( TF_CLIENT_DLL )
+#if defined(TF_DLL)
 		if ( g_pStringTableServerPopFiles )
 		{
 			// Search for all pop files that are prefixed with the current map name
@@ -1484,9 +1473,7 @@ ConVarRef suitcharger( "sk_suitcharger" );
 		engine->ChangeLevel( pszMap, NULL );
 	}
 
-
 #endif		
-
 
 	//-----------------------------------------------------------------------------
 	// Purpose: Shared script resource of voice menu commands and hud strings

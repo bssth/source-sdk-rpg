@@ -38,9 +38,7 @@
 #include "ai_memory.h"
 #include "npc_attackchopper.h"
 
-#ifdef HL2_EPISODIC
 #include "physics_bone_follower.h"
-#endif // HL2_EPISODIC
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -230,18 +228,16 @@ public:
 
 	float GetBombLifetime();
 
-#ifdef HL2_EPISODIC
 	virtual void OnPhysGunPickup(CBasePlayer *pPhysGunUser, PhysGunPickup_t reason );
 	virtual void OnPhysGunDrop( CBasePlayer *pPhysGunUser, PhysGunDrop_t reason );
 	virtual Class_T Classify( void ) {	return CLASS_MISSILE; }
 	void SetCollisionObject( CBaseEntity *pEntity ) { m_hCollisionObject = pEntity; }
-	void SendMissEvent();	
+	void SendMissEvent();
 	bool IsThrownByPlayer();
 
 	virtual bool	ShouldPuntUseLaunchForces( PhysGunForce_t reason ) { return ( reason == PHYSGUN_FORCE_LAUNCHED ); }
 
 	void InputExplodeIn( inputdata_t &inputdata );
-#endif // HL2_EPISODIC
 
 private:
 	// Pow!
@@ -263,13 +259,11 @@ private:
 	bool m_bBlinkerAtTop;
 
 
-#ifdef HL2_EPISODIC
 	float m_flLifetime;
 	EHANDLE	m_hCollisionObject;	// Pointer to object we re-enable collisions with when picked up
 	bool m_bPickedUp;
 	float m_flBlinkFastTime;
 	COutputEvent m_OnPhysGunOnlyPickup;
-#endif // HL2_EPISODIC
 };
 
 
@@ -370,9 +364,7 @@ public:
 	virtual bool	CreateComponents();
 	virtual int		ObjectCaps();
 
-#ifdef HL2_EPISODIC
 	virtual bool	CreateVPhysics( void );
-#endif // HL2_EPISODIC
 
 	virtual void	UpdateOnRemove();
 	virtual void	StopLoopingSounds();
@@ -676,10 +668,8 @@ private:
 		SHOOT_MODE_FAST,
 	};
 
-#ifdef HL2_EPISODIC
 	void InitBoneFollowers( void );
 	CBoneFollowerManager	m_BoneFollowerManager;
-#endif // HL2_EPISODIC
 
 	CAI_Spotlight	m_Spotlight;
 	Vector		m_angGun;
@@ -766,12 +756,10 @@ private:
 	EHANDLE		m_hCrashPoint;
 };
 
-#ifdef HL2_EPISODIC
 static const char *pFollowerBoneNames[] =
 {
 	"Chopper.Body"
 };
-#endif // HL2_EPISODIC
 
 LINK_ENTITY_TO_CLASS( npc_helicopter, CNPC_AttackHelicopter );
 
@@ -780,9 +768,7 @@ BEGIN_DATADESC( CNPC_AttackHelicopter )
 	DEFINE_ENTITYFUNC( FlyTouch ),
 
 	DEFINE_EMBEDDED( m_Spotlight ),
-#ifdef HL2_EPISODIC
 	DEFINE_EMBEDDED( m_BoneFollowerManager ),
-#endif
 	DEFINE_FIELD( m_angGun,				FIELD_VECTOR ),
 	DEFINE_FIELD( m_vecAngAcceleration,	FIELD_VECTOR ),
 	DEFINE_FIELD( m_iAmmoType,			FIELD_INTEGER ),
@@ -1063,9 +1049,7 @@ void CNPC_AttackHelicopter::Spawn( void )
 	
 	SetHullSizeNormal();
 
-#ifdef HL2_EPISODIC
 	CreateVPhysics();
-#endif // HL2_EPISODIC
 
 	SetPauseState( PAUSE_NO_PAUSE );
 
@@ -1109,16 +1093,14 @@ void CNPC_AttackHelicopter::Spawn( void )
 	m_hCrashPoint.Set( NULL );
 }
 
-#ifdef HL2_EPISODIC
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 bool CNPC_AttackHelicopter::CreateVPhysics( void )
 {
 	InitBoneFollowers();
 	return BaseClass::CreateVPhysics();
 }
-#endif // HL2_EPISODIC
 
 //------------------------------------------------------------------------------
 // Startup the chopper
@@ -1306,9 +1288,7 @@ void CNPC_AttackHelicopter::UpdateOnRemove()
 		}
 	}
 
-#ifdef HL2_EPISODIC
 	m_BoneFollowerManager.DestroyBoneFollowers();
-#endif // HL2_EPISODIC
 }
 
 
@@ -2388,12 +2368,10 @@ void CNPC_AttackHelicopter::ShootAtFacingDirection( const Vector &vBasePos, cons
 		}
 	}
 
-#ifdef HL2_EPISODIC 
 	if( GetEnemy() != NULL )
 	{
 		CSoundEnt::InsertSound( SOUND_DANGER, GetEnemy()->WorldSpaceCenter(), 180.0f, 0.5f, this, SOUNDENT_CHANNEL_REPEATED_DANGER );
 	}
-#endif//HL2_EPISODIC
 
 	DoMuzzleFlash();
 
@@ -2701,7 +2679,6 @@ CGrenadeHelicopter *CNPC_AttackHelicopter::SpawnBombEntity( const Vector &vecPos
 	DispatchSpawn( pGrenade );
 	pGrenade->SetExplodeOnContact( m_bBombsExplodeOnContact );
 
-#ifdef HL2_EPISODIC
 	// Disable collisions with the owner's bone followers while we drop
 	physfollower_t *pFollower = m_BoneFollowerManager.GetBoneFollower( 0 );
 	if ( pFollower )
@@ -2710,7 +2687,6 @@ CGrenadeHelicopter *CNPC_AttackHelicopter::SpawnBombEntity( const Vector &vecPos
 		PhysDisableEntityCollisions( pBoneFollower, pGrenade );
 		pGrenade->SetCollisionObject( pBoneFollower );
 	}
-#endif // HL2_EPISODIC
 
 	return pGrenade;
 }
@@ -3547,7 +3523,6 @@ void Chopper_BecomeChunks( CBaseEntity *pChopper )
 	Vector vecForward, vecUp;
 	pChopper->GetVectors( &vecForward, NULL, &vecUp );
 
-#ifdef HL2_EPISODIC
 	CNPC_AttackHelicopter *pAttackHelicopter;
 	pAttackHelicopter = dynamic_cast<CNPC_AttackHelicopter*>(pChopper);
 	if( pAttackHelicopter != NULL )
@@ -3566,7 +3541,6 @@ void Chopper_BecomeChunks( CBaseEntity *pChopper )
 			AngleVectors( vecChunkAngles, &vecForward, NULL, &vecUp );
 		}
 	}
-#endif//HL2_EPISODIC
 
 
 	Vector vecChunkPos = pChopper->GetAbsOrigin();
@@ -4712,10 +4686,8 @@ void CNPC_AttackHelicopter::Hunt( void )
 		}
 	}
 
-#ifdef HL2_EPISODIC
 	// Update our bone followers
 	m_BoneFollowerManager.UpdateBoneFollowers(this);
-#endif // HL2_EPISODIC
 }
 
 //-----------------------------------------------------------------------------
@@ -4730,9 +4702,8 @@ void	CNPC_AttackHelicopter::PopulatePoseParameters( void )
 	BaseClass::PopulatePoseParameters();
 }
 
-#ifdef HL2_EPISODIC
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CNPC_AttackHelicopter::InitBoneFollowers( void )
 {
@@ -4743,7 +4714,6 @@ void CNPC_AttackHelicopter::InitBoneFollowers( void )
 	// Init our followers
 	m_BoneFollowerManager.InitBoneFollowers( this, ARRAYSIZE(pFollowerBoneNames), pFollowerBoneNames );
 }
-#endif // HL2_EPISODIC
 
 //-----------------------------------------------------------------------------
 // Where are how should we avoid?
@@ -4858,7 +4828,6 @@ BEGIN_DATADESC( CGrenadeHelicopter )
 	DEFINE_FIELD( m_hWarningSprite,		FIELD_EHANDLE ),
 	DEFINE_FIELD( m_bBlinkerAtTop,		FIELD_BOOLEAN ),
 
-#ifdef HL2_EPISODIC
 	DEFINE_FIELD( m_flLifetime,			FIELD_FLOAT ),
 	DEFINE_FIELD( m_hCollisionObject,	FIELD_EHANDLE ),
 	DEFINE_FIELD( m_bPickedUp,			FIELD_BOOLEAN ),
@@ -4867,7 +4836,6 @@ BEGIN_DATADESC( CGrenadeHelicopter )
 	DEFINE_INPUTFUNC( FIELD_FLOAT, "ExplodeIn", InputExplodeIn ),
 
 	DEFINE_OUTPUT( m_OnPhysGunOnlyPickup, "OnPhysGunOnlyPickup" ),
-#endif // HL2_EPISODIC
 
 	DEFINE_THINKFUNC( ExplodeThink ),
 	DEFINE_THINKFUNC( AnimateThink ),
@@ -4982,13 +4950,12 @@ void CGrenadeHelicopter::UpdateOnRemove()
 }
 
 
-#ifdef HL2_EPISODIC
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
 void CGrenadeHelicopter::InputExplodeIn( inputdata_t &inputdata )
 {
 	m_flLifetime = inputdata.value.Float();
-	
+
 	if ( HasSpawnFlags( SF_HELICOPTER_GRENADE_DUD ) )
 	{
 		// We are a dud no more!
@@ -4999,7 +4966,6 @@ void CGrenadeHelicopter::InputExplodeIn( inputdata_t &inputdata )
 	m_bActivated = false;
 	BecomeActive();
 }
-#endif
 
 
 //------------------------------------------------------------------------------
@@ -5042,9 +5008,7 @@ void CGrenadeHelicopter::BecomeActive()
 
 	SetContextThink( &CGrenadeHelicopter::WarningBlinkerThink, gpGlobals->curtime + (GetBombLifetime() - 2.0f), s_pWarningBlinkerContext );
 
-#ifdef HL2_EPISODIC
 	m_flBlinkFastTime = gpGlobals->curtime + GetBombLifetime() - 1.0f;
-#endif//HL2_EPISODIC
 }
 
 
@@ -5067,10 +5031,6 @@ void CGrenadeHelicopter::RampSoundThink( )
 //------------------------------------------------------------------------------
 void CGrenadeHelicopter::WarningBlinkerThink()
 {
-#ifndef HL2_EPISODIC
-	return;
-#endif
-
 /*
 	if( !m_hWarningSprite.Get() )
 	{
@@ -5113,7 +5073,6 @@ void CGrenadeHelicopter::WarningBlinkerThink()
 	// Frighten people
 	CSoundEnt::InsertSound ( SOUND_DANGER, WorldSpaceCenter(), g_helicopter_bomb_danger_radius.GetFloat(), 0.2f, this, SOUNDENT_CHANNEL_REPEATED_DANGER );
 
-#ifdef HL2_EPISODIC
 	if( gpGlobals->curtime >= m_flBlinkFastTime )
 	{
 		SetContextThink( &CGrenadeHelicopter::WarningBlinkerThink, gpGlobals->curtime + 0.1f, s_pWarningBlinkerContext );
@@ -5122,7 +5081,6 @@ void CGrenadeHelicopter::WarningBlinkerThink()
 	{
 		SetContextThink( &CGrenadeHelicopter::WarningBlinkerThink, gpGlobals->curtime + 0.2f, s_pWarningBlinkerContext );
 	}
-#endif//HL2_EPISODIC
 }
 
 //------------------------------------------------------------------------------
@@ -5206,11 +5164,7 @@ void CGrenadeHelicopter::VPhysicsCollision( int index, gamevcollisionevent_t *pE
 //------------------------------------------------------------------------------
 float CGrenadeHelicopter::GetBombLifetime()
 {
-#if HL2_EPISODIC
 	return m_flLifetime;
-#else
-	return BOMB_LIFETIME;
-#endif
 }
 
 
@@ -5268,7 +5222,6 @@ void CGrenadeHelicopter::DoExplosion( const Vector &vecOrigin, const Vector &vec
 //------------------------------------------------------------------------------
 void CGrenadeHelicopter::ExplodeThink(void)
 {
-#ifdef HL2_EPISODIC
 	// remember if we were thrown by player, we can only determine this prior to explosion
 	bool bIsThrownByPlayer = IsThrownByPlayer();
 	int iHealthBefore = 0;
@@ -5278,13 +5231,11 @@ void CGrenadeHelicopter::ExplodeThink(void)
 	{
 		iHealthBefore = pOwner->GetHealth();
 	}
-#endif // HL2_EPISODIC
 
 	Vector vecVelocity;
 	GetVelocity( &vecVelocity, NULL );
 	DoExplosion( GetAbsOrigin(), vecVelocity );
 
-#ifdef HL2_EPISODIC
 	// if we were thrown by player, look at health of helicopter after explosion and determine if we damaged it
 	if ( bIsThrownByPlayer && pOwner && ( iHealthBefore > 0 ) )
 	{
@@ -5295,8 +5246,6 @@ void CGrenadeHelicopter::ExplodeThink(void)
 			SendMissEvent();
 		}
 	}
-#endif // HL2_EPISODIC
-
 }
 
 
@@ -5342,7 +5291,6 @@ void CGrenadeHelicopter::ExplodeConcussion( CBaseEntity *pOther )
 }
 
 
-#ifdef HL2_EPISODIC
 //-----------------------------------------------------------------------------
 // Purpose: The bomb will act differently when picked up by the player
 //-----------------------------------------------------------------------------
@@ -5377,10 +5325,8 @@ void CGrenadeHelicopter::OnPhysGunPickup(CBasePlayer *pPhysGunUser, PhysGunPicku
 
 			SetContextThink( &CGrenadeHelicopter::WarningBlinkerThink, gpGlobals->curtime + GetBombLifetime() - 2.0f, s_pWarningBlinkerContext );
 
-#ifdef HL2_EPISODIC
 			m_nSkin = (int)SKIN_REGULAR;
 			m_flBlinkFastTime = gpGlobals->curtime + GetBombLifetime() - 1.0f;
-#endif//HL2_EPISODIC
 			
 			// Stop us from sparing damage to the helicopter that dropped us
 			SetOwnerEntity( pPhysGunUser );
@@ -5438,11 +5384,9 @@ void CGrenadeHelicopter::SendMissEvent()
 	}
 }
 
-#endif // HL2_EPISODIC
-
 //-----------------------------------------------------------------------------
 //
-// This entity is used to create little force spheres that the helicopters should avoid. 
+// This entity is used to create little force spheres that the helicopters should avoid.
 //
 //-----------------------------------------------------------------------------
 CUtlVector< CAvoidSphere::AvoidSphereHandle_t > CAvoidSphere::s_AvoidSpheres; 

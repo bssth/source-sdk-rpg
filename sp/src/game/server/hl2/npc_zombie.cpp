@@ -105,9 +105,6 @@ public:
 	int TranslateSchedule( int scheduleType );
 	char* GetReadableName(void) { return "Zombie"; }
 
-#ifndef HL2_EPISODIC
-	void CheckFlinches() {} // Zombie has custom flinch code
-#endif // HL2_EPISODIC
 
 	Activity NPC_TranslateActivity( Activity newActivity );
 
@@ -276,11 +273,7 @@ void CZombie::Spawn( void )
 
 	m_fIsHeadless = false;
 
-#ifdef HL2_EPISODIC
 	SetBloodColor( BLOOD_COLOR_ZOMBIE );
-#else
-	SetBloodColor( BLOOD_COLOR_GREEN );
-#endif // HL2_EPISODIC
 
 	m_iHealth			= sk_zombie_health.GetFloat();
 	m_flFieldOfView		= 0.2;
@@ -822,20 +815,6 @@ void CZombie::Extinguish()
 //---------------------------------------------------------
 int CZombie::OnTakeDamage_Alive( const CTakeDamageInfo &inputInfo )
 {
-#ifndef HL2_EPISODIC
-	if ( inputInfo.GetDamageType() & DMG_BUCKSHOT )
-	{
-		if( !m_fIsTorso && inputInfo.GetDamage() > (m_iMaxHealth/3) )
-		{
-			// Always flinch if damaged a lot by buckshot, even if not shot in the head.
-			// The reason for making sure we did at least 1/3rd of the zombie's max health
-			// is so the zombie doesn't flinch every time the odd shotgun pellet hits them,
-			// and so the maximum number of times you'll see a zombie flinch like this is 2.(sjb)
-			AddGesture( ACT_GESTURE_FLINCH_HEAD );
-		}
-	}
-#endif // HL2_EPISODIC
-
 	return BaseClass::OnTakeDamage_Alive( inputInfo );
 }
 
@@ -843,7 +822,6 @@ int CZombie::OnTakeDamage_Alive( const CTakeDamageInfo &inputInfo )
 //-----------------------------------------------------------------------------
 bool CZombie::IsHeavyDamage( const CTakeDamageInfo &info )
 {
-#ifdef HL2_EPISODIC
 	if ( info.GetDamageType() & DMG_BUCKSHOT )
 	{
 		if ( !m_fIsTorso && info.GetDamage() > (m_iMaxHealth/3) )
@@ -866,7 +844,6 @@ bool CZombie::IsHeavyDamage( const CTakeDamageInfo &info )
 			return true;
 		}
 	}
-#endif // HL2_EPISODIC
 
 	return BaseClass::IsHeavyDamage(info);
 }

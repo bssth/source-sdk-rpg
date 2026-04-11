@@ -189,7 +189,6 @@ static void RagdollAddSolid( IPhysicsEnvironment *pPhysEnv, ragdoll_t &ragdoll, 
 	}
 }
 
-
 static void RagdollAddConstraint( IPhysicsEnvironment *pPhysEnv, ragdoll_t &ragdoll, const ragdollparams_t &params, constraint_ragdollparams_t &constraint )
 {
 	if( constraint.childIndex == constraint.parentIndex )
@@ -201,7 +200,6 @@ static void RagdollAddConstraint( IPhysicsEnvironment *pPhysEnv, ragdoll_t &ragd
 	if ( constraint.childIndex >= 0 && constraint.parentIndex >= 0 )
 	{
 		Assert(constraint.childIndex<ragdoll.listCount);
-
 
 		ragdollelement_t &childElement = ragdoll.list[constraint.childIndex];
 		// save parent index
@@ -237,7 +235,6 @@ static void RagdollAddConstraint( IPhysicsEnvironment *pPhysEnv, ragdoll_t &ragd
 		}
 	}
 }
-
 
 static void RagdollCreateObjects( IPhysicsEnvironment *pPhysEnv, ragdoll_t &ragdoll, const ragdollparams_t &params )
 {
@@ -380,7 +377,6 @@ void RagdollActivate( ragdoll_t &ragdoll, vcollide_t *pCollide, int modelIndex, 
 	}
 }
 
-
 bool RagdollCreate( ragdoll_t &ragdoll, const ragdollparams_t &params, IPhysicsEnvironment *pPhysEnv )
 {
 	RagdollCreateObjects( pPhysEnv, ragdoll, params );
@@ -432,7 +428,6 @@ bool RagdollCreate( ragdoll_t &ragdoll, const ragdollparams_t &params, IPhysicsE
 	return true;
 }
 
-
 void RagdollApplyAnimationAsVelocity( ragdoll_t &ragdoll, const matrix3x4_t *pPrevBones, const matrix3x4_t *pCurrentBones, float dt )
 {
 	for ( int i = 0; i < ragdoll.listCount; i++ )
@@ -477,7 +472,6 @@ void RagdollApplyAnimationAsVelocity( ragdoll_t &ragdoll, const matrix3x4_t *pBo
 		ragdoll.list[i].pObject->AddVelocity( &velocity, &localAngVelocity );
 	}
 }
-
 
 void RagdollDestroy( ragdoll_t &ragdoll )
 {
@@ -624,7 +618,6 @@ void RagdollSolveSeparation( ragdoll_t &ragdoll, CBaseEntity *pEntity )
 			if ( dir.LengthSqr() > 1.0f )
 			{
 				// this fixes a bug in ep2 with antlion grubs, but causes problems in TF2 - revisit, but disable for TF now
-#if !defined(TF_CLIENT_DLL)
 				// heuristic: guess that anything separated and small mass ratio is in some state that's 
 				// keeping the solver from fixing it
 				float mass = element.pObject->GetMass();
@@ -638,7 +631,6 @@ void RagdollSolveSeparation( ragdoll_t &ragdoll, CBaseEntity *pEntity )
 					++fixCount;
 					continue;
 				}
-#endif
 
 				if ( PhysHasContactWithOtherInDirection(element.pObject, dir) )
 				{
@@ -769,14 +761,10 @@ bool ShouldRemoveThisRagdoll( CBaseAnimating *pRagdoll )
 	return false;
 }
 
-
-
-
 //-----------------------------------------------------------------------------
 // Cull stale ragdolls. There is an ifdef here: one version for episodic, 
 // one for everything else.
 //-----------------------------------------------------------------------------
-#if HL2_EPISODIC
 
 void CRagdollLRURetirement::Update( float frametime ) // EPISODIC VERSION
 {
@@ -913,93 +901,6 @@ void CRagdollLRURetirement::Update( float frametime ) // EPISODIC VERSION
 	}
 }
 
-#else
-
-void CRagdollLRURetirement::Update( float frametime ) // Non-episodic version
-{
-	VPROF( "CRagdollLRURetirement::Update" );
-	// Compress out dead items
-	int i, next;
-
-	int iMaxRagdollCount = m_iMaxRagdolls;
-
-	if ( iMaxRagdollCount == -1 )
-	{
-		iMaxRagdollCount = g_ragdoll_maxcount.GetInt();
-	}
-
-	// fade them all for the low violence version
-	if ( g_RagdollLVManager.IsLowViolence() )
-	{
-		iMaxRagdollCount = 0;
-	}
-	m_iRagdollCount = 0;
-	m_iSimulatedRagdollCount = 0;
-
-	for ( i = m_LRU.Head(); i < m_LRU.InvalidIndex(); i = next )
-	{
-		next = m_LRU.Next(i);
-		CBaseAnimating *pRagdoll = m_LRU[i].Get();
-		if ( pRagdoll )
-		{
-			m_iRagdollCount++;
-			IPhysicsObject *pObject = pRagdoll->VPhysicsGetObject();
-			if (pObject && !pObject->IsAsleep())
-			{
-				m_iSimulatedRagdollCount++;
-			}
-			if ( m_LRU.Count() > iMaxRagdollCount )
-			{
-				//Found one, we're done.
-				if ( ShouldRemoveThisRagdoll( m_LRU[i] ) == true )
-				{
-#ifdef CLIENT_DLL
-					m_LRU[ i ]->SUB_Remove();
-#else
-					m_LRU[ i ]->SUB_StartFadeOut( 0 );
-#endif
-
-					m_LRU.Remove(i);
-					return;
-				}
-			}
-		}
-		else 
-		{
-			m_LRU.Remove(i);
-		}
-	}
-
-
-	//////////////////////////////
-	///   ORIGINAL ALGORITHM   ///
-	//////////////////////////////
-	// not episodic -- this is the original mechanism
-
-	for ( i = m_LRU.Head(); i < m_LRU.InvalidIndex(); i = next )
-	{
-		if ( m_LRU.Count() <=  iMaxRagdollCount )
-			break;
-
-		next = m_LRU.Next(i);
-
-		CBaseAnimating *pRagdoll = m_LRU[i].Get();
-
-		//Just ignore it until we're done burning/dissolving.
-		if ( pRagdoll && pRagdoll->GetEffectEntity() )
-			continue;
-
-#ifdef CLIENT_DLL
-		m_LRU[ i ]->SUB_Remove();
-#else
-		m_LRU[ i ]->SUB_StartFadeOut( 0 );
-#endif
-		m_LRU.Remove(i);
-	}
-}
-
-#endif // HL2_EPISODIC
-
 //This is pretty hacky, it's only called on the server so it just calls the update method.
 void CRagdollLRURetirement::FrameUpdatePostEntityThink( void )
 {
@@ -1048,7 +949,6 @@ void CRagdollLRURetirement::MoveToTopOfLRU( CBaseAnimating *pRagdoll, bool bImpo
 	m_LRU.AddToTail( pRagdoll );
 }
 
-
 //EFFECT/ENTITY TRANSFERS
 
 //CLIENT
@@ -1058,8 +958,6 @@ void CRagdollLRURetirement::MoveToTopOfLRU( CBaseAnimating *pRagdoll, bool bImpo
 #define DEFAULT_MODEL_FADE_START 1.9f
 #define DEFAULT_MODEL_FADE_LENGTH 0.1f
 #define DEFAULT_FADEIN_LENGTH 1.0f
-
-
 
 C_EntityDissolve *DissolveEffect( C_BaseEntity *pTarget, float flTime )
 {
@@ -1119,7 +1017,6 @@ C_EntityFlame *FireEffect( C_BaseAnimating *pTarget, C_BaseEntity *pServerFire, 
 		pFire->OnDataChanged( DATA_UPDATE_CREATED );
 		pFire->SetAbsOrigin( pTarget->GetAbsOrigin() );
 
-#ifdef HL2_EPISODIC
 		if ( pServerFire )
 		{
 			if ( pServerFire->IsEffectActive(EF_DIMLIGHT) )
@@ -1131,7 +1028,6 @@ C_EntityFlame *FireEffect( C_BaseAnimating *pTarget, C_BaseEntity *pServerFire, 
 				pFire->AddEffects( EF_BRIGHTLIGHT );
 			}
 		}
-#endif
 
 		//Play a sound
 		CPASAttenuationFilter filter( pTarget );
@@ -1158,8 +1054,6 @@ void C_BaseAnimating::IgniteRagdoll( C_BaseAnimating *pSource )
 		}
 	}
 }
-
-
 
 void C_BaseAnimating::TransferDissolveFrom( C_BaseAnimating *pSource )
 {

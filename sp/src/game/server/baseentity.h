@@ -178,16 +178,6 @@ enum Class_T
 	NUM_AI_CLASSES
 };
 
-#elif defined( CSTRIKE_DLL )
-
-enum Class_T
-{
-	CLASS_NONE = 0,
-	CLASS_PLAYER,
-	CLASS_PLAYER_ALLY,
-	NUM_AI_CLASSES
-};
-
 #else
 
 enum Class_T

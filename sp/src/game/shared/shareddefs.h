@@ -13,7 +13,6 @@
 
 #define TICK_INTERVAL			(gpGlobals->interval_per_tick)
 
-
 #define TIME_TO_TICKS( dt )		( (int)( 0.5f + (float)(dt) / TICK_INTERVAL ) )
 #define TICKS_TO_TIME( t )		( TICK_INTERVAL *( t ) )
 #define ROUND_TO_TICKS( t )		( TICK_INTERVAL * TIME_TO_TICKS( t ) )
@@ -102,7 +101,7 @@ public:
 
 #define MAX_CLIMB_SPEED		200
 
-#if defined(TF_DLL) || defined(TF_CLIENT_DLL)
+#if defined(TF_DLL)
 	#define TIME_TO_DUCK		0.2
 	#define TIME_TO_DUCK_MS		200.0f
 #else
@@ -212,7 +211,6 @@ enum CastVote
 
 #define MAX_SUIT_DEVICES			3
 
-
 //===================================================================================================================
 // Player Defines
 
@@ -224,11 +222,7 @@ enum CastVote
 //You might be wondering why these aren't multiple of 2. Well the reason is that if servers decide to have HLTV or Replay enabled we need the extra slot.
 //This is ok since MAX_PLAYERS is used for code specific things like arrays and loops, but it doesn't really means that this is the max number of players allowed
 //Since this is decided by the gamerules (and it can be whatever number as long as its less than MAX_PLAYERS).
-#if defined( CSTRIKE_DLL )
-	#define MAX_PLAYERS				65  // Absolute max players supported
-#else
 	#define MAX_PLAYERS				33  // Absolute max players supported
-#endif
 
 #define MAX_PLACE_NAME_LENGTH		18
 
@@ -263,7 +257,6 @@ enum CastVote
 #define SKILL_MEDIUM	2
 #define SKILL_HARD		3
 
-
 // Weapon flags
 // -----------------------------------------
 //	Flags - NOTE: KEEP g_ItemFlags IN WEAPON_PARSE.CPP UPDATED WITH THESE
@@ -277,7 +270,6 @@ enum CastVote
 #define ITEM_FLAG_NOAMMOPICKUPS		(1<<6)	// Don't draw ammo pickup sprites/sounds when ammo is received
 #define ITEM_FLAG_NOITEMPICKUP		(1<<7)	// Don't draw weapon pickup when this weapon is picked up by the player
 // NOTE: KEEP g_ItemFlags IN WEAPON_PARSE.CPP UPDATED WITH THESE
-
 
 // Humans only have left and right hands, though we might have aliens with more
 //  than two, sigh
@@ -379,7 +371,6 @@ enum PLAYER_ANIM
 #endif
 #define DAMAGE_FOR_FALL_SPEED		100.0f / ( PLAYER_FATAL_FALL_SPEED - PLAYER_MAX_SAFE_FALL_SPEED ) // damage per unit per second.
 
-
 #define AUTOAIM_2DEGREES  0.0348994967025
 #define AUTOAIM_5DEGREES  0.08715574274766
 #define AUTOAIM_8DEGREES  0.1391731009601
@@ -412,7 +403,6 @@ enum PLAYER_ANIM
 #define DMG_ALWAYSGIB		(1 << 13)	// with this bit OR'd in, any damage type can be made to gib victims upon death.
 #define DMG_DROWN			(1 << 14)	// Drowning
 
-
 #define DMG_PARALYZE		(1 << 15)	// slows affected creature down
 #define DMG_NERVEGAS		(1 << 16)	// nerve toxins, very bad
 #define DMG_POISON			(1 << 17)	// blood poisoning - heals over time like drowning damage
@@ -438,8 +428,6 @@ enum PLAYER_ANIM
 
 // TODO: keep this up to date so all the mod-specific flags don't overlap anything.
 #define DMG_LASTGENERICFLAG	DMG_BUCKSHOT
-
-
 
 // settings for m_takedamage
 #define	DAMAGE_NO				0
@@ -538,11 +526,9 @@ enum
 	BLOOD_COLOR_GREEN,
 	BLOOD_COLOR_MECH,
 
-#if defined( HL2_EPISODIC )
 	BLOOD_COLOR_ANTLION,		// FIXME: Move to Base HL2
 	BLOOD_COLOR_ZOMBIE,			// FIXME: Move to Base HL2
 	BLOOD_COLOR_ANTLION_WORKER,
-#endif // HL2_EPISODIC
 };
 
 //-----------------------------------------------------------------------------
@@ -565,7 +551,6 @@ enum
 {
 	FX_WATER_IN_SLIME = 0x1,
 };
-
 
 // Shared think context stuff
 #define	MAX_CONTEXT_LENGTH		32
@@ -665,7 +650,6 @@ enum FireBulletsFlags_t
 	FIRE_BULLETS_ALLOW_WATER_SURFACE_IMPACTS = 0x4,	// If the shot hits water surface, still call DoImpactEffect
 	FIRE_BULLETS_TEMPORARY_DANGER_SOUND = 0x8,		// Danger sounds added from this impact can be stomped immediately if another is queued
 };
-
 
 struct FireBulletsInfo_t
 {
@@ -881,7 +865,7 @@ enum
 //-----------------------------------------------------------------------------
 // Commentary Mode
 //-----------------------------------------------------------------------------
-#if defined(TF_DLL) || defined(TF_CLIENT_DLL)
+#if defined(TF_DLL)
 #define GAME_HAS_NO_USE_KEY
 
 #if defined( SPROP_COORD )
@@ -923,7 +907,7 @@ enum
 	kActivityLookup_Missing = -1,			// has been searched for but wasn't found
 };
 
-#if defined(TF_DLL) || defined(TF_CLIENT_DLL)
+#if defined(TF_DLL)
 //-----------------------------------------------------------------------------
 // Vision Filters.
 //-----------------------------------------------------------------------------
@@ -943,6 +927,6 @@ enum
 
 	MAX_VISION_MODES
 };
-#endif // TF_DLL || TF_CLIENT_DLL
+#endif
 
 #endif // SHAREDDEFS_H

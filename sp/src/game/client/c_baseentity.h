@@ -1075,14 +1075,6 @@ public:
 	virtual const Vector &GetViewOffset() const;
 	virtual void		  SetViewOffset( const Vector& v );
 
-#ifdef SIXENSE
-	const Vector&		GetEyeOffset() const;
-	void				SetEyeOffset( const Vector& v );
-
-	const QAngle &		GetEyeAngleOffset() const;
-	void				SetEyeAngleOffset( const QAngle & qa );
-#endif
-
 	// Invalidates the abs state of all children
 	void InvalidatePhysicsRecursive( int nChangeFlags );
 
@@ -1320,10 +1312,6 @@ public:
 	// Object model index
 	short							m_nModelIndex;
 
-#ifdef TF_CLIENT_DLL
-	int								m_nModelIndexOverrides[MAX_VISION_MODES];
-#endif
-
 	char							m_takedamage;
 	char							m_lifeState;
 
@@ -1416,10 +1404,6 @@ protected:
 	// Object eye position
 	Vector							m_vecViewOffset;
 
-#if defined(SIXENSE)
-	Vector							m_vecEyeOffset;
-	QAngle							m_EyeAngleOffset;    
-#endif
 	// Allow studio models to tell us what their m_nBody value is
 	virtual int						GetStudioBody( void ) { return 0; }
 
@@ -1674,19 +1658,6 @@ protected:
 	CThreadFastMutex m_CalcAbsolutePositionMutex;
 	CThreadFastMutex m_CalcAbsoluteVelocityMutex;
 
-#ifdef TF_CLIENT_DLL
-	// TF prevents drawing of any entity attached to players that aren't items in the inventory of the player.
-	// This is to prevent servers creating fake cosmetic items and attaching them to players.
-public:
-	virtual bool ValidateEntityAttachedToPlayer( bool &bShouldRetry );
-	bool EntityDeemedInvalid( void ) { return (m_bValidatedOwner && m_bDeemedInvalid); }
-protected:
-	bool m_bValidatedOwner;
-	bool m_bDeemedInvalid;
-	bool m_bWasDeemedInvalid;
-	RenderMode_t m_PreviousRenderMode;
-	color32 m_PreviousRenderColor;
-#endif
 };
 
 EXTERN_RECV_TABLE(DT_BaseEntity);
@@ -1750,17 +1721,15 @@ inline bool C_BaseEntity::IsServerEntity( void )
 // Inline methods
 //-----------------------------------------------------------------------------
 inline matrix3x4_t &C_BaseEntity::EntityToWorldTransform()
-{ 
-	Assert( s_bAbsQueriesValid );
+{
 	CalcAbsolutePosition();
-	return m_rgflCoordinateFrame; 
+	return m_rgflCoordinateFrame;
 }
 
 inline const matrix3x4_t &C_BaseEntity::EntityToWorldTransform() const
 {
-	Assert( s_bAbsQueriesValid );
 	const_cast<C_BaseEntity*>(this)->CalcAbsolutePosition();
-	return m_rgflCoordinateFrame; 
+	return m_rgflCoordinateFrame;
 }
 
 inline const Vector& C_BaseEntity::GetNetworkOrigin() const
@@ -1812,7 +1781,6 @@ inline void C_BaseEntity::WorldToEntitySpace( const Vector &in, Vector *pOut ) c
 
 inline const Vector &C_BaseEntity::GetAbsVelocity( ) const
 {
-	Assert( s_bAbsQueriesValid );
 	const_cast<C_BaseEntity*>(this)->CalcAbsoluteVelocity();
 	return m_vecAbsVelocity;
 }
@@ -2073,30 +2041,6 @@ inline ClientRenderHandle_t& CBaseEntity::RenderHandle()
 {
 	return m_hRender;
 }
-
-#ifdef SIXENSE
-
-inline const Vector& CBaseEntity::GetEyeOffset() const 
-{ 
-	return m_vecEyeOffset; 
-}
-
-inline void CBaseEntity::SetEyeOffset( const Vector& v ) 
-{ 
-	m_vecEyeOffset = v; 
-}
-
-inline const QAngle & CBaseEntity::GetEyeAngleOffset() const 
-{ 
-	return m_EyeAngleOffset; 
-}
-
-inline void CBaseEntity::SetEyeAngleOffset( const QAngle & qa ) 
-{ 
-	m_EyeAngleOffset = qa; 
-}
-
-#endif
 
 //-----------------------------------------------------------------------------
 // Methods to cast away const

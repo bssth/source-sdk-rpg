@@ -336,10 +336,8 @@ public:
 	// Conservative collision volumes
 	static float gm_strideLength;
 
-#ifdef HL2_EPISODIC
 	void	StriderBusterAttached( CBaseEntity *pAttached );
 	void	StriderBusterDetached( CBaseEntity *pAttached );
-#endif // HL2_EPISODIC
 
 public:
 
@@ -501,9 +499,7 @@ private:
 
 	CAI_FreePass m_PlayerFreePass;
 	
-#ifdef HL2_EPISODIC
 	CUtlVector< EHANDLE >	m_hAttachedBusters;		// List of busters attached to us
-#endif // HL2_EPISODIC
 
 	static float	gm_zCannonDist;
 	static float	gm_zMinigunDist;

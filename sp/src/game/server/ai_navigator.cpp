@@ -1739,7 +1739,6 @@ bool CAI_Navigator::OnObstructionPreSteer( AILocalMoveGoal_t *pMoveGoal, float d
 		}
 	}
 
-#ifdef HL2_EPISODIC
 	// Build an avoidance path around a vehicle
 	if ( ai_vehicle_avoidance.GetBool() && pMoveGoal->directTrace.pObstruction != NULL && pMoveGoal->directTrace.pObstruction->GetServerVehicle() != NULL )
 	{
@@ -1747,7 +1746,7 @@ bool CAI_Navigator::OnObstructionPreSteer( AILocalMoveGoal_t *pMoveGoal, float d
 		AI_Waypoint_t *pOBB = GetPathfinder()->BuildOBBAvoidanceRoute( GetOuter()->GetAbsOrigin(),
 																	   GetGoalPos(),
 																	   pMoveGoal->directTrace.pObstruction,
-																	   GetNavTargetEntity(), 
+																	   GetNavTargetEntity(),
 																	   GetNavType() );
 
 		// See if we need to complete this navigation
@@ -1769,7 +1768,6 @@ bool CAI_Navigator::OnObstructionPreSteer( AILocalMoveGoal_t *pMoveGoal, float d
 			return true;
 		}
 	}
-#endif // HL2_EPISODIC
 
 	// Allow the NPC to override this behavior. Above logic takes priority
 	if ( GetOuter()->OnObstructionPreSteer( pMoveGoal, distClear, pResult ) )

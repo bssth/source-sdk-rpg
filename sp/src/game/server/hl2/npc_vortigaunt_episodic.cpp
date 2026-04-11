@@ -612,16 +612,8 @@ int CNPC_Vortigaunt::RangeAttack1Conditions( float flDot, float flDist )
 
 	// dvs: Allow up-close range attacks for episodic as the vort's melee
 	// attack is rather ineffective.
-#ifndef HL2_EPISODIC
-	if ( flDist <= 70 )
-	{
-		return( COND_TOO_CLOSE_TO_ATTACK );
-	}
-	else
-#else
 	if ( flDist < 32.0f )
 		return COND_TOO_CLOSE_TO_ATTACK;
-#endif // HL2_EPISODIC
 	if ( flDist > InnateRange1MaxRange() )
 	{
 		return( COND_TOO_FAR_TO_ATTACK );
@@ -630,8 +622,6 @@ int CNPC_Vortigaunt::RangeAttack1Conditions( float flDot, float flDist )
 	{
 		return( COND_NOT_FACING_ATTACK );
 	}
-
-#ifdef HL2_EPISODIC
 
 	// Do an extra check for workers near myself or the player
 	if ( IsAntlionWorker( GetEnemy() ) )
@@ -649,8 +639,6 @@ int CNPC_Vortigaunt::RangeAttack1Conditions( float flDot, float flDist )
 			return COND_NONE;
 		}
 	}
-
-#endif // HL2_EPISODIC
 
 	return COND_CAN_RANGE_ATTACK1;
 }
@@ -1080,11 +1068,6 @@ void CNPC_Vortigaunt::Event_Killed( const CTakeDamageInfo &info )
 //-----------------------------------------------------------------------------
 void CNPC_Vortigaunt::Spawn( void )
 {
-#if !defined( HL2_EPISODIC )
-	// Disable back-away
-	AddSpawnFlags( SF_NPC_NO_PLAYER_PUSHAWAY );
-#endif // HL2_EPISODIC
-
 	// Allow multiple models (for slaves), but default to vortigaunt.mdl
 	char *szModel = (char *)STRING( GetModelName() );
 	if (!szModel || !*szModel)
@@ -1537,13 +1520,8 @@ int CNPC_Vortigaunt::SelectSchedule( void )
 			return nSchedule;
 	}
 
-#ifndef HL2_EPISODIC
-	if ( BehaviorSelectSchedule() )
-		return BaseClass::SelectSchedule();
-#else
 	if ( IsInAScript() )
 		return BaseClass::SelectSchedule();
-#endif
 
 	// If we're currently supposed to be doing something scripted, do it immediately.
 	if ( m_bExtractingBugbait )
@@ -3314,8 +3292,6 @@ void CVortigauntEffectDispel::FadeAndDie( void )
 //	
 //=============================================================================
 
-#ifdef HL2_EPISODIC
-
 class CFleshEffectTarget : public CPointEntity
 {
 	DECLARE_CLASS( CFleshEffectTarget, CPointEntity );
@@ -3363,5 +3339,3 @@ void CFleshEffectTarget::InputSetRadius( inputdata_t &inputData )
 	m_flRadius = vecRadius.x;
 	m_flScaleTime = vecRadius.y;
 }
-
-#endif // HL2_EPISODIC

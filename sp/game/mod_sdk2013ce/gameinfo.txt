@@ -7,39 +7,49 @@
 
 	type		singleplayer_only
 
+	GameData	"halflife2.fgd"
+	GameData	"|gameinfo_path|bb.fgd"
+
 	FileSystem
 	{
-		SteamAppId				243730		// This sets the app ID in Steam
+		SteamAppId				243730		// Source SDK Base 2013 Singleplayer
+
 		SearchPaths
 		{
-			game+mod			ep2/custom/*
-			game+mod			episodic/custom/*
-			game+mod			hl2/custom/*
+			// Mod itself (writable) - highest priority
 			game+mod+mod_write+default_write_path		|gameinfo_path|.
 			gamebin				|gameinfo_path|bin
 
-			game_lv				hl2/hl2_lv.vpk
-			game+mod			ep2/ep2_english.vpk
-			game+mod			ep2/ep2_pak.vpk
-			game				|all_source_engine_paths|ep2/ep2_english.vpk
-			game				|all_source_engine_paths|ep2/ep2_pak.vpk
-			game				|all_source_engine_paths|episodic/ep1_english.vpk
-			game				|all_source_engine_paths|episodic/ep1_pak.vpk
-			game				|all_source_engine_paths|hl2/hl2_english.vpk
-			game				|all_source_engine_paths|hl2/hl2_pak.vpk
-			game				|all_source_engine_paths|hl2/hl2_textures.vpk
-			game				|all_source_engine_paths|hl2/hl2_sound_vo_english.vpk
-			game				|all_source_engine_paths|hl2/hl2_sound_misc.vpk
-			game				|all_source_engine_paths|hl2/hl2_misc.vpk
-			platform			|all_source_engine_paths|platform/platform_misc.vpk
-			platform			|all_source_engine_paths|platform/platform_misc.vpk
+			// Per-mod custom content slots
+			game+mod			|gameinfo_path|_steam/ep2/custom/*
+			game+mod			|gameinfo_path|_steam/episodic/custom/*
+			game+mod			|gameinfo_path|_steam/hl2/custom/*
 
-			game+game_write		ep2
+			// SDK Base content comes FIRST so its shaders/scripts/HudLayout/
+			// HudAnimations win over HL2 Anniversary's incompatible updates.
 
-			game				|all_source_engine_paths|ep2
-			game				|all_source_engine_paths|episodic
-			game				|all_source_engine_paths|hl2
-			platform			|all_source_engine_paths|platform
+			// HL2 (from SDK Base - missing hl2_pak, that comes from hl2_game below)
+			game				|gameinfo_path|_steam/hl2/hl2_textures.vpk
+			game				|gameinfo_path|_steam/hl2/hl2_sound_vo_english.vpk
+			game				|gameinfo_path|_steam/hl2/hl2_sound_misc.vpk
+			game				|gameinfo_path|_steam/hl2/hl2_misc.vpk
+			game				|gameinfo_path|_steam/hl2
+
+			// EP2 (from SDK Base)
+			game				|gameinfo_path|_steam/ep2/ep2_pak.vpk
+			game				|gameinfo_path|_steam/ep2
+
+			// EP1 (from SDK Base)
+			game				|gameinfo_path|_steam/episodic/ep1_pak.vpk
+			game				|gameinfo_path|_steam/episodic
+
+			// The missing piece: hl2_pak.vpk from Anniversary HL2
+			// (SDK Base 2013 SP doesn't ship this one)
+			game				|gameinfo_path|_steam/hl2_game/hl2_pak.vpk
+
+			// Platform (from SDK Base)
+			platform			|gameinfo_path|_steam/platform/platform_misc.vpk
+			platform			|gameinfo_path|_steam/platform
 		}
 	}
 }

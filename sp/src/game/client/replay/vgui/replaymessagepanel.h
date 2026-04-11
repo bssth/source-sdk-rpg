@@ -77,9 +77,6 @@ private:
 	float		m_flShowDuration;
 	bool		m_bUrgent;
 
-#if defined( TF_CLIENT_DLL )
-	char		m_szBorderName[ 64 ];
-#endif
 };
 
 #endif // REPLAYMESSAGEPANEL_H

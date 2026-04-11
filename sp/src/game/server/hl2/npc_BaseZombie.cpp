@@ -581,13 +581,9 @@ int CNPC_BaseZombie::MeleeAttack1Conditions ( float flDot, float flDist )
 	if( tr.fraction == 1.0 || !tr.m_pEnt )
 	{
 
-#ifdef HL2_EPISODIC
-
-		// If our trace was unobstructed but we were shooting 
+		// If our trace was unobstructed but we were shooting
 		if ( GetEnemy() && GetEnemy()->Classify() == CLASS_BULLSEYE )
 			return COND_CAN_MELEE_ATTACK1;
-
-#endif // HL2_EPISODIC
 
 		// This attack would miss completely. Trick the zombie into moving around some more.
 		return COND_TOO_FAR_TO_ATTACK;
@@ -627,8 +623,6 @@ int CNPC_BaseZombie::MeleeAttack1Conditions ( float flDot, float flDist )
 		}
 	}
 
-#ifdef HL2_EPISODIC
-
 	if ( !tr.m_pEnt->IsWorld() && GetEnemy() && GetEnemy()->GetGroundEntity() == tr.m_pEnt )
 	{
 		//Try to swat whatever the player is standing on instead of acting like a dill.
@@ -638,8 +632,6 @@ int CNPC_BaseZombie::MeleeAttack1Conditions ( float flDot, float flDist )
 	// Bullseyes are given some grace on if they can be hit
 	if ( GetEnemy() && GetEnemy()->Classify() == CLASS_BULLSEYE )
 		return COND_CAN_MELEE_ATTACK1;
-
-#endif // HL2_EPISODIC
 
 	// Move around some more
 	return COND_TOO_FAR_TO_ATTACK;
@@ -1766,13 +1758,6 @@ void CNPC_BaseZombie::BuildScheduleTestBits( void )
 		ClearCustomInterruptCondition( COND_LIGHT_DAMAGE );
 		ClearCustomInterruptCondition( COND_HEAVY_DAMAGE );
 	}
-#ifndef HL2_EPISODIC
-	else if ( m_flNextFlinch >= gpGlobals->curtime )
-	{
-		ClearCustomInterruptCondition( COND_LIGHT_DAMAGE );
-		ClearCustomInterruptCondition( COND_HEAVY_DAMAGE );
-	}
-#endif // !HL2_EPISODIC
 
 	// Everything should be interrupted if we get killed.
 	SetCustomInterruptCondition( COND_ZOMBIE_RELEASECRAB );
@@ -2086,11 +2071,6 @@ void CNPC_BaseZombie::StartTask( const Task_t *pTask )
 
 	case TASK_ZOMBIE_WAIT_POST_MELEE:
 		{
-#ifndef HL2_EPISODIC
-			TaskComplete();
-			return;
-#endif
-
 			// Don't wait when attacking the player
 			if ( GetEnemy() && GetEnemy()->IsPlayer() )
 			{
@@ -2749,7 +2729,6 @@ AI_BEGIN_CUSTOM_NPC( base_zombie, CNPC_BaseZombie )
 	//=========================================================
 	// ChaseEnemy
 	//=========================================================
-#ifdef HL2_EPISODIC
 	DEFINE_SCHEDULE
 	(
 		SCHED_ZOMBIE_CHASE_ENEMY,
@@ -2776,33 +2755,6 @@ AI_BEGIN_CUSTOM_NPC( base_zombie, CNPC_BaseZombie )
 		"		COND_ZOMBIE_RELEASECRAB"
 		"		COND_HEAVY_DAMAGE"
 	)
-#else 
-	DEFINE_SCHEDULE
-	(
-		SCHED_ZOMBIE_CHASE_ENEMY,
-
-		"	Tasks"
-		"		 TASK_SET_FAIL_SCHEDULE			SCHEDULE:SCHED_CHASE_ENEMY_FAILED"
-		"		 TASK_SET_TOLERANCE_DISTANCE	24"
-		"		 TASK_GET_CHASE_PATH_TO_ENEMY	600"
-		"		 TASK_RUN_PATH					0"
-		"		 TASK_WAIT_FOR_MOVEMENT			0"
-		"		 TASK_FACE_ENEMY				0"
-		"	"
-		"	Interrupts"
-		"		COND_NEW_ENEMY"
-		"		COND_ENEMY_DEAD"
-		"		COND_ENEMY_UNREACHABLE"
-		"		COND_CAN_RANGE_ATTACK1"
-		"		COND_CAN_MELEE_ATTACK1"
-		"		COND_CAN_RANGE_ATTACK2"
-		"		COND_CAN_MELEE_ATTACK2"
-		"		COND_TOO_CLOSE_TO_ATTACK"
-		"		COND_TASK_FAILED"
-		"		COND_ZOMBIE_CAN_SWAT_ATTACK"
-		"		COND_ZOMBIE_RELEASECRAB"
-	)
-#endif // HL2_EPISODIC
 
 
 	//=========================================================

@@ -120,3 +120,4 @@ compile_commands.json
 .idea/
 *.iml
 sp/launch.local.ps1
+sp/game/mod_sdk2013ce/_steam/

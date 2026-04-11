@@ -167,24 +167,7 @@ int	CNPC_Stalker::OnTakeDamage_Alive( const CTakeDamageInfo &inputInfo )
 //-----------------------------------------------------------------------------
 float CNPC_Stalker::MaxYawSpeed( void )
 {
-#ifdef HL2_EPISODIC
 	return 10.0f;
-#else
-	switch( GetActivity() )
-	{
-	case ACT_TURN_LEFT:
-	case ACT_TURN_RIGHT:
-		return 160;
-		break;
-	case ACT_RUN:
-	case ACT_RUN_HURT:
-		return 280;
-		break;
-	default:
-		return 160;
-		break;
-	}
-#endif
 }
 
 //-----------------------------------------------------------------------------

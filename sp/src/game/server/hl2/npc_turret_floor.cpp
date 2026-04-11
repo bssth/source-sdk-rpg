@@ -23,11 +23,6 @@
 #include "props.h"
 #include "particle_parse.h"
 
-#ifdef PORTAL
-	#include "prop_portal_shared.h"
-	#include "portal_util_shared.h"
-#endif
-
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -257,9 +252,7 @@ void CNPC_FloorTurret::Precache( void )
 	PrecacheScriptSound( "NPC_FloorTurret.DryFire");
 	PrecacheScriptSound( "NPC_FloorTurret.Destruct" );
 
-#ifdef HL2_EPISODIC
 	PrecacheParticleSystem( "explosion_turret_break" );
-#endif // HL2_EPISODIC
 	
 	BaseClass::Precache();
 }
@@ -1179,19 +1172,6 @@ bool CNPC_FloorTurret::IsValidEnemy( CBaseEntity *pEnemy )
 	//	- Can only aim +-15 degrees, + the 10 degree slop they're allowed.
 	Vector vEnemyPos = pEnemy->EyePosition();
 
-#ifdef PORTAL
-	if ( !FInViewCone( pEnemy ) || !FVisible( pEnemy ) )
-	{
-		CProp_Portal *pPortal = FInViewConeThroughPortal( pEnemy );
-
-		if ( pPortal )
-		{
-			// Translate our target across the portal
-			UTIL_Portal_PointTransform( pPortal->m_hLinkedPortal->MatrixThisToLinked(), vEnemyPos, vEnemyPos );
-		}
-	}
-#endif
-
 	Vector los = ( vEnemyPos - EyePosition() );
 
 	QAngle angleToTarget;
@@ -2024,9 +2004,7 @@ void CNPC_FloorTurret::BreakThink( void )
 	Vector vecOrigin = WorldSpaceCenter() + ( vecUp * 12.0f );
 
 	// Our effect
-#ifdef HL2_EPISODIC
 	DispatchParticleEffect( "explosion_turret_break", vecOrigin, GetAbsAngles() );
-#endif // HL2_EPISODIC
 
 	// K-boom
 	RadiusDamage( CTakeDamageInfo( this, this, 15.0f, DMG_BLAST ), vecOrigin, (10*12), CLASS_NONE, this );

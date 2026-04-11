@@ -265,7 +265,6 @@ void CFlashlightEffect::UpdateLightNew(const Vector &vecPos, const Vector &vecFo
 
 	bool bFlicker = false;
 
-#ifdef HL2_EPISODIC
 	C_BaseHLPlayer *pPlayer = (C_BaseHLPlayer *)C_BasePlayer::GetLocalPlayer();
 	if ( pPlayer )
 	{
@@ -311,7 +310,6 @@ void CFlashlightEffect::UpdateLightNew(const Vector &vecPos, const Vector &vecFo
 			bFlicker = true;
 		}
 	}
-#endif // HL2_EPISODIC
 
 	if ( bFlicker == false )
 	{

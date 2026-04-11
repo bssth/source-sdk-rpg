@@ -2572,10 +2572,8 @@ bool CNPC_Alyx::PlayerInSpread( const Vector &sourcePos, const Vector &targetPos
 		if ( pPlayer && ( !ignoreHatedPlayers || IRelationType( pPlayer ) != D_HT ) )
 		{
 			//If the player is being lifted by a barnacle then go ahead and ignore the player and shoot.
-#ifdef HL2_EPISODIC
 			if ( pPlayer->IsEFlagSet( EFL_IS_BEING_LIFTED_BY_BARNACLE ) )
 				return false;
-#endif
 
 			if ( PointInSpread( pPlayer, sourcePos, targetPos, pPlayer->WorldSpaceCenter(), flSpread, maxDistOffCenter ) )
 				return true;

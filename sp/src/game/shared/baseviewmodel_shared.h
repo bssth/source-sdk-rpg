@@ -43,7 +43,6 @@ public:
 							CBaseViewModel( void );
 							~CBaseViewModel( void );
 
-
 	bool IsViewable(void) { return false; }
 
 	virtual void					UpdateOnRemove( void );
@@ -89,7 +88,7 @@ public:
 	Vector					m_vecLastFacing;
 
 	// Only support prediction in TF2 for now
-#if defined( INVASION_DLL ) || defined( INVASION_CLIENT_DLL )
+#if defined(INVASION_DLL)
 	// All predicted weapons need to implement and return true
 	virtual bool			IsPredicted( void ) const
 	{ 
@@ -106,18 +105,6 @@ public:
 	virtual RenderGroup_t	GetRenderGroup();
 
 // Only supported in TF2 right now
-#if defined( INVASION_CLIENT_DLL )
-
-	virtual bool ShouldPredict( void )
-	{
-		if ( GetOwner() && GetOwner() == C_BasePlayer::GetLocalPlayer() )
-			return true;
-
-		return BaseClass::ShouldPredict();
-	}
-
-#endif
-
 
 	virtual void			FireEvent( const Vector& origin, const QAngle& angles, int event, const char *options );
 
@@ -197,7 +184,6 @@ private:
 #if defined( CLIENT_DLL )
 	int						m_nOldAnimationParity;
 #endif
-
 
 	typedef CHandle< CBaseCombatWeapon > CBaseCombatWeaponHandle;
 	CNetworkVar( CBaseCombatWeaponHandle, m_hWeapon );

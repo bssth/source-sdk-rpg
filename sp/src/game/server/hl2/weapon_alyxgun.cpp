@@ -100,10 +100,8 @@ CWeaponAlyxGun::CWeaponAlyxGun( )
 
 	m_flTooCloseTimer	= TOOCLOSETIMER_OFF;
 
-#ifdef HL2_EPISODIC
 	m_fMinRange1		= 60;
 	m_fMaxRange1		= 2048;
-#endif//HL2_EPISODIC
 }
 
 CWeaponAlyxGun::~CWeaponAlyxGun( )
@@ -134,8 +132,6 @@ void CWeaponAlyxGun::Equip( CBaseCombatCharacter *pOwner )
 //-----------------------------------------------------------------------------
 int CWeaponAlyxGun::WeaponRangeAttack1Condition( float flDot, float flDist )
 {
-#ifdef HL2_EPISODIC
-	
 	if( flDist < m_fMinRange1 )
 	{
 		// If Alyx is not able to fire because an enemy is too close, start a timer.
@@ -164,7 +160,7 @@ int CWeaponAlyxGun::WeaponRangeAttack1Condition( float flDot, float flDist )
 
 	int nBaseCondition = BaseClass::WeaponRangeAttack1Condition( flDot, flDist );
 
-	// While in a vehicle, we extend our aiming cone (this relies on COND_NOT_FACING_ATTACK 
+	// While in a vehicle, we extend our aiming cone (this relies on COND_NOT_FACING_ATTACK
 	// TODO: This needs to be rolled in at the animation level
 	if ( GetOwner()->IsInAVehicle() )
 	{
@@ -173,7 +169,7 @@ int CWeaponAlyxGun::WeaponRangeAttack1Condition( float flDot, float flDist )
 		GetVectors( NULL, &vecRight, NULL );
 		bool bRightSide = ( DotProduct( vecRoughDirection, vecRight ) > 0.0f );
 		float flTargetDot = ( bRightSide ) ? -0.7f : 0.0f;
-		
+
 		if ( nBaseCondition == COND_NOT_FACING_ATTACK && flDot >= flTargetDot )
 		{
 			nBaseCondition = COND_CAN_RANGE_ATTACK1;
@@ -181,12 +177,6 @@ int CWeaponAlyxGun::WeaponRangeAttack1Condition( float flDot, float flDist )
 	}
 
 	return nBaseCondition;
-
-#else 
-
-	return BaseClass::WeaponRangeAttack1Condition( flDot, flDist );
-
-#endif//HL2_EPISODIC
 }
 
 //-----------------------------------------------------------------------------

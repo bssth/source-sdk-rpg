@@ -33,19 +33,17 @@
 #endif // REPLAY_ENABLED
 #endif
 
-#if defined(TF_CLIENT_DLL) || defined(TF_DLL)
+#if defined(TF_DLL)
 	#include "tf_gamerules.h"
-	#if defined(TF_CLIENT_DLL) || defined(TF_DLL)
-		#include "tf_lobby.h"
-		#ifdef GAME_DLL
-			#include "player_vs_environment/tf_population_manager.h"
-			#include "../server/tf/tf_gc_server.h"
-			#include "../server/tf/tf_objective_resource.h"
-		#else
-			#include "../client/tf/tf_gc_client.h"
-			#include "../client/tf/c_tf_objective_resource.h"
-		#endif // GAME_DLL
-	#endif // #if defined(TF_CLIENT_DLL) || defined(TF_DLL)
+	#include "tf_lobby.h"
+	#ifdef GAME_DLL
+		#include "player_vs_environment/tf_population_manager.h"
+		#include "../server/tf/tf_gc_server.h"
+		#include "../server/tf/tf_objective_resource.h"
+	#else
+		#include "../client/tf/tf_gc_client.h"
+		#include "../client/tf/c_tf_objective_resource.h"
+	#endif // GAME_DLL
 #endif
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -174,7 +172,7 @@ ConVar mp_respawnwavetime( "mp_respawnwavetime", "10.0", FCVAR_NOTIFY | FCVAR_RE
 ConVar mp_capdeteriorate_time( "mp_capdeteriorate_time", "90.0", FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY, "Time it takes for a full capture point to deteriorate." );
 ConVar mp_tournament( "mp_tournament", "0", FCVAR_REPLICATED | FCVAR_NOTIFY );
 
-#if defined( TF_CLIENT_DLL ) || defined( TF_DLL )
+#if defined( TF_DLL )
 ConVar mp_highlander( "mp_highlander", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Allow only 1 of each player class type." );
 #endif
 
@@ -640,7 +638,6 @@ void CTeamplayRoundBasedRules::Think( void )
 //-----------------------------------------------------------------------------
 bool CTeamplayRoundBasedRules::TimerMayExpire( void )
 {
-#ifndef CSTRIKE_DLL
 	// team_train_watchers can also prevent timer expiring ( overtime )
 	CTeamTrainWatcher *pWatcher = dynamic_cast<CTeamTrainWatcher*>( gEntList.FindEntityByClassname( NULL, "team_train_watcher" ) );
 	while ( pWatcher )
@@ -652,7 +649,6 @@ bool CTeamplayRoundBasedRules::TimerMayExpire( void )
 
 		pWatcher = dynamic_cast<CTeamTrainWatcher*>( gEntList.FindEntityByClassname( pWatcher, "team_train_watcher" ) );
 	}
-#endif
 
 	return BaseClass::TimerMayExpire();
 }
@@ -778,7 +774,6 @@ void CTeamplayRoundBasedRules::SetOvertime( bool bOvertime )
 	{
 		// tell train watchers that we've transitioned to overtime
 
-#ifndef CSTRIKE_DLL
 		CTeamTrainWatcher *pWatcher = dynamic_cast<CTeamTrainWatcher*>( gEntList.FindEntityByClassname( NULL, "team_train_watcher" ) );
 		while ( pWatcher )
 		{
@@ -787,7 +782,6 @@ void CTeamplayRoundBasedRules::SetOvertime( bool bOvertime )
 
 			pWatcher = dynamic_cast<CTeamTrainWatcher*>( gEntList.FindEntityByClassname( pWatcher, "team_train_watcher" ) );
 		}
-#endif
 	}
 }
 
@@ -838,7 +832,6 @@ void CTeamplayRoundBasedRules::CheckWaitingForPlayers( void )
 		// it's not supposed to start paused at the beginning of a round.
 		// We must do this before SetInWaitingForPlayers() is called because it will
 		// restore the timer in the HUD and set the handle to NULL
-#ifndef CSTRIKE_DLL
 		if ( m_hPreviousActiveTimer.Get() )
 		{
 			CTeamRoundTimer *pTimer = dynamic_cast<CTeamRoundTimer*>( m_hPreviousActiveTimer.Get() );
@@ -847,7 +840,6 @@ void CTeamplayRoundBasedRules::CheckWaitingForPlayers( void )
 				pTimer->ResumeTimer();
 			}
 		}
-#endif
 		SetInWaitingForPlayers( false );
 		mp_waitingforplayers_cancel.SetValue( 0 );
 	}
@@ -889,7 +881,6 @@ void CTeamplayRoundBasedRules::CheckWaitingForPlayers( void )
 				// Stop any timers, and bring up a new one
 				HideActiveTimer();
 
-#ifndef CSTRIKE_DLL
 				variant_t sVariant;
 				m_hWaitingForPlayersTimer = (CTeamRoundTimer*)CBaseEntity::Create( "team_round_timer", vec3_origin, vec3_angle );
 				m_hWaitingForPlayersTimer->SetName( MAKE_STRING("zz_teamplay_waiting_timer") );
@@ -898,7 +889,6 @@ void CTeamplayRoundBasedRules::CheckWaitingForPlayers( void )
 				m_hWaitingForPlayersTimer->AcceptInput( "SetTime", NULL, NULL, sVariant, 0 );
 				m_hWaitingForPlayersTimer->AcceptInput( "Resume", NULL, NULL, sVariant, 0 );
 				m_hWaitingForPlayersTimer->AcceptInput( "Enable", NULL, NULL, sVariant, 0 );
-#endif
 			}
 		}
 	}
@@ -953,12 +943,12 @@ void CTeamplayRoundBasedRules::CheckRestartRound( void )
 	{
 		int iDelayMax = 60;
 
-#if defined(TF_CLIENT_DLL) || defined(TF_DLL)
+#if defined(TF_DLL)
 		if ( TFGameRules() && TFGameRules()->IsMannVsMachineMode() )
 		{
 			iDelayMax = 180;
 		}
-#endif // #if defined(TF_CLIENT_DLL) || defined(TF_DLL)
+#endif // #if defined(TF_DLL)
 
 		if ( iRestartDelay > iDelayMax )
 		{
@@ -1386,7 +1376,6 @@ void CTeamplayRoundBasedRules::State_Enter_PREROUND( void )
 	{
 		if ( CountActivePlayers() > 0 )
 		{
-#ifndef CSTRIKE_DLL
 			variant_t sVariant;
 			if ( !m_hStalemateTimer )
 			{
@@ -1399,7 +1388,6 @@ void CTeamplayRoundBasedRules::State_Enter_PREROUND( void )
 			m_hStalemateTimer->AcceptInput( "SetTime", NULL, NULL, sVariant, 0 );
 			m_hStalemateTimer->AcceptInput( "Resume", NULL, NULL, sVariant, 0 );
 			m_hStalemateTimer->AcceptInput( "Enable", NULL, NULL, sVariant, 0 );
-#endif
 			IGameEvent *event = gameeventmanager->CreateEvent( "teamplay_update_timer" );
 			if ( event )
 			{
@@ -1409,13 +1397,13 @@ void CTeamplayRoundBasedRules::State_Enter_PREROUND( void )
 
 		m_flStateTransitionTime = gpGlobals->curtime + tf_arena_preround_time.GetInt();
 	}
-#if defined(TF_CLIENT_DLL) || defined(TF_DLL)
+#if defined(TF_DLL)
 	else if ( TFGameRules() && TFGameRules()->IsMannVsMachineMode() )
 	{
 		State_Transition( GR_STATE_BETWEEN_RNDS );
 		TFObjectiveResource()->SetMannVsMachineBetweenWaves( true );
 	}
-#endif // #if defined(TF_CLIENT_DLL) || defined(TF_DLL)
+#endif // #if defined(TF_DLL)
 	else
 	{
 		m_flStateTransitionTime = gpGlobals->curtime + 5 * mp_enableroundwaittime.GetFloat();
@@ -1552,7 +1540,7 @@ void CTeamplayRoundBasedRules::CheckReadyRestart( void )
 	}
 }
 
-#if defined(TF_CLIENT_DLL) || defined(TF_DLL)
+#if defined(TF_DLL)
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -1599,7 +1587,7 @@ bool CTeamplayRoundBasedRules::AreDefendingPlayersReady()
 	return bAtLeastOnePersonReady;
 }
 
-#endif // #if defined(TF_CLIENT_DLL) || defined(TF_DLL)
+#endif // #if defined(TF_DLL)
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -1821,7 +1809,6 @@ void CTeamplayRoundBasedRules::State_Enter_STALEMATE( void )
 
 	if ( iTimeLimit > 0 )
 	{
-#ifndef CSTRIKE_DLL
 		variant_t sVariant;
 		if ( !m_hStalemateTimer )
 		{
@@ -1833,7 +1820,6 @@ void CTeamplayRoundBasedRules::State_Enter_STALEMATE( void )
 		m_hStalemateTimer->AcceptInput( "SetTime", NULL, NULL, sVariant, 0 );
 		m_hStalemateTimer->AcceptInput( "Resume", NULL, NULL, sVariant, 0 );
 		m_hStalemateTimer->AcceptInput( "Enable", NULL, NULL, sVariant, 0 );
-#endif
 		IGameEvent *event = gameeventmanager->CreateEvent( "teamplay_update_timer" );
 		if ( event )
 		{
@@ -1924,7 +1910,6 @@ void CTeamplayRoundBasedRules::HideActiveTimer( void )
 
 	m_hPreviousActiveTimer = NULL;
 
-#ifndef CSTRIKE_DLL
 	CBaseEntity *pEntity = NULL;
 	variant_t sVariant;
 	sVariant.SetInt( false );
@@ -1939,7 +1924,6 @@ void CTeamplayRoundBasedRules::HideActiveTimer( void )
 			pEntity->AcceptInput( "ShowInHUD", NULL, NULL, sVariant, 0 );
 		}
 	}
-#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -2523,7 +2507,6 @@ void CTeamplayRoundBasedRules::HandleTimeLimitChange( void )
 //-----------------------------------------------------------------------------
 bool CTeamplayRoundBasedRules::MapHasActiveTimer( void )
 {
-#ifndef CSTRIKE_DLL
 	CBaseEntity *pEntity = NULL;
 	while ( ( pEntity = gEntList.FindEntityByClassname( pEntity, "team_round_timer" ) ) != NULL )
 	{
@@ -2533,7 +2516,6 @@ bool CTeamplayRoundBasedRules::MapHasActiveTimer( void )
 			return true;
 		}
 	}
-#endif
 	return false;
 }
 
@@ -2545,7 +2527,6 @@ void CTeamplayRoundBasedRules::CreateTimeLimitTimer( void )
 	if ( IsInArenaMode () == true || IsInKothMode() == true )
 		return;
 
-#ifndef CSTRIKE_DLL
 	if ( !m_hTimeLimitTimer )
 	{
 		m_hTimeLimitTimer = (CTeamRoundTimer*)CBaseEntity::Create( "team_round_timer", vec3_origin, vec3_angle );
@@ -2558,7 +2539,6 @@ void CTeamplayRoundBasedRules::CreateTimeLimitTimer( void )
 	m_hTimeLimitTimer->AcceptInput( "SetTime", NULL, NULL, sVariant, 0 );
 	m_hTimeLimitTimer->AcceptInput( "Resume", NULL, NULL, sVariant, 0 );
 	m_hTimeLimitTimer->AcceptInput( "Enable", NULL, NULL, sVariant, 0 );
-#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -2835,14 +2815,12 @@ void CTeamplayRoundBasedRules::BalanceTeams( bool bRequireSwitcheesToBeDead )
 	// wrap with this bool, indicates it's a round running switch and not a between rounds insta-switch
 	if ( bRequireSwitcheesToBeDead )
 	{
-#ifndef CSTRIKE_DLL
 		// we don't balance if there is less than 60 seconds on the active timer
 		CTeamRoundTimer *pActiveTimer = GetActiveRoundTimer();
 		if ( pActiveTimer && pActiveTimer->GetTimeRemaining() < 60 )
 		{
 			return;
 		}
-#endif
 	}
 
 	int iHeaviestTeam = TEAM_UNASSIGNED, iLightestTeam = TEAM_UNASSIGNED;
@@ -3060,7 +3038,7 @@ void CTeamplayRoundBasedRules::PlayWinSong( int team )
 	}
 	else
 	{
-#if defined (TF_DLL) || defined (TF_CLIENT_DLL)
+#if defined (TF_DLL)
 		if ( TFGameRules() && TFGameRules()->IsPlayingSpecialDeliveryMode() )
 			return;
 #endif // TF_DLL
@@ -3230,7 +3208,7 @@ bool CTeamplayRoundBasedRules::IsInTournamentMode( void )
 //-----------------------------------------------------------------------------
 bool CTeamplayRoundBasedRules::IsInHighlanderMode( void )
 {
-#if defined( TF_CLIENT_DLL ) || defined( TF_DLL )
+#if defined( TF_DLL )
 	// can't use highlander mode and the queue system
 	if ( IsInArenaMode() == true && tf_arena_use_queue.GetBool() == true )
 		return false;
@@ -3447,7 +3425,7 @@ void CTeamplayRoundBasedRules::ResetTeamsRoundWinTracking( void )
 }
 #endif // GAME_DLL
 
-#if defined(TF_CLIENT_DLL) || defined(TF_DLL)
+#if defined(TF_DLL)
 //-----------------------------------------------------------------------------
 // Purpose: Are you now, or are you ever going to be, a member of the defending party?
 //-----------------------------------------------------------------------------
@@ -3574,4 +3552,4 @@ void CTeamplayRoundBasedRules::GetAllPlayersLobbyInfo( CUtlVector<LobbyPlayerInf
 	}
 }
 
-#endif // #if defined(TF_CLIENT_DLL) || defined(TF_DLL)
+#endif // #if defined(TF_DLL)

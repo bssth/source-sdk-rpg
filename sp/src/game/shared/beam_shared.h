@@ -132,7 +132,6 @@ public:
 	float GetHDRColorScale( void ) const;
 	void SetHDRColorScale( float flScale ) { m_flHDRColorScale = flScale; }
 
-
 	// Call after you change start/end positions
 	void		RelinkBeam( void );
 
@@ -157,12 +156,6 @@ public:
 	void BeamDamageInstant( trace_t *ptr, float damage );
 
 // Only supported in TF2 right now
-#if defined( INVASION_CLIENT_DLL )
-	virtual bool	ShouldPredict( void )
-	{
-		return true;
-	}
-#endif
 
 	virtual const char *GetDecalName( void ) { return "BigShot"; }
 
@@ -238,10 +231,6 @@ private:
 #endif
 
 public:
-#ifdef PORTAL
-	CNetworkVar( bool, m_bDrawInMainRender );
-	CNetworkVar( bool, m_bDrawInPortalRender );
-#endif //#ifdef PORTAL
 };
 
 #if !defined( CLIENT_DLL )
@@ -459,7 +448,6 @@ bool IsStaticPointEntity( CBaseEntity *pEnt );
 #define BEAMENT_ENTITY(x)		((x)&0xFFF)
 #define BEAMENT_ATTACHMENT(x)	(((x)>>12)&0xF)
 
-
 // Beam types, encoded as a byte
 enum 
 {
@@ -471,6 +459,5 @@ enum
 	BEAM_LASER,
 	NUM_BEAM_TYPES
 };
-
 
 #endif // BEAM_H

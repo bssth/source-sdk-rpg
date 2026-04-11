@@ -79,12 +79,10 @@ void CNPC_CombineS::Spawn( void )
 
 	BaseClass::Spawn();
 
-#if HL2_EPISODIC
 	if (m_iUseMarch && !HasSpawnFlags(SF_NPC_START_EFFICIENT))
 	{
 		Msg( "Soldier %s is set to use march anim, but is not an efficient AI. The blended march anim can only be used for dead-ahead walks!\n", GetDebugName() );
 	}
-#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -242,14 +240,12 @@ void CNPC_CombineS::OnChangeActivity( Activity eNewActivity )
 
 	BaseClass::OnChangeActivity( eNewActivity );
 
-#if HL2_EPISODIC
 	// Give each trooper a varied look for his march. Done here because if you do it earlier (eg Spawn, StartTask), the
 	// pose param gets overwritten.
 	if (m_iUseMarch)
 	{
 		SetPoseParameter("casual", RandomFloat());
 	}
-#endif
 }
 
 void CNPC_CombineS::OnListened()
@@ -295,9 +291,7 @@ void CNPC_CombineS::Event_Killed( const CTakeDamageInfo &info )
 		// Elites drop alt-fire ammo, so long as they weren't killed by dissolving.
 		if( IsElite() )
 		{
-#ifdef HL2_EPISODIC
 			if ( HasSpawnFlags( SF_COMBINE_NO_AR2DROP ) == false )
-#endif
 			{
 				CBaseEntity *pItem = DropItem( "item_ammo_ar2_altfire", WorldSpaceCenter()+RandomVector(-4,4), RandomAngle(0,360) );
 
@@ -382,7 +376,6 @@ bool CNPC_CombineS::IsHeavyDamage( const CTakeDamageInfo &info )
 	return BaseClass::IsHeavyDamage( info );
 }
 
-#if HL2_EPISODIC
 //-----------------------------------------------------------------------------
 // Purpose: Translate base class activities into combot activites
 //-----------------------------------------------------------------------------
@@ -406,4 +399,3 @@ BEGIN_DATADESC( CNPC_CombineS )
 	DEFINE_KEYFIELD( m_iUseMarch, FIELD_INTEGER, "usemarch" ),
 
 END_DATADESC()
-#endif

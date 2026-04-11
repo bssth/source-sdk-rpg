@@ -1309,9 +1309,7 @@ void CReplayPerformanceEditorPanel::ApplySchemeSettings( IScheme *pScheme )
 			pCurButton->SetParent( m_pBottom );
 			pCurButton->AddActionSignalTarget( this );
 
-#if !defined( TF_CLIENT_DLL )
 			pCurButton->SetPaintBorderEnabled( false );
-#endif
 
 			AddPanelKeyboardInputDisableList( pCurButton );
 		}
@@ -1334,9 +1332,7 @@ void CReplayPerformanceEditorPanel::ApplySchemeSettings( IScheme *pScheme )
 
 		AddPanelKeyboardInputDisableList( pCurButton );
 
-#if !defined( TF_CLIENT_DLL )
 		pCurButton->SetPaintBorderEnabled( false );
-#endif
 
 		m_pCtrlButtons[ i ] = pCurButton;
 	}
@@ -1376,9 +1372,7 @@ void CReplayPerformanceEditorPanel::ApplySchemeSettings( IScheme *pScheme )
 	m_pMenuButton = dynamic_cast< CExImageButton * >( FindChildByName( "MenuButton" ) );
 	AddPanelKeyboardInputDisableList( m_pMenuButton );
 	m_pMenuButton->SetMouseInputEnabled( true );
-#if !defined( TF_CLIENT_DLL )
 	m_pMenuButton->SetPaintBorderEnabled( false );
-#endif
 
 	// Get button tip
 	m_pButtonTip = dynamic_cast< CReplayTipLabel * >( FindChildByName( "ButtonTip" ) );
@@ -1622,11 +1616,9 @@ void CReplayPerformanceEditorPanel::OnTick()
 		if ( nCurTeam < 0 )
 			continue;
 
-#if !defined( CSTRIKE_DLL )
 		int iPlayerClass = pGamePlayerResource->GetPlayerClass( iPlayer );
 		if ( iPlayerClass == REPLAY_CLASS_UNDEFINED )
 			continue;
-#endif
 					 
 		int nCurTeamCount = nTeamCounts[ nCurTeam ];
 		CPlayerCell* pCell = m_pPlayerCells[ nCurTeam ][ nCurTeamCount-1 ];
@@ -1636,35 +1628,6 @@ void CReplayPerformanceEditorPanel::OnTick()
 
 		// Make visible
 		pCell->SetVisible( true );
-
-		// Show leaderboard icon
-#if defined( TF_CLIENT_DLL )
-		char szClassImg[64];
-		extern const char *g_aPlayerClassNames_NonLocalized[ REPLAY_NUM_CLASSES ];
-		char const *pClassName = iPlayerClass == TF_CLASS_DEMOMAN
-			? "demo"
-			: g_aPlayerClassNames_NonLocalized[ iPlayerClass ];
-		V_snprintf( szClassImg, sizeof( szClassImg ), "../HUD/leaderboard_class_%s", pClassName );
-
-		// Show dead icon instead?
-		if ( !pGamePlayerResource->IsAlive( iPlayer ) )
-		{
-			V_strcat( szClassImg, "_d", sizeof( szClassImg ) );
-		}
-
-		IImage *pImage = scheme()->GetImage( szClassImg, true );
-		if ( pImage )
-		{
-			pImage->SetSize( 32, 32 );
-			pCell->GetImage()->SetImage( pImage );
-		}
-
-#elif defined( CSTRIKE_DLL )
-		// TODO - create and use class icons
-		char szText[16];
-		V_snprintf( szText, sizeof( szText ), "%i", nTeamCounts[ nCurTeam ] );
-		pCell->SetText( szText );
-#endif
 
 		// Display player name if mouse is over the current cell
 		if ( pCell->IsWithin( nMouseX, nMouseY ) )
@@ -1799,9 +1762,6 @@ void CReplayPerformanceEditorPanel::Achievements_Think( float flElapsed )
 
 void CReplayPerformanceEditorPanel::Achievements_Grant()
 {
-#if defined( TF_CLIENT_DLL )
-	g_AchievementMgrTF.AwardAchievement( ACHIEVEMENT_TF_REPLAY_EDIT_TIME );
-#endif
 
 	// Awarded
 	m_bAchievementAwarded = true;

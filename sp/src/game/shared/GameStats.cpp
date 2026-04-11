@@ -38,17 +38,11 @@ extern const ConVar *sv_cheats;
 #endif
 #endif
 
-
 #if !defined(NO_STEAM) && defined(CLIENT_DLL)
-#if defined(TF_CLIENT_DLL) ||  defined(CSTRIKE_DLL)
-#define STEAMWORKS_GAMESTATS_ACTIVE
-#include "steamworks_gamestats.h"
-#endif
 #endif
 
 // NOTE: This has to be the last file included!
 #include "tier0/memdbgon.h"
-
 
 #define GAMESTATS_LOG_FILE "gamestats.log"
 #define GAMESTATS_PATHID "MOD"
@@ -563,12 +557,10 @@ bool CBaseGameStats::UploadStatsFileNOW( void )
 	return false;
 }
 
-
 void CBaseGameStats::LoadingEvent_PlayerIDDifferentThanLoadedStats( void )
 {
 	StatsLog( "CBaseGameStats::LoadingEvent_PlayerIDDifferentThanLoadedStats\n" );
 }
-
 
 bool CBaseGameStats::LoadFromFile( void )
 {
@@ -663,7 +655,6 @@ void CBaseGameStats::SendData()
 	CBGSDriver.SendData();
 }
 
-
 #endif // GAME_DLL
 
 bool CBaseGameStats_Driver::Init()
@@ -734,7 +725,6 @@ bool CBaseGameStats_Driver::Init()
 
 	return true;
 }
-
 
 void CBaseGameStats_Driver::Shutdown()
 {
@@ -842,8 +832,6 @@ void CBaseGameStats_Driver::PossibleMapChange( void )
 #endif
 }
 
-
-
 void CBaseGameStats_Driver::LevelInitPreEntity()
 {
 	m_bInLevel = true;
@@ -887,7 +875,6 @@ void CBaseGameStats_Driver::LevelInitPreEntity()
 	}
 #endif
 }
-
 
 void CBaseGameStats_Driver::LevelShutdownPreEntity()
 {
@@ -954,7 +941,6 @@ void CBaseGameStats_Driver::OnSave()
 {
 	gamestats->Event_SaveGame();
 }
-
 
 void CBaseGameStats_Driver::CollectData( StatSendType_t sendType )
 {
@@ -1028,11 +1014,7 @@ void CBaseGameStats_Driver::CollectData( StatSendType_t sendType )
 	pGamestatsData->m_bHaveData |= gamestats->AddDataForSend( pKV, sendType );
 
 // Need to initialiate a reset since cs isn't using the gamestat system to add data
-#if defined(CSTRIKE_DLL) && defined(CLIENT_DLL)
-	ResetData();
-#endif
 }
-
 
 void CBaseGameStats_Driver::SendData()
 {
@@ -1086,7 +1068,6 @@ bool CBaseGameStats_Driver::AddBaseDataForSend( KeyValues *pKV, StatSendType_t s
 			float flAverageFrameRate = AverageStat( &StatsBufferRecord_t::m_flFrameRate );
 			float flMinFrameRate = MinStat( &StatsBufferRecord_t::m_flFrameRate );
 			float flMaxFrameRate = MaxStat( &StatsBufferRecord_t::m_flFrameRate );
-
 
 			float flDeviationsquared = 0;
 			// Compute std deviation
@@ -1149,7 +1130,6 @@ bool CBaseGameStats_Driver::AddBaseDataForSend( KeyValues *pKV, StatSendType_t s
 	return false;
 }
 
-
 void CBaseGameStats_Driver::ResetData()
 {
 #ifdef GAME_DLL
@@ -1202,17 +1182,6 @@ void CBaseGameStats_Driver::ResetData()
 	engine->SetGamestatsData( m_pGamestatsData );
 #endif
 
-#if defined(CSTRIKE_DLL) && defined(CLIENT_DLL)
-	// reset perf buffer for next map
-	for( int i = 0; i < STATS_WINDOW_SIZE; i++ )
-	{
-		m_StatsBuffer[i].m_flFrameRate = 0;
-		m_StatsBuffer[i].m_flServerPing = 0;
-	}
-	
-	m_bBufferFull = false;
-	m_nWriteIndex = 0;
-#endif
 }
 
 void CBaseGameStats_Driver::OnRestore()
@@ -1221,7 +1190,6 @@ void CBaseGameStats_Driver::OnRestore()
 
 	gamestats->Event_LoadGame();
 }
-
 
 void CBaseGameStats_Driver::FrameUpdatePostEntityThink()
 {
@@ -1382,7 +1350,7 @@ void CBaseGameStats::SetDXLevelStatistic( int iDXLevel )
 
 static void CC_ResetGameStats( const CCommand &args )
 {
-#if defined ( TF_DLL ) || defined ( TF_CLIENT_DLL )
+#if defined(TF_DLL)
 	// Disabled this until we fix the TF gamestat crashes that result
 	return;
 #endif
@@ -1433,7 +1401,6 @@ BEGIN_DATADESC( CPointGamestatsCounter )
 END_DATADESC()
 
 LINK_ENTITY_TO_CLASS( point_gamestats_counter, CPointGamestatsCounter )
-
 
 CPointGamestatsCounter::CPointGamestatsCounter() :
 	m_strStatisticName( NULL_STRING ),

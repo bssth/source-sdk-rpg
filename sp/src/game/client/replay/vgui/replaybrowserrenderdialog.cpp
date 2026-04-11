@@ -181,12 +181,6 @@ void CReplayRenderDialog::ApplySchemeSettings( vgui::IScheme *pScheme )
 	m_pGlowEnabledCheck = dynamic_cast< CheckButton * >( FindChildByName( "GlowEnabled" ) );
 	m_pLockWarningLabel = dynamic_cast< CExLabel * >( FindChildByName( "LockWarningLabel" ) );
 
-#if defined( TF_CLIENT_DLL )
-	if ( m_pBgPanel )
-	{
-		m_pBgPanel->SetPaintBackgroundType( 2 );	// Rounded.
-	}
-#endif
 
 	AddControlToAutoLayout( m_pTitleLabel, false );
 

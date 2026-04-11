@@ -1867,7 +1867,6 @@ void CWeaponPhysCannon::ApplyVelocityBasedForce( CBaseEntity *pEntity, const Vec
 	CRagdollProp *pRagdoll = dynamic_cast<CRagdollProp*>( pEntity );
 	if ( pRagdoll == NULL )
 	{
-#ifdef HL2_EPISODIC
 		// The jeep being punted needs special force overrides
 		if ( reason == PHYSGUN_FORCE_PUNTED && pEntity->GetServerVehicle() )
 		{
@@ -1880,11 +1879,6 @@ void CWeaponPhysCannon::ApplyVelocityBasedForce( CBaseEntity *pEntity, const Vec
 		{
 			pPhysicsObject->AddVelocity( &vVel, &aVel );
 		}
-#else
-
-		pPhysicsObject->AddVelocity( &vVel, &aVel );
-
-#endif // HL2_EPISODIC
 	}
 	else
 	{
@@ -2261,14 +2255,12 @@ bool CWeaponPhysCannon::AttachObject( CBaseEntity *pObject, const Vector &vPosit
 	m_bActive = true;
 	if( pOwner )
 	{
-#ifdef HL2_EPISODIC
 		CBreakableProp *pProp = dynamic_cast< CBreakableProp * >( pObject );
 
 		if ( pProp && pProp->HasInteraction( PROPINTER_PHYSGUN_CREATE_FLARE ) )
 		{
 			pOwner->FlashlightTurnOff();
 		}
-#endif
 
 		// NOTE: This can change the mass; so it must be done before max speed setting
 		Physgun_OnPhysGunPickup( pObject, pOwner, PICKED_UP_BY_CANNON );

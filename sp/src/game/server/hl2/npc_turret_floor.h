@@ -68,10 +68,8 @@ public:
 	virtual int		VPhysicsTakeDamage( const CTakeDamageInfo &info );
 	virtual bool	CanBecomeServerRagdoll( void ) { return false; }
 
-#ifdef HL2_EPISODIC
 	// We don't want to be NPCSOLID because we'll collide with NPC clips
-	virtual unsigned int PhysicsSolidMaskForEntity( void ) const { return MASK_SOLID; } 
-#endif	// HL2_EPISODIC
+	virtual unsigned int PhysicsSolidMaskForEntity( void ) const { return MASK_SOLID; }
 
 	// Player pickup
 	virtual void	OnPhysGunPickup( CBasePlayer *pPhysGunUser, PhysGunPickup_t reason );

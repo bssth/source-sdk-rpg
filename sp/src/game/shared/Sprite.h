@@ -229,12 +229,6 @@ public:
 	virtual void	GetToolRecordingState( KeyValues *msg );
 
 // Only supported in TF2 right now
-#if defined( INVASION_CLIENT_DLL )
-	virtual bool	ShouldPredict( void )
-	{
-		return true;
-	}
-#endif
 
 	virtual void	ClientThink( void );
 	virtual void	OnDataChanged( DataUpdateType_t updateType );
@@ -245,10 +239,6 @@ public:
 	CNetworkVar( int, m_nAttachment );
 	CNetworkVar( float, m_flSpriteFramerate );
 	CNetworkVar( float, m_flFrame );
-#ifdef PORTAL
-	CNetworkVar( bool, m_bDrawInMainRender );
-	CNetworkVar( bool, m_bDrawInPortalRender );
-#endif
 
 	float		m_flDieTime;
 
@@ -274,7 +264,6 @@ private:
 	float		m_flBrightnessTimeStart;//Real time for brightness
 };
 
-
 class CSpriteOriented : public CSprite
 {
 public:
@@ -287,8 +276,6 @@ public:
 	virtual bool IsTransparent( void );
 #endif
 };
-
-
 
 // Macro to wrap creation
 #define SPRITE_CREATE_PREDICTABLE( name, origin, animate ) \

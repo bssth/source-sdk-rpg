@@ -63,7 +63,6 @@ ConVar	npc_citizen_dont_precache_all( "npc_citizen_dont_precache_all", "0" );
 
 
 ConVar  npc_citizen_medic_emit_sound("npc_citizen_medic_emit_sound", "1" );
-#ifdef HL2_EPISODIC
 // todo: bake these into pound constants (for now they're not just for tuning purposes)
 ConVar  npc_citizen_heal_chuck_medkit("npc_citizen_heal_chuck_medkit" , "1" , FCVAR_ARCHIVE, "Set to 1 to use new experimental healthkit-throwing medic.");
 ConVar npc_citizen_medic_throw_style( "npc_citizen_medic_throw_style", "1", FCVAR_ARCHIVE, "Set to 0 for a lobbier trajectory" );
@@ -72,7 +71,6 @@ ConVar	sk_citizen_heal_toss_player_delay("sk_citizen_heal_toss_player_delay", "2
 
 
 #define MEDIC_THROW_SPEED npc_citizen_medic_throw_speed.GetFloat()
-#endif
 
 #define ShouldAutosquad() (npc_citizen_auto_player_squad.GetBool())
 
@@ -84,10 +82,8 @@ enum SquadSlot_T
 
 const float HEAL_MOVE_RANGE = 30*12;
 const float HEAL_TARGET_RANGE = 120; // 10 feet
-#ifdef HL2_EPISODIC
-const float HEAL_TOSS_TARGET_RANGE = 480; // 40 feet when we are throwing medkits 
+const float HEAL_TOSS_TARGET_RANGE = 480; // 40 feet when we are throwing medkits
 const float HEAL_TARGET_RANGE_Z = 72; // a second check that Gordon isn't too far above us -- 6 feet
-#endif
 
 // player must be at least this distance away from an enemy before we fire an RPG at him
 const float RPG_SAFE_DISTANCE = CMissile::EXPLOSION_RADIUS + 64.0;
@@ -322,9 +318,7 @@ BEGIN_DATADESC( CNPC_Citizen )
 	DEFINE_INPUTFUNC( FIELD_VOID,	"SetAmmoResupplierOff",	InputSetAmmoResupplierOff ),
 	DEFINE_INPUTFUNC( FIELD_VOID,	"SpeakIdleResponse", InputSpeakIdleResponse ),
 
-#if HL2_EPISODIC
 	DEFINE_INPUTFUNC( FIELD_VOID,   "ThrowHealthKit", InputForceHealthKitToss ),
-#endif
 
 	DEFINE_USEFUNC( CommanderUse ),
 	DEFINE_USEFUNC( SimpleUse ),
@@ -1505,7 +1499,6 @@ void CNPC_Citizen::RunTask( const Task_t *pTask )
 			break;
 
 
-#if HL2_EPISODIC
 		case TASK_CIT_HEAL_TOSS:
 			if ( IsSequenceFinished() )
 			{
@@ -1521,8 +1514,6 @@ void CNPC_Citizen::RunTask( const Task_t *pTask )
 				GetMotor()->SetIdealYawToTargetAndUpdate( GetTarget()->GetAbsOrigin() );
 			}
 			break;
-
-#endif
 
 		case TASK_CIT_RPG_AUGER:
 			{
@@ -1675,7 +1666,6 @@ void CNPC_Citizen::HandleAnimEvent( animevent_t *pEvent )
 	else if ( pEvent->event == AE_CITIZEN_HEAL )
 	{
 		// Heal my target (if within range)
-#if HL2_EPISODIC
 		if ( IsMedic() )
 		{
 			CBaseCombatCharacter *pTarget = dynamic_cast<CBaseCombatCharacter *>( GetTarget() );
@@ -1690,9 +1680,6 @@ void CNPC_Citizen::HandleAnimEvent( animevent_t *pEvent )
 		{
 			Heal();
 		}
-#else
-		Heal();
-#endif
 		return;
 	}
 
@@ -3146,10 +3133,8 @@ bool CNPC_Citizen::ShouldHealTarget( CBaseEntity *pTarget, bool bActiveUse )
 	if ( IsMedic() )
 	{
 		Vector toPlayer = ( pTarget->GetAbsOrigin() - GetAbsOrigin() );
-	 	if (( bActiveUse || !HaveCommandGoal() || toPlayer.Length() < HEAL_TARGET_RANGE) 
-#ifdef HL2_EPISODIC
+	 	if (( bActiveUse || !HaveCommandGoal() || toPlayer.Length() < HEAL_TARGET_RANGE)
 			&& fabs(toPlayer.z) < HEAL_TARGET_RANGE_Z
-#endif
 			)
 	 	{
 			if ( pTarget->m_iHealth > 0 )
@@ -3217,7 +3202,6 @@ bool CNPC_Citizen::ShouldHealTarget( CBaseEntity *pTarget, bool bActiveUse )
 	return false;
 }
 
-#ifdef HL2_EPISODIC
 //-----------------------------------------------------------------------------
 // Determine if the citizen is in a position to be throwing medkits
 //-----------------------------------------------------------------------------
@@ -3288,7 +3272,6 @@ bool CNPC_Citizen::ShouldHealTossTarget( CBaseEntity *pTarget, bool bActiveUse )
 	
 	return false;
 }
-#endif
 
 
 //-----------------------------------------------------------------------------
@@ -3369,7 +3352,6 @@ void CNPC_Citizen::Heal()
 
 
 
-#if HL2_EPISODIC
 //-----------------------------------------------------------------------------
 // Like Heal(), but tosses a healthkit in front of the player rather than just juicing him up.
 //-----------------------------------------------------------------------------
@@ -3447,10 +3429,6 @@ void	CNPC_Citizen::InputForceHealthKitToss( inputdata_t &inputdata )
 {
 	TossHealthKit( UTIL_GetLocalPlayer(), Vector(48.0f, 0.0f, 0.0f)  );
 }
-
-#endif
-
-
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
@@ -3593,9 +3571,7 @@ AI_BEGIN_CUSTOM_NPC( npc_citizen, CNPC_Citizen )
 	DECLARE_TASK( TASK_CIT_SIT_ON_TRAIN )
 	DECLARE_TASK( TASK_CIT_LEAVE_TRAIN )
 	DECLARE_TASK( TASK_CIT_SPEAK_MOURNING )
-#if HL2_EPISODIC
 	DECLARE_TASK( TASK_CIT_HEAL_TOSS )
-#endif
 
 	DECLARE_ACTIVITY( ACT_CIT_HANDSUP )
 	DECLARE_ACTIVITY( ACT_CIT_BLINDED )
@@ -3631,7 +3607,6 @@ AI_BEGIN_CUSTOM_NPC( npc_citizen, CNPC_Citizen )
 		"	Interrupts"
 	)
 
-#if HL2_EPISODIC
 	//=========================================================
 	// > SCHED_CITIZEN_HEAL_TOSS
 	// this is for the episodic behavior where the citizen hurls the medkit
@@ -3652,7 +3627,6 @@ AI_BEGIN_CUSTOM_NPC( npc_citizen, CNPC_Citizen )
 	"	"
 	"	Interrupts"
 	)
-#endif
 
 	//=========================================================
 	// > SCHED_CITIZEN_RANGE_ATTACK1_RPG

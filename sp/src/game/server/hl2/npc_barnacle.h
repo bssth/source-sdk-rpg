@@ -147,7 +147,6 @@ private:
 
 
 
-#if HL2_EPISODIC
 	/// Decides whether something should poison the barnacle upon eating
 	static bool IsPoisonous( CBaseEntity *pVictim );
 
@@ -155,7 +154,6 @@ private:
 	COutputEHANDLE m_OnGrab, m_OnRelease;
 
 	const impactdamagetable_t &GetPhysicsImpactDamageTable( void );
-#endif
 
 	CNetworkVar( float, m_flAltitude );
 	int				m_cGibs;				// barnacle loads up on gibs each time it kills something.
@@ -198,9 +196,7 @@ private:
 	float						m_flLastPull;
 	CSimpleSimTimer				m_StuckTimer;
 	bool						m_bSwallowingBomb;
-#ifdef HL2_EPISODIC
 	bool						m_bSwallowingPoison;
-#endif
 	
 #if BARNACLE_USE_TONGUE_OFFSET
 	// Static because only one barnacle can be holding the player
