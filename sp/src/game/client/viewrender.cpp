@@ -9,6 +9,7 @@
 #include "iviewrender.h"
 #include "view_shared.h"
 #include "ivieweffects.h"
+#include "glow_outline_effect.h"
 #include "iinput.h"
 #include "model_types.h"
 #include "clientsideeffects.h"
@@ -2021,6 +2022,10 @@ void CViewRender::RenderView( const CViewSetup &view, int nClearFlags, int whatT
 
 		PerformScreenSpaceEffects( 0, 0, view.width, view.height );
 
+#ifdef GLOWS_ENABLE
+		g_GlowObjectManager.RenderGlowEffects( &view, 0 );
+#endif
+
 		if ( g_pMaterialSystemHardwareConfig->GetHDRType() == HDR_TYPE_INTEGER )
 		{
 			pRenderContext.GetFrom( materials );
@@ -2761,6 +2766,10 @@ void CViewRender::ViewDrawScene_Intro( const CViewSetup &view, int nClearFlags, 
 
 	// And here are the screen-space effects
 	PerformScreenSpaceEffects( 0, 0, view.width, view.height );
+
+#ifdef GLOWS_ENABLE
+	g_GlowObjectManager.RenderGlowEffects( &view, 0 );
+#endif
 
 	// Make sure sound doesn't stutter
 	engine->Sound_ExtraUpdate();

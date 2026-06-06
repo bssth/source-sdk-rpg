@@ -101,6 +101,15 @@ public:
 	// Disable auto fading under dx7 or when level fades are specified
 	void	DisableAutoFade();
 
+	// Glow outline (L4D-style). Networked to client; CGlowObject lifecycle is
+	// managed in C_BreakableProp::OnDataChanged.
+	void			InputEnableGlow( inputdata_t &inputdata );
+	void			InputDisableGlow( inputdata_t &inputdata );
+	void			InputSetGlowColor( inputdata_t &inputdata );
+
+	CNetworkVar( bool, m_bGlowEnabled );
+	CNetworkVector( m_vecGlowColor );
+
 public:
 	COutputEvent	m_OnBreak;
 	COutputFloat	m_OnHealthChanged;

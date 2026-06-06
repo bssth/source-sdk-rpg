@@ -726,6 +726,8 @@ static ConCommand prop_debug("prop_debug", CC_Prop_Debug, "Toggle prop debug mod
 // BREAKABLE PROPS
 //=============================================================================================================
 IMPLEMENT_SERVERCLASS_ST(CBreakableProp, DT_BreakableProp)
+	SendPropBool( SENDINFO( m_bGlowEnabled ) ),
+	SendPropVector( SENDINFO( m_vecGlowColor ), -1, SPROP_NOSCALE ),
 END_SEND_TABLE()
 
 BEGIN_DATADESC( CBreakableProp )
@@ -769,6 +771,12 @@ BEGIN_DATADESC( CBreakableProp )
 	DEFINE_INPUTFUNC( FIELD_VOID, "DisablePhyscannonPickup", InputDisablePhyscannonPickup ),
 	DEFINE_INPUTFUNC( FIELD_VOID, "EnablePuntSound", InputEnablePuntSound ),
 	DEFINE_INPUTFUNC( FIELD_VOID, "DisablePuntSound", InputDisablePuntSound ),
+
+	DEFINE_KEYFIELD( m_bGlowEnabled, FIELD_BOOLEAN, "glow_enabled" ),
+	DEFINE_KEYFIELD( m_vecGlowColor, FIELD_VECTOR, "glow_color" ),
+	DEFINE_INPUTFUNC( FIELD_VOID, "EnableGlow", InputEnableGlow ),
+	DEFINE_INPUTFUNC( FIELD_VOID, "DisableGlow", InputDisableGlow ),
+	DEFINE_INPUTFUNC( FIELD_VECTOR, "SetGlowColor", InputSetGlowColor ),
 
 	// Outputs
 	DEFINE_OUTPUT( m_OnBreak, "OnBreak" ),
@@ -814,6 +822,31 @@ CBreakableProp::CBreakableProp()
 	
 	// This defaults to on. Most times mapmakers won't specify a punt sound to play.
 	m_bUsePuntSound = true;
+
+	m_bGlowEnabled = false;
+	m_vecGlowColor.Init( 1.0f, 1.0f, 1.0f );
+}
+
+void CBreakableProp::InputEnableGlow( inputdata_t &inputdata )
+{
+	m_bGlowEnabled = true;
+}
+
+void CBreakableProp::InputDisableGlow( inputdata_t &inputdata )
+{
+	m_bGlowEnabled = false;
+}
+
+void CBreakableProp::InputSetGlowColor( inputdata_t &inputdata )
+{
+	Vector v;
+	inputdata.value.Vector3D( v );
+	// Accept either 0..1 or 0..255 ranges; if any component is > 1.5 assume 0..255.
+	if ( v.x > 1.5f || v.y > 1.5f || v.z > 1.5f )
+	{
+		v *= ( 1.0f / 255.0f );
+	}
+	m_vecGlowColor = v;
 }
 
 //-----------------------------------------------------------------------------
