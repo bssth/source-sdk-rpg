@@ -1867,6 +1867,9 @@
     <ClCompile Include="mapbase\SystemConvarMod.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="mapbase\point_glow.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="mapbase\point_projectile.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

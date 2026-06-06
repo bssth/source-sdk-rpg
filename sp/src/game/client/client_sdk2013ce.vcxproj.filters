@@ -2149,6 +2149,9 @@
     <ClCompile Include="glow_outline_effect.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="mapbase\c_point_glow.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="c_pixel_visibility.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
