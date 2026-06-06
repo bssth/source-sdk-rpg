@@ -194,6 +194,7 @@ void CNPC_PlayerCompanion::Spawn()
 	}
 
 	CapabilitiesAdd( bits_CAP_MOVE_GROUND );
+	CapabilitiesAdd( bits_CAP_MOVE_JUMP );	// Half-Life: BB - allow node-graph jumps for human allies (citizen/alyx/barney/...) (height-gated by IsJumpLegal)
 	SetMoveType( MOVETYPE_STEP );
 
 	m_HackedGunPos = Vector( 0, 0, 55 );

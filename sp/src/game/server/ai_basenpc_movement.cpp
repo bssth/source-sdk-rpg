@@ -318,9 +318,14 @@ bool CAI_BaseNPC::IsJumpLegal( const Vector &startPos, const Vector &apex, const
 //-----------------------------------------------------------------------------
 bool CAI_BaseNPC::IsJumpLegal( const Vector &startPos, const Vector &apex, const Vector &endPos ) const
 {
-	const float MAX_JUMP_RISE		= 80.0f;
+	// Half-Life: BB - jump limits are relative to the NPC's own height ("rost") so any
+	// regular node connection becomes jumpable without needing info_node_hint jump nodes:
+	//   * jump DOWN  up to two of its heights
+	//   * jump UP    only if the rise is less than half its height
+	const float flHeight			= GetHullHeight();
+	const float MAX_JUMP_RISE		= flHeight * 0.5f;
+	const float MAX_JUMP_DROP		= flHeight * 2.0f;
 	const float MAX_JUMP_DISTANCE	= 250.0f;
-	const float MAX_JUMP_DROP		= 192.0f;
 
 	return IsJumpLegal( startPos, apex, endPos, MAX_JUMP_RISE, MAX_JUMP_DROP, MAX_JUMP_DISTANCE );
 }

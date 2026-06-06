@@ -321,6 +321,7 @@ void CNPC_Combine::Spawn( void )
 	//	CapabilitiesAdd( bits_CAP_TURN_HEAD | bits_CAP_MOVE_GROUND | bits_CAP_MOVE_JUMP | bits_CAP_MOVE_CLIMB);
 	// JAY: Disabled jump for now - hard to compare to HL1
 	CapabilitiesAdd( bits_CAP_TURN_HEAD | bits_CAP_MOVE_GROUND );
+	CapabilitiesAdd( bits_CAP_MOVE_JUMP );	// Half-Life: BB - allow node-graph jumps (height-gated by IsJumpLegal)
 
 	CapabilitiesAdd( bits_CAP_AIM_GUN );
 
