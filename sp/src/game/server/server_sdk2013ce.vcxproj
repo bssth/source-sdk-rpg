@@ -438,6 +438,7 @@
     <ClInclude Include="..\..\public\zip_uncompressed.h" />
     <ClInclude Include="..\..\common\replay\ireplaysessionrecorder.h" />
     <ClInclude Include="..\..\game\shared\mapbase\matchers.h" />
+    <ClInclude Include="logic_random_outputs.h" />
     <ClInclude Include="..\..\game\shared\hl2mp\weapon_slam.h" />
     <ClInclude Include="..\..\game\shared\achievement_saverestore.h" />
     <ClInclude Include="..\..\game\shared\achievementmgr.h" />
@@ -814,6 +815,9 @@
     <ClCompile Include="mapbase\point_copy_size.cpp" />
     <ClCompile Include="mapbase\point_damageinfo.cpp" />
     <ClCompile Include="mapbase\point_entity_replace.cpp" />
+    <ClCompile Include="logic_random_outputs.cpp" />
+    <ClCompile Include="point_entity_finder.cpp" />
+    <ClCompile Include="skyboxswapper.cpp" />
     <ClCompile Include="..\..\game\shared\achievement_saverestore.cpp" />
     <ClCompile Include="..\..\game\shared\achievementmgr.cpp" />
     <ClCompile Include="..\..\game\shared\achievements_hlx.cpp" />

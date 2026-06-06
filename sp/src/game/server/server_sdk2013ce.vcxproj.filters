@@ -704,6 +704,9 @@
     <ClInclude Include="..\..\game\shared\mapbase\matchers.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="logic_random_outputs.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\game\shared\hl2mp\weapon_slam.h">
       <Filter>Source Files</Filter>
     </ClInclude>
@@ -1826,6 +1829,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="mapbase\point_entity_replace.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="logic_random_outputs.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="point_entity_finder.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="skyboxswapper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\game\shared\achievement_saverestore.cpp">
