@@ -1813,6 +1813,15 @@
     <ClCompile Include="..\..\game\shared\mapbase\matchers.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="vscript_server.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\game\shared\vscript_shared.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="mapbase\baseentity_vscript.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\game\shared\hl2mp\weapon_slam.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

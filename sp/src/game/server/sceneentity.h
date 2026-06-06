@@ -10,6 +10,8 @@
 #pragma once
 #endif
 
+#include "vscript/ivscript.h"
+
 // List of the last 5 lines of speech from NPCs for bug reports
 #define SPEECH_LIST_MAX_SOUNDS	5
 
@@ -40,6 +42,7 @@ int GetSceneSpeechCount( char const *pszScene );
 bool IsInInterruptableScenes( CBaseFlex *pActor );
 
 void PrecacheInstancedScene( char const *pszScene );
+HSCRIPT ScriptCreateSceneEntity( char const *pszScene );
 
 char const *GetSceneFilename( CBaseEntity *ent );
 void ReloadSceneFromDisk( CBaseEntity *ent );

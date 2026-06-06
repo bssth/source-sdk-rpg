@@ -62,6 +62,9 @@ enum InvalidatePhysicsBits_t
 #include "info_darknessmode_lightsource.h"
 #endif
 
+#include "vscript/ivscript.h"
+#include "vscript_shared.h"
+
 #if !defined( NO_ENTITY_PREDICTION )
 // CBaseEntity inlines
 inline bool CBaseEntity::IsPlayerSimulated( void ) const
@@ -233,9 +236,25 @@ inline void CBaseEntity::ClearEffects( void )
 }
 
 inline bool CBaseEntity::IsEffectActive( int nEffects ) const
-{ 
-	return (m_fEffects & nEffects) != 0; 
+{
+	return (m_fEffects & nEffects) != 0;
 }
+
+// NOTE (port): server-only for now. The client-side CBaseEntity (C_BaseEntity)
+// VScript surface (GetScriptInstance) is a later port step; guarding keeps the
+// client build green until then.
+#if !defined( CLIENT_DLL )
+inline HSCRIPT ToHScript(CBaseEntity* pEnt)
+{
+	return (pEnt) ? pEnt->GetScriptInstance() : NULL;
+}
+
+template <> ScriptClassDesc_t* GetScriptDesc<CBaseEntity>(CBaseEntity*, bool);
+inline CBaseEntity* ToEnt(HSCRIPT hScript)
+{
+	return (hScript) ? (CBaseEntity*)g_pScriptVM->GetInstanceValue(hScript, GetScriptDescForClass(CBaseEntity)) : NULL;
+}
+#endif // !CLIENT_DLL
 
 // Shared EntityMessage between game and client .dlls
 #define BASEENTITY_MSG_REMOVE_DECALS	1
