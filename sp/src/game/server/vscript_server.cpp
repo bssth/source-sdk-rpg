@@ -16,6 +16,9 @@
 #include "isaverestore.h"
 #include "gamerules.h"
 #include "igamesystem.h"
+#ifdef MAPBASE_VSCRIPT
+#include "world.h"
+#endif
 #ifdef _WIN32
 //#include "vscript_server_nut.h"
 #endif
@@ -277,6 +280,14 @@ bool VScriptServerInit()
 		ScriptLanguage_t scriptLanguage = SL_DEFAULT;
 
 		char const *pszScriptLanguage;
+#ifdef MAPBASE_VSCRIPT
+		if (GetWorldEntity()->GetScriptLanguage() != SL_NONE)
+		{
+			// Allow world entity to override script language
+			scriptLanguage = GetWorldEntity()->GetScriptLanguage();
+		}
+		else
+#endif
 		if ( CommandLine()->CheckParm( "-scriptlang", &pszScriptLanguage ) )
 		{
 			if( !Q_stricmp(pszScriptLanguage, "gamemonkey") )
@@ -291,6 +302,12 @@ bool VScriptServerInit()
 			{
 				scriptLanguage = SL_PYTHON;
 			}
+#ifdef MAPBASE_VSCRIPT
+			else if( !Q_stricmp(pszScriptLanguage, "lua") )
+			{
+				scriptLanguage = SL_LUA;
+			}
+#endif
 			else
 			{
 				DevWarning("-server_script does not recognize a language named '%s'. virtual machine did NOT start.\n", pszScriptLanguage );
@@ -513,8 +530,17 @@ public:
 
 CVScriptGameSystem g_VScriptGameSystem;
 
+#ifdef MAPBASE_VSCRIPT
+ConVar script_allow_entity_creation_midgame( "script_allow_entity_creation_midgame", "1", FCVAR_NOT_CONNECTED, "Allows VScript files to create entities mid-game, as opposed to only creating entities on startup." );
+#endif
+
 bool IsEntityCreationAllowedInScripts( void )
 {
+#ifdef MAPBASE_VSCRIPT
+	if (script_allow_entity_creation_midgame.GetBool())
+		return true;
+#endif
+
 	return g_VScriptGameSystem.m_bAllowEntityCreationInScripts;
 }
 

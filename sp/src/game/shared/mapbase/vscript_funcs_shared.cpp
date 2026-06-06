@@ -62,6 +62,12 @@ void ParseScriptTableKeyValues( CBaseEntity *pEntity, HSCRIPT hKV )
 
 void PrecacheEntityFromTable( const char *pszClassname, HSCRIPT hKV )
 {
+	if ( IsEntityCreationAllowedInScripts() == false )
+	{
+		Warning( "VScript error: A script attempted to create an entity mid-game. Due to the server's settings, entity creation from scripts is only allowed during map init.\n" );
+		return;
+	}
+
 	// This is similar to UTIL_PrecacheOther(), but we can't check if we can only precache it once.
 	// Probably for the best anyway, as similar classes can still have different precachable properties.
 	CBaseEntity *pEntity = CreateEntityByName( pszClassname );
@@ -80,6 +86,12 @@ void PrecacheEntityFromTable( const char *pszClassname, HSCRIPT hKV )
 
 HSCRIPT SpawnEntityFromTable( const char *pszClassname, HSCRIPT hKV )
 {
+	if ( IsEntityCreationAllowedInScripts() == false )
+	{
+		Warning( "VScript error: A script attempted to create an entity mid-game. Due to the server's settings, entity creation from scripts is only allowed during map init.\n" );
+		return NULL;
+	}
+
 	CBaseEntity *pEntity = CreateEntityByName( pszClassname );
 	if ( !pEntity )
 	{
@@ -107,6 +119,12 @@ HSCRIPT SpawnEntityFromTable( const char *pszClassname, HSCRIPT hKV )
 // script manager instead of the game-side wrapper that earlier Mapbase commits used.
 HSCRIPT SpawnEntityFromKeyValues( const char *pszClassname, HSCRIPT hKV )
 {
+	if ( IsEntityCreationAllowedInScripts() == false )
+	{
+		Warning( "VScript error: A script attempted to create an entity mid-game. Due to the server's settings, entity creation from scripts is only allowed during map init.\n" );
+		return NULL;
+	}
+
 	CBaseEntity *pEntity = CreateEntityByName( pszClassname );
 	if ( !pEntity )
 	{

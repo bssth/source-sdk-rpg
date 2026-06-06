@@ -200,6 +200,14 @@ void CBaseEntity::InputRunScriptQuotable(inputdata_t& inputdata)
 		RunScript( inputdata.value.String(), "InputRunScriptQuotable" );
 	}
 }
+
+//---------------------------------------------------------
+// Clear this entity's script scope
+//---------------------------------------------------------
+void CBaseEntity::InputClearScriptScope(inputdata_t& inputdata)
+{
+	m_ScriptScope.Term();
+}
 #endif
 
 //-----------------------------------------------------------------------------

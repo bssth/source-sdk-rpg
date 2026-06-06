@@ -11,6 +11,10 @@
 #pragma once
 #endif
 
+#ifdef MAPBASE_VSCRIPT
+#include "vscript/ivscript.h"
+#endif
+
 
 class CWorld : public CBaseEntity
 {
@@ -52,6 +56,13 @@ public:
 
 	bool IsColdWorld( void );
 
+#ifdef MAPBASE_VSCRIPT
+	// NOTE (port): plain server-side member, NOT networked. Canon networks this on
+	// DT_WORLD; adding a SendProp here would change the network protocol and desync
+	// the existing client. Server VScript only reads it, so a plain int suffices.
+	ScriptLanguage_t GetScriptLanguage() { return (ScriptLanguage_t)m_iScriptLanguage; }
+#endif
+
 private:
 	DECLARE_DATADESC();
 
@@ -65,6 +76,10 @@ private:
 	CNetworkVar( float, m_flMinPropScreenSpaceWidth );
 	CNetworkVar( float, m_flMaxPropScreenSpaceWidth );
 	CNetworkVar( string_t, m_iszDetailSpriteMaterial );
+
+#ifdef MAPBASE_VSCRIPT
+	int m_iScriptLanguage;
+#endif
 
 	// start flags
 	CNetworkVar( bool, m_bStartDark );

@@ -1940,6 +1940,7 @@ BEGIN_DATADESC_NO_BASE( CBaseEntity )
 	DEFINE_INPUTFUNC( FIELD_STRING, "CallScriptFunction", InputCallScriptFunction ),
 #ifdef MAPBASE_VSCRIPT
 	DEFINE_INPUTFUNC( FIELD_STRING, "RunScriptCodeQuotable", InputRunScriptQuotable ),
+	DEFINE_INPUTFUNC( FIELD_VOID, "ClearScriptScope", InputClearScriptScope ),
 #endif
 
 	DEFINE_OUTPUT( m_OnUser1, "OnUser1" ),
@@ -4007,6 +4008,10 @@ bool CBaseEntity::AcceptInput( const char *szInputName, CBaseEntity *pActivator,
 
 							g_pScriptVM->SetValue( "activator", ( pActivator ) ? ScriptVariant_t( pActivator->GetScriptInstance() ) : SCRIPT_VARIANT_NULL );
 							g_pScriptVM->SetValue( "caller", ( pCaller ) ? ScriptVariant_t( pCaller->GetScriptInstance() ) : SCRIPT_VARIANT_NULL );
+#ifdef MAPBASE_VSCRIPT
+							Value.SetScriptVariant( functionReturn );
+							g_pScriptVM->SetValue( "parameter", functionReturn );
+#endif
 
 							if( CallScriptFunction( szScriptFunctionName, &functionReturn ) )
 							{
@@ -4023,6 +4028,9 @@ bool CBaseEntity::AcceptInput( const char *szInputName, CBaseEntity *pActivator,
 						{
 							g_pScriptVM->ClearValue( "activator" );
 							g_pScriptVM->ClearValue( "caller" );
+#ifdef MAPBASE_VSCRIPT
+							g_pScriptVM->ClearValue( "parameter" );
+#endif
 						}
 					}
 					else if ( dmap->dataDesc[i].flags & FTYPEDESC_KEY )
