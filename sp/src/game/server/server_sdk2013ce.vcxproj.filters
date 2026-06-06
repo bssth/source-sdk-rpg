@@ -1822,6 +1822,9 @@
     <ClCompile Include="..\..\game\shared\mapbase\vscript_funcs_shared.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\game\shared\mapbase\vscript_singletons.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\game\shared\mapbase\vscript_funcs_hl2.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
