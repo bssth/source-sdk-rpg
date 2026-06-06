@@ -32,26 +32,8 @@ extern CBaseEntityScriptInstanceHelper g_BaseEntityScriptInstanceHelper;
 // Only allow scripts to create entities during map initialization
 bool IsEntityCreationAllowedInScripts( void );
 
-// ----------------------------------------------------------------------------
-// KeyValues access
-// ----------------------------------------------------------------------------
-class CScriptKeyValues
-{
-public:
-	CScriptKeyValues( KeyValues *pKeyValues );
-	~CScriptKeyValues( );
-
-	HSCRIPT ScriptFindKey( const char *pszName );
-	HSCRIPT ScriptGetFirstSubKey( void );
-	HSCRIPT ScriptGetNextKey( void );
-	int ScriptGetKeyValueInt( const char *pszName );
-	float ScriptGetKeyValueFloat( const char *pszName );
-	const char *ScriptGetKeyValueString( const char *pszName );
-	bool ScriptIsKeyValueEmpty( const char *pszName );
-	bool ScriptGetKeyValueBool( const char *pszName );
-	void ScriptReleaseKeyValues( );
-
-	KeyValues *m_pKeyValues;	// actual KeyValue entity
-};
+// NOTE (port): CScriptKeyValues lives in the vscript library (vscript_bindings_base.h)
+// in the final Mapbase. The richer refcounted version + GetModelKeyValues hookup is
+// wired up by a later commit; deferred here.
 
 #endif // VSCRIPT_SERVER_H

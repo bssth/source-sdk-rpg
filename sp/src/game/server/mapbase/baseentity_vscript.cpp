@@ -103,8 +103,6 @@ BEGIN_ENT_SCRIPTDESC_ROOT_WITH_HELPER( CBaseEntity, "Root class of all server-si
 	DEFINE_SCRIPTFUNC_NAMED( KeyValueFromInt, "__KeyValueFromInt", SCRIPT_HIDE )
 	DEFINE_SCRIPTFUNC_NAMED( KeyValueFromVector, "__KeyValueFromVector", SCRIPT_HIDE )
 
-	DEFINE_SCRIPTFUNC_NAMED( ScriptGetModelKeyValues, "GetModelKeyValues", "Get a KeyValue class instance on this entity's model")
-
 	DEFINE_SCRIPTFUNC( ValidateScriptScope, "Ensure that an entity's script scope has been created" )
 	DEFINE_SCRIPTFUNC( GetScriptScope, "Retrieve the script-side data associated with an entity" )
 	DEFINE_SCRIPTFUNC( GetScriptId, "Retrieve the unique identifier used to refer to the entity within the scripting system" )
@@ -547,29 +545,6 @@ HSCRIPT	CBaseEntity::GetScriptOwnerEntity()
 void CBaseEntity::SetScriptOwnerEntity(HSCRIPT pOwner)
 {
 	SetOwnerEntity(ToEnt(pOwner));
-}
-
-//-----------------------------------------------------------------------------
-// VScript access to model's key values
-//-----------------------------------------------------------------------------
-HSCRIPT CBaseEntity::ScriptGetModelKeyValues( void )
-{
-	KeyValues *pModelKeyValues = new KeyValues("");
-	HSCRIPT hScript = NULL;
-	const char *pszModelName = modelinfo->GetModelName( GetModel() );
-	const char *pBuffer = modelinfo->GetModelKeyValueText( GetModel() ) ;
-
-	if ( pModelKeyValues->LoadFromBuffer( pszModelName, pBuffer ) )
-	{
-		// UNDONE: how does destructor get called on this
-		m_pScriptModelKeyValues = new CScriptKeyValues( pModelKeyValues );
-
-		// UNDONE: who calls ReleaseInstance on this??? Does name need to be unique???
-
-		hScript = g_pScriptVM->RegisterInstance( m_pScriptModelKeyValues );
-	}
-
-	return hScript;
 }
 
 void CBaseEntity::ScriptSetLocalAngularVelocity(float pitchVel, float yawVel, float rollVel)

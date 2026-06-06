@@ -1906,7 +1906,6 @@ public:
 	const Vector& ScriptGetUp(void) { static Vector vecUp; GetVectors(NULL, NULL, &vecUp); return vecUp; }
 
 	const char* ScriptGetModelName(void) const;
-	HSCRIPT ScriptGetModelKeyValues(void);
 
 	void ScriptEmitSound(const char* soundname);
 	float ScriptSoundDuration(const char* soundname, const char* actormodel);
@@ -1924,7 +1923,6 @@ public:
 	CScriptScope	m_ScriptScope;
 	HSCRIPT			m_hScriptInstance;
 	string_t		m_iszScriptId;
-	CScriptKeyValues* m_pScriptModelKeyValues;
 };
 
 // Send tables exposed in this module.
