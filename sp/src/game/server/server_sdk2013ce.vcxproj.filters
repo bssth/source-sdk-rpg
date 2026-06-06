@@ -1861,6 +1861,15 @@
     <ClCompile Include="mapbase\datadesc_mod.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="mapbase\point_projectile.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="mapbase\ai_monitor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="mapbase\ai_weaponmodifier.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\game\shared\achievement_saverestore.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
