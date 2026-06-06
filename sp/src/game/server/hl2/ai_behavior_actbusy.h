@@ -240,6 +240,13 @@ protected:
 	void		 InputForceThisNPCToLeave( inputdata_t &inputdata );
 
 	DECLARE_DATADESC();
+#ifdef MAPBASE_VSCRIPT
+	DECLARE_ENT_SCRIPTDESC();
+
+	void ScriptForceBusy( HSCRIPT hNPC, HSCRIPT hHint, bool bTeleportOnly );
+	void ScriptForceBusyComplex( HSCRIPT hNPC, HSCRIPT hHint, bool bTeleportOnly, bool bVisibleOnly, bool bUseNearestBusy, float flMaxTime, int activity, HSCRIPT pSeeEntity );
+	void ScriptStopBusy( HSCRIPT hNPC );
+#endif
 
 protected:
 	float			m_flBusySearchRange;
