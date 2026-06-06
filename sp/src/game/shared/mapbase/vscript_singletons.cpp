@@ -20,6 +20,8 @@
 
 #ifndef CLIENT_DLL
 #include "ai_squad.h"
+#include "usermessages.h"
+#include "recipientfilter.h"
 #endif // !CLIENT_DLL
 
 #include "filesystem.h"
@@ -1108,16 +1110,163 @@ HSCRIPT CScriptReadWriteFile::ScriptKeyValuesRead( const char *szFile )
 #undef SCRIPT_RW_FULL_PATH_FMT
 
 //=============================================================================
+// User Message Helper
+// Based on Source 2 API
+//
+// NOTE (port): server-only. SendUserMessage only dispatches usermessages that are
+// ALREADY registered (it raises a script exception for unknown ones) and never
+// registers new ones, so this does NOT alter the network protocol / usermessage
+// table — safe alongside the prebuilt client.dll.
+//=============================================================================
+#ifndef CLIENT_DLL
+class CNetMsgScriptHelper
+{
+private:
+	CRecipientFilter filter;
+	bf_write message;
+	byte data_msg[ MAX_USER_MSG_DATA ];
+
+	inline void SendMsg( bf_write *bf )
+	{
+		bf_read buffer = bf_read();
+		buffer.StartReading( message.GetData(), message.m_nDataBytes );
+		bf->WriteBitsFromBuffer( &buffer, message.GetNumBitsWritten() );
+		engine->MessageEnd();
+	}
+
+public:
+	inline void Reset()
+	{
+		message.StartWriting( data_msg, sizeof(data_msg) );
+		filter.Reset();
+	}
+
+	void SendUserMessage( HSCRIPT player, const char *msg, bool bReliable )
+	{
+		int msg_type = usermessages->LookupUserMessage(msg);
+		if ( msg_type == -1 )
+		{
+			g_pScriptVM->RaiseException("UserMessageBegin: Unregistered message");
+			return;
+		}
+
+		CBaseEntity *pPlayer = ToEnt(player);
+		if ( pPlayer )
+		{
+			filter.AddRecipient( (CBasePlayer*)pPlayer );
+		}
+
+		if ( bReliable )
+		{
+			filter.MakeReliable();
+		}
+
+		SendMsg( engine->UserMessageBegin( &filter, msg_type ) );
+	}
+
+	void SendEntityMessage( HSCRIPT hEnt, bool bReliable )
+	{
+		CBaseEntity *entity = ToEnt(hEnt);
+		if ( !entity )
+		{
+			g_pScriptVM->RaiseException("EntityMessageBegin: invalid entity");
+			return;
+		}
+
+		SendMsg( engine->EntityMessageBegin( entity->entindex(), entity->GetServerClass(), bReliable ) );
+	}
+
+public:
+	void AddRecipient( HSCRIPT player )
+	{
+		CBaseEntity *pPlayer = ToEnt(player);
+		if ( pPlayer )
+		{
+			filter.AddRecipient( (CBasePlayer*)pPlayer );
+		}
+	}
+
+	void AddRecipientsByPVS( const Vector &pos )
+	{
+		filter.AddRecipientsByPVS(pos);
+	}
+
+	void AddAllPlayers()
+	{
+		filter.AddAllPlayers();
+	}
+
+public:
+	void WriteByte( int iValue )                    { message.WriteByte( iValue );             }
+	void WriteChar( int iValue )                    { message.WriteChar( iValue );             }
+	void WriteShort( int iValue )                   { message.WriteShort( iValue );            }
+	void WriteWord( int iValue )                    { message.WriteWord( iValue );             }
+	void WriteLong( int iValue )                    { message.WriteLong( iValue );             }
+	void WriteFloat( float flValue )                { message.WriteFloat( flValue );           }
+	void WriteAngle( float flValue )                { message.WriteBitAngle( flValue, 8 );     }
+	void WriteCoord( float flValue )                { message.WriteBitCoord( flValue );        }
+	void WriteVec3Coord( const Vector& rgflValue )  { message.WriteBitVec3Coord( rgflValue );  }
+	void WriteVec3Normal( const Vector& rgflValue ) { message.WriteBitVec3Normal( rgflValue ); }
+	void WriteAngles( const QAngle& rgflValue )     { message.WriteBitAngles( rgflValue );     }
+	void WriteString( const char *sz )              { message.WriteString( sz );               }
+	void WriteEntity( int iValue )                  { message.WriteShort( iValue );            }
+	void WriteBool( bool bValue )                   { message.WriteOneBit( bValue ? 1 : 0 );   }
+	void WriteEHandle( HSCRIPT hEnt )
+	{
+		CBaseEntity *pEnt = ToEnt( hEnt );
+		long iEncodedEHandle;
+		if ( pEnt )
+		{
+			EHANDLE hEnt = pEnt;
+			int iSerialNum = hEnt.GetSerialNumber() & (1 << NUM_NETWORKED_EHANDLE_SERIAL_NUMBER_BITS) - 1;
+			iEncodedEHandle = hEnt.GetEntryIndex() | (iSerialNum << MAX_EDICT_BITS);
+		}
+		else
+		{
+			iEncodedEHandle = INVALID_NETWORKED_EHANDLE_VALUE;
+		}
+		message.WriteLong( iEncodedEHandle );
+	}
+
+} g_ScriptNetMsg;
+
+BEGIN_SCRIPTDESC_ROOT_NAMED( CNetMsgScriptHelper, "CNetMsg", SCRIPT_SINGLETON "NetworkMessages" )
+	DEFINE_SCRIPTFUNC( Reset, "" )
+	DEFINE_SCRIPTFUNC( SendUserMessage, "" )
+	DEFINE_SCRIPTFUNC( SendEntityMessage, "" )
+	DEFINE_SCRIPTFUNC( AddRecipient, "" )
+	DEFINE_SCRIPTFUNC( AddRecipientsByPVS, "" )
+	DEFINE_SCRIPTFUNC( AddAllPlayers, "" )
+	DEFINE_SCRIPTFUNC( WriteByte, "" )
+	DEFINE_SCRIPTFUNC( WriteChar, "" )
+	DEFINE_SCRIPTFUNC( WriteShort, "" )
+	DEFINE_SCRIPTFUNC( WriteWord, "" )
+	DEFINE_SCRIPTFUNC( WriteLong, "" )
+	DEFINE_SCRIPTFUNC( WriteFloat, "" )
+	DEFINE_SCRIPTFUNC( WriteAngle, "" )
+	DEFINE_SCRIPTFUNC( WriteCoord, "" )
+	DEFINE_SCRIPTFUNC( WriteVec3Coord, "" )
+	DEFINE_SCRIPTFUNC( WriteVec3Normal, "" )
+	DEFINE_SCRIPTFUNC( WriteAngles, "" )
+	DEFINE_SCRIPTFUNC( WriteString, "" )
+	DEFINE_SCRIPTFUNC( WriteEntity, "" )
+	DEFINE_SCRIPTFUNC( WriteEHandle, "" )
+	DEFINE_SCRIPTFUNC( WriteBool, "" )
+END_SCRIPTDESC();
+
+#endif // !CLIENT_DLL
+
+//=============================================================================
 //=============================================================================
 
 void RegisterScriptSingletons()
 {
 	// NOTE (port): partial port of Mapbase eb014cce (v6.0) RegisterScriptSingletons.
 	// Brought over: NetProps (moved), SaveRestore table funcs, file R/W funcs, the
-	// game-event listener funcs, and the Squads instance. Still DEFERRED to follow-up
-	// sub-commits: CScriptLocalize ("Localize", needs vgui which server.dll does not
-	// link), CNetMsgScriptHelper ("NetMsg"), and the "AmmoDef" instance (CAmmoDef
-	// scriptdesc is a pre-v6.0 surface this tree never ported).
+	// game-event listener funcs, and the Squads + NetMsg instances. Still DEFERRED:
+	// CScriptLocalize ("Localize", needs vgui which server.dll does not link) and the
+	// "AmmoDef" instance (CAmmoDef scriptdesc is a pre-v6.0 surface this tree never
+	// ported).
 	ScriptRegisterFunctionNamed( g_pScriptVM, CScriptSaveRestoreUtil::SaveTable, "SaveTable", "Store a table with primitive values that will persist across level transitions and save loads." );
 	ScriptRegisterFunctionNamed( g_pScriptVM, CScriptSaveRestoreUtil::RestoreTable, "RestoreTable", "Retrieves a table from storage. Write into input table." );
 	ScriptRegisterFunctionNamed( g_pScriptVM, CScriptSaveRestoreUtil::ClearSavedTable, "ClearSavedTable", "Removes the table with the given context." );
@@ -1135,6 +1284,10 @@ void RegisterScriptSingletons()
 #endif
 
 	g_pScriptVM->RegisterInstance( &g_ScriptNetPropManager, "NetProps" );
+
+#ifndef CLIENT_DLL
+	g_pScriptVM->RegisterInstance( &g_ScriptNetMsg, "NetMsg" );
+#endif
 
 	// Singletons not unique to VScript (not declared or defined here)
 #ifndef CLIENT_DLL
