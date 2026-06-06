@@ -927,6 +927,7 @@
     <ClCompile Include="glow_outline_effect.cpp" />
     <ClCompile Include="mapbase\c_point_glow.cpp" />
     <ClCompile Include="mapbase\c_vgui_text_display.cpp" />
+    <ClCompile Include="mapbase\c_func_clientclip.cpp" />
     <ClCompile Include="c_pixel_visibility.cpp" />
     <ClCompile Include="c_plasma.cpp" />
     <ClCompile Include="c_playerresource.cpp" />

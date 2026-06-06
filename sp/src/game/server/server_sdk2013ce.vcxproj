@@ -829,6 +829,7 @@
     <ClCompile Include="mapbase\SystemConvarMod.cpp" />
     <ClCompile Include="mapbase\point_glow.cpp" />
     <ClCompile Include="mapbase\vgui_text_display.cpp" />
+    <ClCompile Include="mapbase\func_clientclip.cpp" />
     <ClCompile Include="mapbase\point_projectile.cpp" />
     <ClCompile Include="mapbase\ai_monitor.cpp" />
     <ClCompile Include="mapbase\ai_weaponmodifier.cpp" />
