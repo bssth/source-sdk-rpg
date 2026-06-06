@@ -658,6 +658,65 @@ public:
 	void InputFireUser3( inputdata_t &inputdata );
 	void InputFireUser4( inputdata_t &inputdata );
 
+	// Mapbase port: self-contained CBaseEntity I/O extensions (bodies in mapbase/baseentity_io_ext.cpp).
+	void InputPassUser1( inputdata_t &inputdata );
+	void InputPassUser2( inputdata_t &inputdata );
+	void InputPassUser3( inputdata_t &inputdata );
+	void InputPassUser4( inputdata_t &inputdata );
+
+	void InputFireRandomUser( inputdata_t &inputdata );
+	void InputPassRandomUser( inputdata_t &inputdata );
+
+	void InputSetEntityName( inputdata_t &inputdata );
+
+	virtual void InputSetTarget( inputdata_t &inputdata );
+	virtual void InputSetOwnerEntity( inputdata_t &inputdata );
+
+	virtual void InputAddHealth( inputdata_t &inputdata );
+	virtual void InputRemoveHealth( inputdata_t &inputdata );
+	virtual void InputSetHealth( inputdata_t &inputdata );
+
+	virtual void InputSetMaxHealth( inputdata_t &inputdata );
+
+	void InputFireOutput( inputdata_t &inputdata );
+	void InputRemoveOutput( inputdata_t &inputdata );
+	void InputReplaceOutput( inputdata_t &inputdata );
+	void InputAcceptInput( inputdata_t &inputdata );
+	virtual void InputCancelPending( inputdata_t &inputdata );
+
+	void InputFreeChildren( inputdata_t &inputdata );
+
+	void InputSetLocalOrigin( inputdata_t &inputdata );
+	void InputSetLocalAngles( inputdata_t &inputdata );
+	void InputSetAbsOrigin( inputdata_t &inputdata );
+	void InputSetAbsAngles( inputdata_t &inputdata );
+	void InputSetLocalVelocity( inputdata_t &inputdata );
+	void InputSetLocalAngularVelocity( inputdata_t &inputdata );
+
+	void InputAddSpawnFlags( inputdata_t &inputdata );
+	void InputRemoveSpawnFlags( inputdata_t &inputdata );
+	void InputSetRenderMode( inputdata_t &inputdata );
+	void InputSetRenderFX( inputdata_t &inputdata );
+	void InputAddEffects( inputdata_t &inputdata );
+	void InputRemoveEffects( inputdata_t &inputdata );
+	void InputDrawEntity( inputdata_t &inputdata );
+	void InputUndrawEntity( inputdata_t &inputdata );
+	void InputAddEFlags( inputdata_t &inputdata );
+	void InputRemoveEFlags( inputdata_t &inputdata );
+	void InputAddSolidFlags( inputdata_t &inputdata );
+	void InputRemoveSolidFlags( inputdata_t &inputdata );
+	void InputSetMoveType( inputdata_t &inputdata );
+	void InputSetCollisionGroup( inputdata_t &inputdata );
+
+	void InputTouch( inputdata_t &inputdata );
+
+	virtual void InputKilledNPC( inputdata_t &inputdata );
+
+	void InputKillIfNotVisible( inputdata_t &inputdata );
+	void InputKillWhenNotVisible( inputdata_t &inputdata );
+
+	void InputSetThinkNull( inputdata_t &inputdata );
+
 	// Returns the origin at which to play an inputted dispatcheffect 
 	virtual void GetInputDispatchEffectPosition( const char *sInputString, Vector &pOrigin, QAngle &pAngles );
 
@@ -1039,6 +1098,7 @@ public:
 	void					SUB_CallUseToggle( void ) { this->Use( this, this, USE_TOGGLE, 0 ); }
 	void					SUB_PerformFadeOut( void );
 	virtual	bool			SUB_AllowedToFade( void );
+	void					SUB_RemoveWhenNotVisible( void );	// Mapbase port: used by KillWhenNotVisible
 
 	// change position, velocity, orientation instantly
 	// passing NULL means no change
@@ -1680,6 +1740,13 @@ private:
 	COutputEvent m_OnUser2;
 	COutputEvent m_OnUser3;
 	COutputEvent m_OnUser4;
+
+	// Mapbase port: pass-through user outputs + OnKilled (see mapbase/baseentity_io_ext.cpp)
+	COutputVariant m_OutUser1;
+	COutputVariant m_OutUser2;
+	COutputVariant m_OutUser3;
+	COutputVariant m_OutUser4;
+	COutputEvent m_OnKilled;
 
 	QAngle			m_angAbsRotation;
 

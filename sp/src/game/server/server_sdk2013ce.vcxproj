@@ -822,6 +822,7 @@
     <ClCompile Include="mapbase\logic_eventlistener.cpp" />
     <ClCompile Include="mapbase\closecaption_entity.cpp" />
     <ClCompile Include="mapbase\point_radiation_source.cpp" />
+    <ClCompile Include="mapbase\baseentity_io_ext.cpp" />
     <ClCompile Include="..\..\game\shared\achievement_saverestore.cpp" />
     <ClCompile Include="..\..\game\shared\achievementmgr.cpp" />
     <ClCompile Include="..\..\game\shared\achievements_hlx.cpp" />

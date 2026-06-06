@@ -75,8 +75,11 @@ public:
 
 	void FireOutput( variant_t Value, CBaseEntity *pActivator, CBaseEntity *pCaller, float fDelay = 0 );
 
-	/// Delete every single action in the action list. 
+	/// Delete every single action in the action list.
 	void DeleteAllElements( void ) ;
+
+	// Mapbase port: needed by CBaseEntity::InputReplaceOutput
+	CEventAction *GetActionList() { return m_ActionList; }
 
 protected:
 	variant_t m_Value;

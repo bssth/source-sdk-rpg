@@ -1934,8 +1934,69 @@ BEGIN_DATADESC_NO_BASE( CBaseEntity )
 	DEFINE_OUTPUT( m_OnUser3, "OnUser3" ),
 	DEFINE_OUTPUT( m_OnUser4, "OnUser4" ),
 
+	// Mapbase port: self-contained CBaseEntity I/O extensions (bodies in mapbase/baseentity_io_ext.cpp)
+	DEFINE_INPUTFUNC( FIELD_INPUT, "PassUser1", InputPassUser1 ),
+	DEFINE_INPUTFUNC( FIELD_INPUT, "PassUser2", InputPassUser2 ),
+	DEFINE_INPUTFUNC( FIELD_INPUT, "PassUser3", InputPassUser3 ),
+	DEFINE_INPUTFUNC( FIELD_INPUT, "PassUser4", InputPassUser4 ),
+	DEFINE_INPUTFUNC( FIELD_VOID, "FireRandomUser", InputFireRandomUser ),
+	DEFINE_INPUTFUNC( FIELD_INPUT, "PassRandomUser", InputPassRandomUser ),
+
+	DEFINE_OUTPUT( m_OutUser1, "OutUser1" ),
+	DEFINE_OUTPUT( m_OutUser2, "OutUser2" ),
+	DEFINE_OUTPUT( m_OutUser3, "OutUser3" ),
+	DEFINE_OUTPUT( m_OutUser4, "OutUser4" ),
+
+	DEFINE_INPUTFUNC( FIELD_STRING, "SetEntityName", InputSetEntityName ),
+	DEFINE_INPUTFUNC( FIELD_STRING, "SetTarget", InputSetTarget ),
+	DEFINE_INPUTFUNC( FIELD_EHANDLE, "SetOwnerEntity", InputSetOwnerEntity ),
+
+	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetHealth", InputSetHealth ),
+	DEFINE_INPUTFUNC( FIELD_INTEGER, "AddHealth", InputAddHealth ),
+	DEFINE_INPUTFUNC( FIELD_INTEGER, "RemoveHealth", InputRemoveHealth ),
+	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetMaxHealth", InputSetMaxHealth ),
+
+	DEFINE_INPUTFUNC( FIELD_STRING, "FireOutput", InputFireOutput ),
+	DEFINE_INPUTFUNC( FIELD_STRING, "RemoveOutput", InputRemoveOutput ),
+	DEFINE_INPUTFUNC( FIELD_STRING, "ReplaceOutput", InputReplaceOutput ),
+	DEFINE_INPUTFUNC( FIELD_STRING, "AcceptInput", InputAcceptInput ),
+	DEFINE_INPUTFUNC( FIELD_VOID, "CancelPending", InputCancelPending ),
+
+	DEFINE_INPUTFUNC( FIELD_VOID, "FreeChildren", InputFreeChildren ),
+
+	DEFINE_INPUTFUNC( FIELD_VECTOR, "SetLocalOrigin", InputSetLocalOrigin ),
+	DEFINE_INPUTFUNC( FIELD_VECTOR, "SetLocalAngles", InputSetLocalAngles ),
+	DEFINE_INPUTFUNC( FIELD_VECTOR, "SetAbsOrigin", InputSetAbsOrigin ),
+	DEFINE_INPUTFUNC( FIELD_VECTOR, "SetAbsAngles", InputSetAbsAngles ),
+	DEFINE_INPUTFUNC( FIELD_VECTOR, "SetLocalVelocity", InputSetLocalVelocity ),
+	DEFINE_INPUTFUNC( FIELD_VECTOR, "SetLocalAngularVelocity", InputSetLocalAngularVelocity ),
+
+	DEFINE_INPUTFUNC( FIELD_INTEGER, "AddSpawnFlags", InputAddSpawnFlags ),
+	DEFINE_INPUTFUNC( FIELD_INTEGER, "RemoveSpawnFlags", InputRemoveSpawnFlags ),
+	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetRenderMode", InputSetRenderMode ),
+	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetRenderFX", InputSetRenderFX ),
+	DEFINE_INPUTFUNC( FIELD_INTEGER, "AddEffects", InputAddEffects ),
+	DEFINE_INPUTFUNC( FIELD_INTEGER, "RemoveEffects", InputRemoveEffects ),
+	DEFINE_INPUTFUNC( FIELD_VOID, "EnableDraw", InputDrawEntity ),
+	DEFINE_INPUTFUNC( FIELD_VOID, "DisableDraw", InputUndrawEntity ),
+	DEFINE_INPUTFUNC( FIELD_INTEGER, "AddEFlags", InputAddEFlags ),
+	DEFINE_INPUTFUNC( FIELD_INTEGER, "RemoveEFlags", InputRemoveEFlags ),
+	DEFINE_INPUTFUNC( FIELD_INTEGER, "AddSolidFlags", InputAddSolidFlags ),
+	DEFINE_INPUTFUNC( FIELD_INTEGER, "RemoveSolidFlags", InputRemoveSolidFlags ),
+	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetMoveType", InputSetMoveType ),
+	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetCollisionGroup", InputSetCollisionGroup ),
+
+	DEFINE_INPUTFUNC( FIELD_EHANDLE, "Touch", InputTouch ),
+	DEFINE_INPUTFUNC( FIELD_INPUT, "KilledNPC", InputKilledNPC ),
+	DEFINE_INPUTFUNC( FIELD_VOID, "KillIfNotVisible", InputKillIfNotVisible ),
+	DEFINE_INPUTFUNC( FIELD_FLOAT, "KillWhenNotVisible", InputKillWhenNotVisible ),
+	DEFINE_INPUTFUNC( FIELD_STRING, "SetThinkNull", InputSetThinkNull ),
+
+	DEFINE_OUTPUT( m_OnKilled, "OnKilled" ),
+
 	// Function Pointers
 	DEFINE_FUNCTION( SUB_Remove ),
+	DEFINE_FUNCTION( SUB_RemoveWhenNotVisible ),
 	DEFINE_FUNCTION( SUB_DoNothing ),
 	DEFINE_FUNCTION( SUB_StartFadeOut ),
 	DEFINE_FUNCTION( SUB_StartFadeOutInstant ),
