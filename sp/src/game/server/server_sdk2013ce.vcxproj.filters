@@ -1849,6 +1849,9 @@
     <ClCompile Include="mapbase\closecaption_entity.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="mapbase\point_radiation_source.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\game\shared\achievement_saverestore.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
