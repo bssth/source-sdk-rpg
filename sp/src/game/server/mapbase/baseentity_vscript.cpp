@@ -108,10 +108,14 @@ BEGIN_ENT_SCRIPTDESC_ROOT_WITH_HELPER( CBaseEntity, "Root class of all server-si
 	DEFINE_SCRIPTFUNC_NAMED( ScriptIsEntVisible, "IsEntVisible", "Check if the specified entity can be visible to this entity." )
 	DEFINE_SCRIPTFUNC_NAMED( ScriptIsVisibleWithMask, "IsVisibleWithMask", "Check if the specified position can be visible to this entity with a specific trace mask." )
 
+	DEFINE_SCRIPTFUNC_NAMED( ScriptTakeDamage, "TakeDamage", "Apply damage to this entity with a given info handle" )
+
 	DEFINE_SCRIPTFUNC_NAMED( ScriptGetContext, "GetContext", "Get a response context value" )
 	DEFINE_SCRIPTFUNC_NAMED( ScriptAddContext, "AddContext", "Add a response context value" )
 
 	DEFINE_SCRIPTFUNC_NAMED( ScriptClassify, "Classify", "Get Class_T class ID" )
+
+	DEFINE_SCRIPTFUNC_NAMED( ScriptGetKeyValue, "GetKeyValue", "Get a keyvalue" )
 #endif
 
 	DEFINE_SCRIPTFUNC( ValidateScriptScope, "Ensure that an entity's script scope has been created" )
@@ -628,6 +632,19 @@ const Vector& CBaseEntity::ScriptGetBoundingMaxs(void)
 
 #ifdef MAPBASE_VSCRIPT
 //-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+int CBaseEntity::ScriptTakeDamage( HSCRIPT pInfo )
+{
+	if (pInfo)
+	{
+		CTakeDamageInfo *info = HScriptToClass<CTakeDamageInfo>( pInfo );
+		return OnTakeDamage( *info );
+	}
+
+	return 0;
+}
+
+//-----------------------------------------------------------------------------
 // NOTE (port): this base lacks Mapbase's 3-arg AddContext / by-name GetContextValue,
 // so these adapt to the vanilla single-string AddContext ("name:value:duration")
 // and the index-based context accessors.
@@ -655,5 +672,14 @@ const char *CBaseEntity::ScriptGetContext( const char *name )
 int CBaseEntity::ScriptClassify( void )
 {
 	return (int)Classify();
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+const char *CBaseEntity::ScriptGetKeyValue( const char *pszKeyName )
+{
+	static char szValue[128];
+	GetKeyValue( pszKeyName, szValue, sizeof(szValue) );
+	return szValue;
 }
 #endif

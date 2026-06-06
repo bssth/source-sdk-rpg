@@ -38,9 +38,20 @@ class CBaseFilter : public CLogicalEntity
 public:
 
 	DECLARE_DATADESC();
+#ifdef MAPBASE_VSCRIPT
+	DECLARE_ENT_SCRIPTDESC();
+#endif
 
 	bool PassesFilter( CBaseEntity *pCaller, CBaseEntity *pEntity );
 	bool PassesDamageFilter( const CTakeDamageInfo &info );
+
+#ifdef MAPBASE_VSCRIPT
+	// NOTE (port): this base lacks Mapbase's caller-aware damage-filter extensions
+	// (PassesFinalDamageFilter / BloodAllowed / DamageMod / 2-arg PassesDamageFilter),
+	// so only the two filter checks available in this tree are exposed to script.
+	bool ScriptPassesFilter( HSCRIPT pCaller, HSCRIPT pEntity );
+	bool ScriptPassesDamageFilter( HSCRIPT pCaller, HSCRIPT pInfo );
+#endif
 
 	bool m_bNegated;
 
