@@ -1563,6 +1563,7 @@ public:
 
 	// NOTE: The Shot Regulator is used to manage the RangeAttack1 weapon.
 	inline CAI_ShotRegulator* GetShotRegulator()		{ return &m_ShotRegulator; }
+	void				SetShotRegulator( CAI_ShotRegulator NewRegulator ) { m_ShotRegulator = NewRegulator; } // Mapbase port: used by ai_weaponmodifier
 	virtual void		OnRangeAttack1();
 	
 protected:

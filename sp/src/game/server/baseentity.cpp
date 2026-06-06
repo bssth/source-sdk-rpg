@@ -1991,6 +1991,7 @@ BEGIN_DATADESC_NO_BASE( CBaseEntity )
 	DEFINE_INPUTFUNC( FIELD_VOID, "KillIfNotVisible", InputKillIfNotVisible ),
 	DEFINE_INPUTFUNC( FIELD_FLOAT, "KillWhenNotVisible", InputKillWhenNotVisible ),
 	DEFINE_INPUTFUNC( FIELD_STRING, "SetThinkNull", InputSetThinkNull ),
+	DEFINE_INPUTFUNC( FIELD_STRING, "ChangeVariable", InputChangeVariable ),
 
 	DEFINE_OUTPUT( m_OnKilled, "OnKilled" ),
 

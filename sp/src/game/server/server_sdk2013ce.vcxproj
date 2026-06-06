@@ -439,6 +439,7 @@
     <ClInclude Include="..\..\common\replay\ireplaysessionrecorder.h" />
     <ClInclude Include="..\..\game\shared\mapbase\matchers.h" />
     <ClInclude Include="logic_random_outputs.h" />
+    <ClInclude Include="mapbase\datadesc_mod.h" />
     <ClInclude Include="..\..\game\shared\hl2mp\weapon_slam.h" />
     <ClInclude Include="..\..\game\shared\achievement_saverestore.h" />
     <ClInclude Include="..\..\game\shared\achievementmgr.h" />
@@ -823,6 +824,7 @@
     <ClCompile Include="mapbase\closecaption_entity.cpp" />
     <ClCompile Include="mapbase\point_radiation_source.cpp" />
     <ClCompile Include="mapbase\baseentity_io_ext.cpp" />
+    <ClCompile Include="mapbase\datadesc_mod.cpp" />
     <ClCompile Include="..\..\game\shared\achievement_saverestore.cpp" />
     <ClCompile Include="..\..\game\shared\achievementmgr.cpp" />
     <ClCompile Include="..\..\game\shared\achievements_hlx.cpp" />

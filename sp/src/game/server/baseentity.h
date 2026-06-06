@@ -717,6 +717,8 @@ public:
 
 	void InputSetThinkNull( inputdata_t &inputdata );
 
+	void InputChangeVariable( inputdata_t &inputdata );
+
 	// Returns the origin at which to play an inputted dispatcheffect 
 	virtual void GetInputDispatchEffectPosition( const char *sInputString, Vector &pOrigin, QAngle &pAngles );
 

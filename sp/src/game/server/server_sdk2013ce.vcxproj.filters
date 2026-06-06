@@ -707,6 +707,9 @@
     <ClInclude Include="logic_random_outputs.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="mapbase\datadesc_mod.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\game\shared\hl2mp\weapon_slam.h">
       <Filter>Source Files</Filter>
     </ClInclude>
@@ -1853,6 +1856,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="mapbase\baseentity_io_ext.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="mapbase\datadesc_mod.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\game\shared\achievement_saverestore.cpp">

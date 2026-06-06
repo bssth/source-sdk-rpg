@@ -15,6 +15,7 @@
 #include "entitylist.h"
 #include "eventqueue.h"
 #include "mapbase/matchers.h"
+#include "mapbase/datadesc_mod.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -672,5 +673,63 @@ void CBaseEntity::SUB_RemoveWhenNotVisible( void )
 	else
 	{
 		SetNextThink( gpGlobals->curtime, "SUB_RemoveWhenNotVisible" );
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Changes a datadesc field by name (uses Datadesc_SetFieldString).
+//-----------------------------------------------------------------------------
+void CBaseEntity::InputChangeVariable( inputdata_t &inputdata )
+{
+	const char *szKeyName = NULL;
+	const char *szValue = NULL;
+
+	char sOutputName[MAX_PATH];
+	Q_strncpy( sOutputName, inputdata.value.String(), sizeof(sOutputName) );
+	char *sChar = strchr( sOutputName, ' ' );
+	if ( sChar )
+	{
+		*sChar = '\0';
+		// Now replace all the :'s in the string with ,'s.
+		// Has to be done this way because Hammer doesn't allow ,'s inside parameters.
+		char *sColon = strchr( sChar+1, ':' );
+		while ( sColon )
+		{
+			*sColon = ',';
+			sColon = strchr( sChar+1, ':' );
+		}
+
+		szKeyName = sOutputName;
+		szValue = sChar + 1;
+	}
+	else
+	{
+		Warning("ChangeVariable input fired with bad string. Format: <output name> <targetname>,<inputname>,<parameter>,<delay>,<max times to fire (-1 == infinite)>\n");
+		return;
+	}
+
+	if (szKeyName == NULL)
+		return;
+
+	for ( datamap_t *dmap = GetDataDescMap(); dmap != NULL; dmap = dmap->baseMap )
+	{
+		// search through all the readable fields in the data description, looking for a match
+		for ( int i = 0; i < dmap->dataNumFields; i++ )
+		{
+			if ( dmap->dataDesc[i].flags & (FTYPEDESC_SAVE | FTYPEDESC_KEY) )
+			{
+				if ( Matcher_NamesMatch(szKeyName, dmap->dataDesc[i].fieldName) )
+				{
+					// Copied from ::ParseKeyvalue...or technically logic_datadesc_accessor...
+					typedescription_t *pField = &dmap->dataDesc[i];
+					char *data = Datadesc_SetFieldString( szValue, this, pField, NULL );
+
+					if (!data)
+					{
+						Warning( "%s cannot set field of type %i.\n", GetDebugName(), dmap->dataDesc[i].fieldType );
+					}
+				}
+			}
+		}
 	}
 }
