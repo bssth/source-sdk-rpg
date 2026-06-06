@@ -95,6 +95,10 @@ BEGIN_DATADESC( CBaseFlex )
 
 END_DATADESC()
 
+BEGIN_ENT_SCRIPTDESC( CBaseFlex, CBaseAnimating, "Animated characters who have vertex flex capability." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptGetOldestScene, "GetCurrentScene", "Returns the instance of the oldest active scene entity (if any)." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptGetSceneByIndex, "GetSceneByIndex", "Returns the instance of the scene entity at the specified index." )
+END_SCRIPTDESC();
 
 
 LINK_ENTITY_TO_CLASS( funCBaseFlex, CBaseFlex ); // meaningless independant class!!
@@ -114,6 +118,32 @@ CBaseFlex::~CBaseFlex( void )
 {
 	m_LocalToGlobal.RemoveAll();
 	Assert( m_SceneEvents.Count() == 0 );
+}
+
+HSCRIPT CBaseFlex::ScriptGetOldestScene( void )
+{
+	if ( m_SceneEvents.Count() > 0 )
+	{
+		CSceneEventInfo curScene = m_SceneEvents.Head();
+		return ToHScript( (CBaseEntity*)(curScene.m_hSceneEntity.Get()) );
+	}
+	else
+	{
+		return NULL;
+	}
+}
+
+HSCRIPT CBaseFlex::ScriptGetSceneByIndex( int index )
+{
+	if ( m_SceneEvents.IsValidIndex( index ) )
+	{
+		CSceneEventInfo curScene = m_SceneEvents.Element( index );
+		return ToHScript( (CBaseEntity*)(curScene.m_hSceneEntity.Get()) );
+	}
+	else
+	{
+		return NULL;
+	}
 }
 
 void CBaseFlex::SetModel( const char *szModelName )

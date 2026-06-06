@@ -305,6 +305,13 @@ public:
 	bool				HintMatchesCriteria( CAI_BaseNPC *pNPC, const CHintCriteria &hintCriteria, const Vector &position, float *flNearestDistance, bool bIgnoreLock = false, bool bIgnoreHintType = false );
 	bool				IsInNodeFOV( CBaseEntity *pOther );
 
+#ifdef MAPBASE_VSCRIPT
+	int					ScriptGetHintType() { return (int)HintType(); }
+	HSCRIPT				ScriptGetUser() { return ToHScript( User() ); }
+	const char*			ScriptGetHintGroup() { return STRING( GetGroup() ); }
+	const char*			ScriptGetHintActivity() { return STRING( HintActivityName() ); }
+#endif
+
 private:
 	void				Spawn( void );
 	virtual void		Activate();
@@ -333,6 +340,9 @@ private:
 	friend class CAI_HintManager;
 
 	DECLARE_DATADESC();
+#ifdef MAPBASE_VSCRIPT
+	DECLARE_ENT_SCRIPTDESC();
+#endif
 };
 
 #define SF_ALLOW_JUMP_UP 65536

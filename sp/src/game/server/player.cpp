@@ -335,6 +335,20 @@ BEGIN_DATADESC( CBasePlayer )
 	DEFINE_FIELD( m_nNumCrateHudHints, FIELD_INTEGER ),
 END_DATADESC()
 
+#ifdef MAPBASE_VSCRIPT
+BEGIN_ENT_SCRIPTDESC( CBasePlayer, CBaseCombatCharacter, "The player entity." )
+
+	DEFINE_SCRIPTFUNC_NAMED( ScriptIsPlayerNoclipping, "IsNoclipping", "Returns true if the player is in noclip mode." )
+
+	DEFINE_SCRIPTFUNC_NAMED( VScriptGetExpresser, "GetExpresser", "Gets a handle for this player's expresser." )
+
+END_SCRIPTDESC();
+#else
+BEGIN_ENT_SCRIPTDESC( CBasePlayer, CBaseAnimating, "The player entity." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptIsPlayerNoclipping, "IsNoclipping", "Returns true if the player is in noclip mode." )
+END_SCRIPTDESC();
+#endif
+
 int giPrecacheGrunt = 0;
 
 edict_t *CBasePlayer::s_PlayerEdict = NULL;
@@ -6128,7 +6142,31 @@ void CBasePlayer::ShowCrosshair( bool bShow )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Used by vscript to determine if the player is noclipping
+//-----------------------------------------------------------------------------
+bool CBasePlayer::ScriptIsPlayerNoclipping(void)
+{
+	return (GetMoveType() == MOVETYPE_NOCLIP);
+}
+
+#ifdef MAPBASE_VSCRIPT
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+HSCRIPT CBasePlayer::VScriptGetExpresser()
+{
+	HSCRIPT hScript = NULL;
+	CAI_Expresser *pExpresser = GetExpresser();
+	if (pExpresser)
+	{
+		hScript = g_pScriptVM->RegisterInstance( pExpresser );
+	}
+
+	return hScript;
+}
+#endif
+
+//-----------------------------------------------------------------------------
+// Purpose:
 //-----------------------------------------------------------------------------
 QAngle CBasePlayer::BodyAngles()
 {
