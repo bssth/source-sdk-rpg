@@ -212,6 +212,9 @@
     <ClCompile Include="bitbuf.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="mapbase_con_groups.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="byteswap.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

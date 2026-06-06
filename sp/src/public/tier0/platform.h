@@ -1635,5 +1635,13 @@ extern "C" int V_tier0_stricmp(const char *s1, const char *s2 );
 #define strcmpi(s1,s2) V_tier0_stricmp( s1, s2 )
 #endif
 
+#ifdef MAPBASE
+//-----------------------------------------------------------------------------
+// General Mapbase version constants compiled into projects for versioning purposes
+//-----------------------------------------------------------------------------
+#define MAPBASE_VERSION "8.0"
+#define MAPBASE_VER_INT 8000	// For use in #if in a similar fashion to macros like _MSC_VER
+#endif
+
 
 #endif /* PLATFORM_H */

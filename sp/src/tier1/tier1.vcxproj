@@ -242,6 +242,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="bitbuf.cpp" />
+    <ClCompile Include="mapbase_con_groups.cpp" />
     <ClCompile Include="byteswap.cpp" />
     <ClCompile Include="characterset.cpp" />
     <ClCompile Include="checksum_crc.cpp" />
