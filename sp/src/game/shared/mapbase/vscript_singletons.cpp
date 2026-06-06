@@ -24,6 +24,8 @@
 
 #include "filesystem.h"
 #include "tier1/utlbuffer.h"
+#include "igameevents.h"
+#include "tier1/mapbase_con_groups.h"
 
 #include "vscript_singletons.h"
 
@@ -312,6 +314,436 @@ BEGIN_SCRIPTDESC_ROOT_NAMED( CScriptNetPropManager, "CNetPropManager", SCRIPT_SI
 	DEFINE_SCRIPTFUNC( SetPropVector, "Sets a netprop to the specified vector." )
 	DEFINE_SCRIPTFUNC( SetPropVectorArray, "Sets a netprop from an array to the specified vector." )
 END_SCRIPTDESC();
+
+//=============================================================================
+// Game Event Listener
+// Based on Source 2 API
+//=============================================================================
+class CScriptGameEventListener : public IGameEventListener2, public CAutoGameSystem
+{
+public:
+	CScriptGameEventListener() : m_bActive(false) {}
+	~CScriptGameEventListener()
+	{
+		StopListeningForEvent();
+	}
+
+	intptr_t ListenToGameEvent( const char* szEvent, HSCRIPT hFunc, const char* szContext );
+	void StopListeningForEvent();
+
+public:
+	static bool StopListeningToGameEvent( intptr_t listener );
+	static void StopListeningToAllGameEvents( const char* szContext );
+
+public:
+	void FireGameEvent( IGameEvent *event );
+	void LevelShutdownPreEntity();
+
+private:
+	bool m_bActive;
+	const char *m_pszContext;
+	HSCRIPT m_hCallback;
+
+	static const char *FindContext( const char *szContext, CScriptGameEventListener *pIgnore = NULL );
+	//inline const char *GetContext( CScriptGameEventListener *p );
+	//inline const char *GetContext();
+
+public:
+	static void DumpEventListeners();
+#ifndef CLIENT_DLL
+	static void LoadAllEvents();
+	static void LoadEventsFromFile( const char *filename, const char *pathID = NULL );
+	static void WriteEventData( IGameEvent *event, HSCRIPT hTable );
+#endif // !CLIENT_DLL
+
+private:
+#ifndef CLIENT_DLL
+	static CUtlVector< KeyValues* > s_GameEvents;
+#endif // !CLIENT_DLL
+	static CUtlVectorAutoPurge< CScriptGameEventListener* > s_GameEventListeners;
+
+};
+
+#ifndef CLIENT_DLL
+CUtlVector< KeyValues* > CScriptGameEventListener::s_GameEvents;
+#endif // !CLIENT_DLL
+CUtlVectorAutoPurge< CScriptGameEventListener* > CScriptGameEventListener::s_GameEventListeners;
+
+//-----------------------------------------------------------------------------
+//
+//-----------------------------------------------------------------------------
+void CScriptGameEventListener::DumpEventListeners()
+{
+	CGMsg( 0, CON_GROUP_VSCRIPT, "--- Script game event listener dump start\n" );
+	FOR_EACH_VEC( s_GameEventListeners, i )
+	{
+		CGMsg( 0, CON_GROUP_VSCRIPT, " %d   (0x%p) %d : %s\n", i,s_GameEventListeners[i],
+										s_GameEventListeners[i],
+										s_GameEventListeners[i]->m_pszContext ? s_GameEventListeners[i]->m_pszContext : "");
+	}
+	CGMsg( 0, CON_GROUP_VSCRIPT, "--- Script game event listener dump end\n" );
+}
+
+void CScriptGameEventListener::FireGameEvent( IGameEvent *event )
+{
+	ScriptVariant_t hTable;
+	g_pScriptVM->CreateTable( hTable );
+	// TODO: pass event data on client
+#ifdef GAME_DLL
+	WriteEventData( event, hTable );
+#endif
+	g_pScriptVM->SetValue( hTable, "game_event_listener", reinterpret_cast<intptr_t>(this) ); // POINTER_TO_INT
+	// g_pScriptVM->SetValue( hTable, "game_event_name", event->GetName() );
+	g_pScriptVM->ExecuteFunction( m_hCallback, &hTable, 1, NULL, NULL, true );
+	g_pScriptVM->ReleaseScript( hTable );
+}
+
+void CScriptGameEventListener::LevelShutdownPreEntity()
+{
+	s_GameEventListeners.FindAndFastRemove(this);
+	delete this;
+}
+
+//-----------------------------------------------------------------------------
+// Executed in LevelInitPreEntity
+//-----------------------------------------------------------------------------
+#ifndef CLIENT_DLL
+void CScriptGameEventListener::LoadAllEvents()
+{
+	// Listed in the same order they are loaded in GameEventManager
+	const char *filenames[] =
+	{
+		"resource/serverevents.res",
+		"resource/gameevents.res",
+		"resource/mapbaseevents.res",
+		"resource/modevents.res"
+	};
+
+	const char *pathlist[] =
+	{
+		"GAME",
+		"MOD"
+	};
+
+	// Destroy old KeyValues
+	if ( s_GameEvents.Count() )
+	{
+		for ( int i = 0; i < s_GameEvents.Count(); ++i )
+			s_GameEvents[i]->deleteThis();
+		s_GameEvents.Purge();
+	}
+
+	for ( int j = 0; j < ARRAYSIZE(pathlist); ++j )
+		for ( int i = 0; i < ARRAYSIZE(filenames); ++i )
+		{
+			LoadEventsFromFile( filenames[i], pathlist[j] );
+		}
+}
+
+//-----------------------------------------------------------------------------
+// Load event files into a lookup array to be able to return the event data to the VM.
+//-----------------------------------------------------------------------------
+void CScriptGameEventListener::LoadEventsFromFile( const char *filename, const char *pathID )
+{
+	KeyValues *pKV = new KeyValues("GameEvents");
+
+	if ( !pKV->LoadFromFile( filesystem, filename, pathID ) )
+	{
+		// CGMsg( 1, CON_GROUP_VSCRIPT, "CScriptGameEventListener::LoadEventsFromFile: Failed to load file %s, %s\n", filename, pathID );
+		pKV->deleteThis();
+		return;
+	}
+
+	// Set the key value types to what they are from their string description values to read the correct data type in WriteEventData.
+	// There might be a better way of doing this, but this is okay since it's only done on file load.
+	for ( KeyValues *key = pKV->GetFirstSubKey(); key; key = key->GetNextKey() )
+		for ( KeyValues *sub = key->GetFirstSubKey(); sub; sub = sub->GetNextKey() )
+		{
+			if ( sub->GetDataType() == KeyValues::TYPE_STRING )
+			{
+				const char *szVal = sub->GetString();
+				if ( !V_stricmp( szVal, "byte" ) || !V_stricmp( szVal, "short" ) || !V_stricmp( szVal, "long" ) || !V_stricmp( szVal, "bool" ) )
+				{
+					sub->SetInt( NULL, 0 );
+				}
+				else if ( !V_stricmp( szVal, "float" ) )
+				{
+					sub->SetFloat( NULL, 0.0f );
+				}
+			}
+			// none   : value is not networked
+			// string : a zero terminated string
+			// bool   : unsigned int, 1 bit
+			// byte   : unsigned int, 8 bit
+			// short  : signed int, 16 bit
+			// long   : signed int, 32 bit
+			// float  : float, 32 bit
+		}
+
+	CGMsg( 2, CON_GROUP_VSCRIPT, "CScriptGameEventListener::LoadEventsFromFile: Loaded %s, %s\n", filename, pathID );
+
+	s_GameEvents.AddToTail(pKV);
+}
+
+//-----------------------------------------------------------------------------
+//
+//-----------------------------------------------------------------------------
+void CScriptGameEventListener::WriteEventData( IGameEvent *event, HSCRIPT hTable )
+{
+	// TODO: Something more efficient than iterating through all the events that ever exist one by one
+
+	const char *szEvent = event->GetName();
+	for ( int i = 0; i < s_GameEvents.Count(); ++i )
+	{
+		KeyValues *pKV = s_GameEvents[i];
+		for ( KeyValues *key = pKV->GetFirstSubKey(); key; key = key->GetNextKey() )
+		{
+			if ( !V_stricmp( key->GetName(), szEvent ) )
+			{
+				for ( KeyValues *sub = key->GetFirstSubKey(); sub; sub = sub->GetNextKey() )
+				{
+					const char *szKey = sub->GetName();
+					switch ( sub->GetDataType() )
+					{
+						case KeyValues::TYPE_STRING: g_pScriptVM->SetValue( hTable, szKey, event->GetString( szKey ) ); break;
+						case KeyValues::TYPE_INT:    g_pScriptVM->SetValue( hTable, szKey, event->GetInt   ( szKey ) ); break;
+						case KeyValues::TYPE_FLOAT:  g_pScriptVM->SetValue( hTable, szKey, event->GetFloat ( szKey ) ); break;
+						// default: DevWarning( 2, "CScriptGameEventListener::WriteEventData: unknown data type '%d' on key '%s' in event '%s'\n", sub->GetDataType(), szKey, szEvent );
+					}
+				}
+				return;
+			}
+		}
+	}
+}
+#endif // !CLIENT_DLL
+//-----------------------------------------------------------------------------
+// Find if context is in use by others; used to alloc/dealloc only when required.
+// Returns allocated pointer to string
+// Expects non-NULL context input
+//-----------------------------------------------------------------------------
+const char *CScriptGameEventListener::FindContext( const char *szContext, CScriptGameEventListener *pIgnore )
+{
+	for ( int i = s_GameEventListeners.Count(); i--; )
+	{
+		CScriptGameEventListener *pCur = s_GameEventListeners[i];
+		if ( pCur != pIgnore )
+		{
+			if ( pCur->m_pszContext && !V_stricmp( szContext, pCur->m_pszContext ) )
+			{
+				return pCur->m_pszContext;
+			}
+		}
+	}
+	return NULL;
+}
+
+//-----------------------------------------------------------------------------
+//
+//-----------------------------------------------------------------------------
+intptr_t CScriptGameEventListener::ListenToGameEvent( const char* szEvent, HSCRIPT hFunc, const char* szContext )
+{
+	m_bActive = true;
+
+	char *psz;
+
+	if ( szContext && *szContext )
+	{
+		psz = const_cast<char*>(FindContext(szContext));
+		if ( !psz )
+		{
+			int len = V_strlen(szContext) + 1;
+			if ( len > 1 )
+			{
+				int size = min( len, 256 ); // arbitrary clamp
+				psz = new char[size];
+				V_strncpy( psz, szContext, size );
+			}
+		}
+	}
+	else
+	{
+		psz = NULL;
+	}
+
+	m_pszContext = psz;
+	m_hCallback = hFunc;
+
+	if ( gameeventmanager )
+#ifdef CLIENT_DLL
+		gameeventmanager->AddListener( this, szEvent, false );
+#else
+		gameeventmanager->AddListener( this, szEvent, true );
+#endif
+	s_GameEventListeners.AddToTail( this );
+
+	return reinterpret_cast<intptr_t>(this); // POINTER_TO_INT
+}
+
+//-----------------------------------------------------------------------------
+// Free stuff. Called from the destructor, does not remove itself from the listener list.
+//-----------------------------------------------------------------------------
+void CScriptGameEventListener::StopListeningForEvent()
+{
+	if ( !m_bActive )
+		return;
+
+	if ( g_pScriptVM )
+	{
+		g_pScriptVM->ReleaseScript( m_hCallback );
+	}
+	else if ( m_hCallback )
+	{
+		AssertMsg( 0, "LEAK (0x%p)\n", (void*)m_hCallback );
+	}
+
+	if ( m_pszContext )
+	{
+		if ( !FindContext( m_pszContext, this ) )
+		{
+			delete[] m_pszContext;
+		}
+
+		m_pszContext = NULL;
+	}
+
+	m_hCallback = NULL;
+
+	if ( gameeventmanager )
+		gameeventmanager->RemoveListener( this );
+
+	m_bActive = false;
+}
+
+//-----------------------------------------------------------------------------
+// Stop the specified event listener.
+//-----------------------------------------------------------------------------
+bool CScriptGameEventListener::StopListeningToGameEvent( intptr_t listener )
+{
+	CScriptGameEventListener *p = reinterpret_cast<CScriptGameEventListener*>(listener); // INT_TO_POINTER
+
+	bool bRemoved = s_GameEventListeners.FindAndFastRemove(p);
+	if ( bRemoved )
+	{
+		delete p;
+	}
+
+	return bRemoved;
+}
+
+//-----------------------------------------------------------------------------
+// Stops listening to all events within a context.
+//-----------------------------------------------------------------------------
+void CScriptGameEventListener::StopListeningToAllGameEvents( const char* szContext )
+{
+	if ( szContext )
+	{
+		if ( *szContext )
+		{
+			// Iterate from the end so they can be safely removed as they are deleted
+			for ( int i = s_GameEventListeners.Count(); i--; )
+			{
+				CScriptGameEventListener *pCur = s_GameEventListeners[i];
+				if ( pCur->m_pszContext && !V_stricmp( szContext, pCur->m_pszContext ) )
+				{
+					s_GameEventListeners.Remove(i); // keep list order
+					delete pCur;
+				}
+			}
+		}
+		else // empty (NULL) context
+		{
+			for ( int i = s_GameEventListeners.Count(); i--; )
+			{
+				CScriptGameEventListener *pCur = s_GameEventListeners[i];
+				if ( !pCur->m_pszContext )
+				{
+					s_GameEventListeners.Remove(i);
+					delete pCur;
+				}
+			}
+		}
+	}
+#if 0
+	if ( !szContext )
+	{
+		for ( int i = s_GameEventListeners.Count(); i--; )
+			delete s_GameEventListeners[i];
+		s_GameEventListeners.Purge();
+	}
+#endif
+}
+
+//=============================================================================
+//=============================================================================
+
+static int ListenToGameEvent( const char* szEvent, HSCRIPT hFunc, const char* szContext )
+{
+	CScriptGameEventListener *p = new CScriptGameEventListener();
+	return p->ListenToGameEvent( szEvent, hFunc, szContext );
+}
+
+//-----------------------------------------------------------------------------
+//
+//-----------------------------------------------------------------------------
+static void FireGameEvent( const char* szEvent, HSCRIPT hTable )
+{
+	IGameEvent *event = gameeventmanager->CreateEvent( szEvent );
+	if ( event )
+	{
+		ScriptVariant_t key, val;
+		int nIterator = -1;
+		while ( ( nIterator = g_pScriptVM->GetKeyValue( hTable, nIterator, &key, &val ) ) != -1 )
+		{
+			switch ( val.m_type )
+			{
+				case FIELD_FLOAT:   event->SetFloat ( key.m_pszString, val.m_float     ); break;
+				case FIELD_INTEGER: event->SetInt   ( key.m_pszString, val.m_int       ); break;
+				case FIELD_BOOLEAN: event->SetBool  ( key.m_pszString, val.m_bool      ); break;
+				case FIELD_CSTRING: event->SetString( key.m_pszString, val.m_pszString ); break;
+			}
+
+			g_pScriptVM->ReleaseValue(key);
+			g_pScriptVM->ReleaseValue(val);
+		}
+
+#ifdef CLIENT_DLL
+		gameeventmanager->FireEventClientSide(event);
+#else
+		gameeventmanager->FireEvent(event);
+#endif
+	}
+}
+
+#ifndef CLIENT_DLL
+//-----------------------------------------------------------------------------
+// Copy of FireGameEvent, server only with no broadcast to clients.
+//-----------------------------------------------------------------------------
+static void FireGameEventLocal( const char* szEvent, HSCRIPT hTable )
+{
+	IGameEvent *event = gameeventmanager->CreateEvent( szEvent );
+	if ( event )
+	{
+		ScriptVariant_t key, val;
+		int nIterator = -1;
+		while ( ( nIterator = g_pScriptVM->GetKeyValue( hTable, nIterator, &key, &val ) ) != -1 )
+		{
+			switch ( val.m_type )
+			{
+				case FIELD_FLOAT:   event->SetFloat ( key.m_pszString, val.m_float     ); break;
+				case FIELD_INTEGER: event->SetInt   ( key.m_pszString, val.m_int       ); break;
+				case FIELD_BOOLEAN: event->SetBool  ( key.m_pszString, val.m_bool      ); break;
+				case FIELD_CSTRING: event->SetString( key.m_pszString, val.m_pszString ); break;
+			}
+
+			g_pScriptVM->ReleaseValue(key);
+			g_pScriptVM->ReleaseValue(val);
+		}
+
+		gameeventmanager->FireEvent(event,true);
+	}
+}
+#endif // !CLIENT_DLL
 
 //=============================================================================
 // Save/Restore Utility
@@ -681,12 +1113,11 @@ HSCRIPT CScriptReadWriteFile::ScriptKeyValuesRead( const char *szFile )
 void RegisterScriptSingletons()
 {
 	// NOTE (port): partial port of Mapbase eb014cce (v6.0) RegisterScriptSingletons.
-	// Brought over: NetProps (moved), the SaveRestore table funcs, the file R/W funcs,
-	// and the Squads instance. Still DEFERRED to follow-up sub-commits:
-	// CScriptLocalize ("Localize", needs vgui which server.dll does not link), the
-	// game-event listener funcs (ListenToGameEvent/StopListening/FireGameEvent),
-	// CNetMsgScriptHelper ("NetMsg"), and the "AmmoDef" instance (CAmmoDef scriptdesc
-	// is a pre-v6.0 surface this tree never ported).
+	// Brought over: NetProps (moved), SaveRestore table funcs, file R/W funcs, the
+	// game-event listener funcs, and the Squads instance. Still DEFERRED to follow-up
+	// sub-commits: CScriptLocalize ("Localize", needs vgui which server.dll does not
+	// link), CNetMsgScriptHelper ("NetMsg"), and the "AmmoDef" instance (CAmmoDef
+	// scriptdesc is a pre-v6.0 surface this tree never ported).
 	ScriptRegisterFunctionNamed( g_pScriptVM, CScriptSaveRestoreUtil::SaveTable, "SaveTable", "Store a table with primitive values that will persist across level transitions and save loads." );
 	ScriptRegisterFunctionNamed( g_pScriptVM, CScriptSaveRestoreUtil::RestoreTable, "RestoreTable", "Retrieves a table from storage. Write into input table." );
 	ScriptRegisterFunctionNamed( g_pScriptVM, CScriptSaveRestoreUtil::ClearSavedTable, "ClearSavedTable", "Removes the table with the given context." );
@@ -695,10 +1126,22 @@ void RegisterScriptSingletons()
 	ScriptRegisterFunctionNamed( g_pScriptVM, CScriptReadWriteFile::ScriptKeyValuesWrite, "KeyValuesToFile", "Stores the CScriptKeyValues into the file" );
 	ScriptRegisterFunctionNamed( g_pScriptVM, CScriptReadWriteFile::ScriptKeyValuesRead, "KeyValuesToString", "Returns the CScriptKeyValues from the file, null if no file or file is too big." );
 
+	ScriptRegisterFunction( g_pScriptVM, ListenToGameEvent, "Register as a listener for a game event from script." );
+	ScriptRegisterFunctionNamed( g_pScriptVM, CScriptGameEventListener::StopListeningToGameEvent, "StopListeningToGameEvent", "Stop the specified event listener." );
+	ScriptRegisterFunctionNamed( g_pScriptVM, CScriptGameEventListener::StopListeningToAllGameEvents, "StopListeningToAllGameEvents", "Stop listening to all game events within a specific context." );
+	ScriptRegisterFunction( g_pScriptVM, FireGameEvent, "Fire a game event." );
+#ifndef CLIENT_DLL
+	ScriptRegisterFunction( g_pScriptVM, FireGameEventLocal, "Fire a game event without broadcasting to the client." );
+#endif
+
 	g_pScriptVM->RegisterInstance( &g_ScriptNetPropManager, "NetProps" );
 
 	// Singletons not unique to VScript (not declared or defined here)
 #ifndef CLIENT_DLL
 	g_pScriptVM->RegisterInstance( &g_AI_SquadManager, "Squads" );
 #endif
+
+#ifndef CLIENT_DLL
+	CScriptGameEventListener::LoadAllEvents();
+#endif // !CLIENT_DLL
 }
