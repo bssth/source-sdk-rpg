@@ -35,4 +35,8 @@ inline bool VScriptRunScript( const char *pszScriptName, bool bWarnMissing = fal
 // Only allow scripts to create entities during map initialization
 bool IsEntityCreationAllowedInScripts( void );
 
+#ifdef MAPBASE_VSCRIPT
+void RegisterSharedScriptFunctions();
+#endif
+
 #endif // VSCRIPT_SHARED_H

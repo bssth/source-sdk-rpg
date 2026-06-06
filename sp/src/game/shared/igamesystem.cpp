@@ -337,9 +337,18 @@ void IGameSystem::FrameUpdatePostEntityThinkAllSystems()
 	InvokePerFrameMethod( &IGameSystemPerFrame::FrameUpdatePostEntityThink );
 }
 
-void IGameSystem::PreClientUpdateAllSystems() 
+void IGameSystem::PreClientUpdateAllSystems()
 {
 	InvokePerFrameMethod( &IGameSystemPerFrame::PreClientUpdate );
+}
+
+#endif
+
+#ifdef MAPBASE_VSCRIPT
+
+void IGameSystem::RegisterVScriptAllSystems()
+{
+	InvokeMethod( &IGameSystem::RegisterVScript );
 }
 
 #endif

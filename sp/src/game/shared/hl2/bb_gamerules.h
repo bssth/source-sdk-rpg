@@ -40,6 +40,11 @@ public:
 	
 	virtual bool			ShouldCollide( int collisionGroup0, int collisionGroup1 );
 	virtual bool			ShouldUseRobustRadiusDamage(CBaseEntity *pEntity);
+
+#ifdef MAPBASE_VSCRIPT
+	virtual void			RegisterScriptFunctions( void );
+#endif
+
 #ifndef CLIENT_DLL
 	virtual float			GetAutoAimScale( CBasePlayer *pPlayer );
 	virtual float			GetAmmoQuantityScale( int iAmmoIndex );

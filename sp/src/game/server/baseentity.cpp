@@ -1938,6 +1938,9 @@ BEGIN_DATADESC_NO_BASE( CBaseEntity )
 	DEFINE_INPUTFUNC( FIELD_STRING, "RunScriptFile", InputRunScriptFile ),
 	DEFINE_INPUTFUNC( FIELD_STRING, "RunScriptCode", InputRunScript ),
 	DEFINE_INPUTFUNC( FIELD_STRING, "CallScriptFunction", InputCallScriptFunction ),
+#ifdef MAPBASE_VSCRIPT
+	DEFINE_INPUTFUNC( FIELD_STRING, "RunScriptCodeQuotable", InputRunScriptQuotable ),
+#endif
 
 	DEFINE_OUTPUT( m_OnUser1, "OnUser1" ),
 	DEFINE_OUTPUT( m_OnUser2, "OnUser2" ),

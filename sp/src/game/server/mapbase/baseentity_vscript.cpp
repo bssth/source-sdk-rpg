@@ -103,6 +103,17 @@ BEGIN_ENT_SCRIPTDESC_ROOT_WITH_HELPER( CBaseEntity, "Root class of all server-si
 	DEFINE_SCRIPTFUNC_NAMED( KeyValueFromInt, "__KeyValueFromInt", SCRIPT_HIDE )
 	DEFINE_SCRIPTFUNC_NAMED( KeyValueFromVector, "__KeyValueFromVector", SCRIPT_HIDE )
 
+#ifdef MAPBASE_VSCRIPT
+	DEFINE_SCRIPTFUNC_NAMED( ScriptIsVisible, "IsVisible", "Check if the specified position can be visible to this entity." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptIsEntVisible, "IsEntVisible", "Check if the specified entity can be visible to this entity." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptIsVisibleWithMask, "IsVisibleWithMask", "Check if the specified position can be visible to this entity with a specific trace mask." )
+
+	DEFINE_SCRIPTFUNC_NAMED( ScriptGetContext, "GetContext", "Get a response context value" )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptAddContext, "AddContext", "Add a response context value" )
+
+	DEFINE_SCRIPTFUNC_NAMED( ScriptClassify, "Classify", "Get Class_T class ID" )
+#endif
+
 	DEFINE_SCRIPTFUNC( ValidateScriptScope, "Ensure that an entity's script scope has been created" )
 	DEFINE_SCRIPTFUNC( GetScriptScope, "Retrieve the script-side data associated with an entity" )
 	DEFINE_SCRIPTFUNC( GetScriptId, "Retrieve the unique identifier used to refer to the entity within the scripting system" )
@@ -163,6 +174,33 @@ void CBaseEntity::InputCallScriptFunction(inputdata_t& inputdata)
 {
 	CallScriptFunction(inputdata.value.String(), NULL);
 }
+
+#ifdef MAPBASE_VSCRIPT
+//---------------------------------------------------------
+// Send the string to the VM as source code and execute it
+//---------------------------------------------------------
+void CBaseEntity::InputRunScriptQuotable(inputdata_t& inputdata)
+{
+	CUtlStringList vecStrings;
+	V_SplitString( inputdata.value.String(), "''", vecStrings );
+	if (vecStrings.Count() > 1)
+	{
+		char szQuotableCode[1024];
+		Q_strncpy( szQuotableCode, vecStrings[0], sizeof( szQuotableCode ) );
+
+		for ( int i = 1; i < vecStrings.Count(); i++ )
+		{
+			Q_snprintf( szQuotableCode, sizeof( szQuotableCode ), "%s\"%s", szQuotableCode, vecStrings[i] );
+		}
+
+		RunScript( szQuotableCode, "InputRunScriptQuotable" );
+	}
+	else
+	{
+		RunScript( inputdata.value.String(), "InputRunScriptQuotable" );
+	}
+}
+#endif
 
 //-----------------------------------------------------------------------------
 // Returns true if the function was located and called. false otherwise.
@@ -579,3 +617,35 @@ const Vector& CBaseEntity::ScriptGetBoundingMaxs(void)
 {
 	return m_Collision.OBBMaxs();
 }
+
+#ifdef MAPBASE_VSCRIPT
+//-----------------------------------------------------------------------------
+// NOTE (port): this base lacks Mapbase's 3-arg AddContext / by-name GetContextValue,
+// so these adapt to the vanilla single-string AddContext ("name:value:duration")
+// and the index-based context accessors.
+//-----------------------------------------------------------------------------
+void CBaseEntity::ScriptAddContext( const char *name, const char *value, float duration )
+{
+	if ( duration > 0.0f )
+		AddContext( CFmtStr( "%s:%s:%f", name, value, duration ) );
+	else
+		AddContext( CFmtStr( "%s:%s", name, value ) );
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+const char *CBaseEntity::ScriptGetContext( const char *name )
+{
+	int idx = FindContextByName( name );
+	if ( idx == -1 )
+		return NULL;
+	return GetContextValue( idx );
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+int CBaseEntity::ScriptClassify( void )
+{
+	return (int)Classify();
+}
+#endif
