@@ -42,16 +42,10 @@ enum teleport_stages_t
 	TELEPORT_FADEIN,
 };
 
-// Convar restoration save/restore
-#define MAX_MODIFIED_CONVAR_STRING		128
-struct modifiedconvars_t 
-{
-	DECLARE_SIMPLE_DATADESC();
-
-	char pszConvar[MAX_MODIFIED_CONVAR_STRING];
-	char pszCurrentValue[MAX_MODIFIED_CONVAR_STRING];
-	char pszOrgValue[MAX_MODIFIED_CONVAR_STRING];
-};
+// Convar restoration save/restore.
+// Mapbase port: modifiedconvars_t (struct + datadesc) moved to mapbase/SystemConvarMod.{h,cpp}
+// so the game_convar_mod / mapbase_convar_mod entities can share it.
+#include "mapbase/SystemConvarMod.h"
 
 bool g_bInCommentaryMode = false;
 bool IsInCommentaryMode( void )
@@ -820,13 +814,6 @@ BEGIN_DATADESC_NO_BASE( CCommentarySystem )
 	DEFINE_FIELD( m_hLastCommentaryNode, FIELD_EHANDLE ),
 	DEFINE_FIELD( m_iCommentaryNodeCount, FIELD_INTEGER ),
 END_DATADESC()
-
-BEGIN_SIMPLE_DATADESC( modifiedconvars_t )
-	DEFINE_ARRAY( pszConvar, FIELD_CHARACTER, MAX_MODIFIED_CONVAR_STRING ),
-	DEFINE_ARRAY( pszCurrentValue, FIELD_CHARACTER, MAX_MODIFIED_CONVAR_STRING ),
-	DEFINE_ARRAY( pszOrgValue, FIELD_CHARACTER, MAX_MODIFIED_CONVAR_STRING ),
-END_DATADESC()
-
 
 //-----------------------------------------------------------------------------
 // Purpose: 

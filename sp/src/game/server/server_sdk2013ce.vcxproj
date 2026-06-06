@@ -440,6 +440,7 @@
     <ClInclude Include="..\..\game\shared\mapbase\matchers.h" />
     <ClInclude Include="logic_random_outputs.h" />
     <ClInclude Include="mapbase\datadesc_mod.h" />
+    <ClInclude Include="mapbase\SystemConvarMod.h" />
     <ClInclude Include="..\..\game\shared\hl2mp\weapon_slam.h" />
     <ClInclude Include="..\..\game\shared\achievement_saverestore.h" />
     <ClInclude Include="..\..\game\shared\achievementmgr.h" />
@@ -825,6 +826,7 @@
     <ClCompile Include="mapbase\point_radiation_source.cpp" />
     <ClCompile Include="mapbase\baseentity_io_ext.cpp" />
     <ClCompile Include="mapbase\datadesc_mod.cpp" />
+    <ClCompile Include="mapbase\SystemConvarMod.cpp" />
     <ClCompile Include="mapbase\point_projectile.cpp" />
     <ClCompile Include="mapbase\ai_monitor.cpp" />
     <ClCompile Include="mapbase\ai_weaponmodifier.cpp" />
