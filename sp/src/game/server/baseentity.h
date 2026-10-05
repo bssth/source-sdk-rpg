@@ -1945,6 +1945,7 @@ public:
 
 	int ScriptClassify(void);
 
+	bool ScriptAddOutput( const char *pszOutputName, const char *pszTarget, const char *pszAction, const char *pszParameter, float flDelay, int iMaxTimes );
 	const char *ScriptGetKeyValue( const char *pszKeyName );
 #endif
 

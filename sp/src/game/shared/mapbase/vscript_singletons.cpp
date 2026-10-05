@@ -17,6 +17,7 @@
 //=============================================================================//
 
 #include "cbase.h"
+#include "ammodef.h"
 
 #ifndef CLIENT_DLL
 #include "ai_squad.h"
@@ -1263,10 +1264,10 @@ void RegisterScriptSingletons()
 {
 	// NOTE (port): partial port of Mapbase eb014cce (v6.0) RegisterScriptSingletons.
 	// Brought over: NetProps (moved), SaveRestore table funcs, file R/W funcs, the
-	// game-event listener funcs, and the Squads + NetMsg instances. Still DEFERRED:
-	// CScriptLocalize ("Localize", needs vgui which server.dll does not link) and the
-	// "AmmoDef" instance (CAmmoDef scriptdesc is a pre-v6.0 surface this tree never
-	// ported).
+	// game-event listener funcs, and the AmmoDef + Squads + NetMsg instances. Still
+	// DEFERRED: CScriptLocalize ("Localize", needs vgui which server.dll does not link).
+	// "AmmoDef" was introduced by Mapbase 418a9dcc (v4.1) in RegisterSharedScriptFunctions;
+	// it is registered here, where v6.0 moved it.
 	ScriptRegisterFunctionNamed( g_pScriptVM, CScriptSaveRestoreUtil::SaveTable, "SaveTable", "Store a table with primitive values that will persist across level transitions and save loads." );
 	ScriptRegisterFunctionNamed( g_pScriptVM, CScriptSaveRestoreUtil::RestoreTable, "RestoreTable", "Retrieves a table from storage. Write into input table." );
 	ScriptRegisterFunctionNamed( g_pScriptVM, CScriptSaveRestoreUtil::ClearSavedTable, "ClearSavedTable", "Removes the table with the given context." );
@@ -1290,6 +1291,7 @@ void RegisterScriptSingletons()
 #endif
 
 	// Singletons not unique to VScript (not declared or defined here)
+	g_pScriptVM->RegisterInstance( GetAmmoDef(), "AmmoDef" );
 #ifndef CLIENT_DLL
 	g_pScriptVM->RegisterInstance( &g_AI_SquadManager, "Squads" );
 #endif
