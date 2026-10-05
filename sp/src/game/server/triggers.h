@@ -69,6 +69,9 @@ public:
 	virtual void StartTouch(CBaseEntity *pOther);
 	virtual void EndTouch(CBaseEntity *pOther);
 	bool IsTouching( CBaseEntity *pOther );
+#ifdef MAPBASE_VSCRIPT
+	bool ScriptIsTouching( HSCRIPT hOther );
+#endif
 
 	CBaseEntity *GetTouchedEntityOfType( const char *sClassName );
 
@@ -97,6 +100,9 @@ protected:
 	CUtlVector< EHANDLE >	m_hTouchingEntities;
 
 	DECLARE_DATADESC();
+#ifdef MAPBASE_VSCRIPT
+	DECLARE_ENT_SCRIPTDESC();
+#endif
 };
 
 //-----------------------------------------------------------------------------

@@ -153,6 +153,11 @@ BEGIN_ENT_SCRIPTDESC_ROOT_WITH_HELPER( CBaseEntity, "Root class of all server-si
 
 	DEFINE_SCRIPTFUNC_NAMED( ScriptClassify, "Classify", "Get Class_T class ID" )
 
+	DEFINE_SCRIPTFUNC_NAMED( ScriptAcceptInput, "AcceptInput", "" )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptFireOutput, "FireOutput", "Fire an entity output" )
+	DEFINE_SCRIPTFUNC( GetMaxOutputDelay, "Get the longest delay for all events attached to an output" )
+	DEFINE_SCRIPTFUNC( CancelEventsByInput, "Cancel all I/O events for this entity, match input" )
+
 	DEFINE_SCRIPTFUNC_NAMED( ScriptAddOutput, "AddOutput", "Add an output" )
 	DEFINE_SCRIPTFUNC_NAMED( ScriptGetKeyValue, "GetKeyValue", "Get a keyvalue" )
 
@@ -203,6 +208,9 @@ BEGIN_ENT_SCRIPTDESC_ROOT_WITH_HELPER( CBaseEntity, "Root class of all server-si
 	DEFINE_SCRIPTFUNC( AddEFlags, "Add Eflags" )
 	DEFINE_SCRIPTFUNC( RemoveEFlags, "Remove Eflags" )
 
+	DEFINE_SCRIPTFUNC( GetTransmitState, "" )
+	DEFINE_SCRIPTFUNC( SetTransmitState, "" )
+
 	DEFINE_SCRIPTFUNC_NAMED( ScriptGetMoveType, "GetMoveType", "Get the move type" )
 	DEFINE_SCRIPTFUNC_NAMED( ScriptSetMoveType, "SetMoveType", "Set the move type" )
 
@@ -249,6 +257,39 @@ END_SCRIPTDESC();
 
 
 //-----------------------------------------------------------------------------
+#ifdef MAPBASE_VSCRIPT
+void CBaseEntity::ScriptFireOutput( const char *pszOutput, HSCRIPT hActivator, HSCRIPT hCaller, const char *szValue, float flDelay )
+{
+	variant_t value;
+	value.SetString( MAKE_STRING(szValue) );
+
+	FireNamedOutput( pszOutput, value, ToEnt(hActivator), ToEnt(hCaller), flDelay );
+}
+
+float CBaseEntity::GetMaxOutputDelay( const char *pszOutput )
+{
+	CBaseEntityOutput *pOutput = FindNamedOutput( pszOutput );
+	if ( pOutput )
+	{
+		return pOutput->GetMaxDelay();
+	}
+	return 0;
+}
+
+void CBaseEntity::CancelEventsByInput( const char *szInput )
+{
+	g_EventQueue.CancelEventsByInput( this, szInput );
+}
+
+bool CBaseEntity::ScriptAcceptInput( const char *szInputName, const char *szValue, HSCRIPT hActivator, HSCRIPT hCaller )
+{
+	variant_t value;
+	value.SetString( MAKE_STRING(szValue) );
+
+	return AcceptInput( szInputName, ToEnt(hActivator), ToEnt(hCaller), value, 0 );
+}
+#endif // MAPBASE_VSCRIPT
+
 CBaseEntityOutput *CBaseEntity::FindNamedOutput( const char *pszOutput )
 {
 	if ( pszOutput == NULL )
@@ -475,7 +516,7 @@ void CBaseEntity::ScriptThink(void)
 #ifdef MAPBASE_VSCRIPT
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
-void CBaseEntity::ScriptSetThinkFunction(const char *szFunc, float time)
+void CBaseEntity::ScriptSetThinkFunction( const char *szFunc, float flTime )
 {
 	// Empty string stops thinking
 	if (!szFunc || szFunc[0] == '\0')
@@ -485,7 +526,8 @@ void CBaseEntity::ScriptSetThinkFunction(const char *szFunc, float time)
 	else
 	{
 		m_iszScriptThinkFunction = AllocPooledString(szFunc);
-		SetContextThink( &CBaseEntity::ScriptThink, gpGlobals->curtime + time, "ScriptThink" );
+		flTime = max( 0, flTime );
+		SetContextThink( &CBaseEntity::ScriptThink, gpGlobals->curtime + flTime, "ScriptThink" );
 	}
 }
 
@@ -499,37 +541,30 @@ void CBaseEntity::ScriptStopThinkFunction()
 //-----------------------------------------------------------------------------
 void CBaseEntity::ScriptThinkH()
 {
-	if (m_hfnThink)
-	{
-		ScriptVariant_t varThinkRetVal;
-		if (g_pScriptVM->ExecuteFunction(m_hfnThink, NULL, 0, &varThinkRetVal, NULL, true) == SCRIPT_ERROR)
-		{
-			DevWarning("%s FAILED to call script think function (invalid closure)!\n", GetDebugName());
-			ScriptStopThink();
-			return;
-		}
-
-		float flThinkFrequency = 0.f;
-		if (!varThinkRetVal.AssignTo(&flThinkFrequency))
-		{
-			// no return value stops thinking
-			ScriptStopThink();
-			return;
-		}
-
-		SetNextThink(gpGlobals->curtime + flThinkFrequency, "ScriptThinkH");
-	}
-	else
+	ScriptVariant_t varThinkRetVal;
+	if ( g_pScriptVM->ExecuteFunction(m_hfnThink, NULL, 0, &varThinkRetVal, NULL, true) == SCRIPT_ERROR )
 	{
 		DevWarning("%s FAILED to call script think function (invalid closure)!\n", GetDebugName());
+		ScriptStopThink();
+		return;
 	}
+
+	float flThinkFrequency = 0.f;
+	if ( !varThinkRetVal.AssignTo(&flThinkFrequency) )
+	{
+		// no return value stops thinking
+		ScriptStopThink();
+		return;
+	}
+
+	SetNextThink( gpGlobals->curtime + flThinkFrequency, "ScriptThinkH" );
 }
 
-void CBaseEntity::ScriptSetThink(HSCRIPT hFunc, float time)
+void CBaseEntity::ScriptSetThink( HSCRIPT hFunc, float flTime )
 {
-	if (hFunc)
+	if ( hFunc )
 	{
-		if (m_hfnThink)
+		if ( m_hfnThink )
 		{
 			// release old func
 			ScriptStopThink();
@@ -538,7 +573,8 @@ void CBaseEntity::ScriptSetThink(HSCRIPT hFunc, float time)
 		// no type check here, print error on call instead
 		m_hfnThink = hFunc;
 
-		SetContextThink( &CBaseEntity::ScriptThinkH, gpGlobals->curtime + time, "ScriptThinkH" );
+		flTime = max( 0, flTime );
+		SetContextThink( &CBaseEntity::ScriptThinkH, gpGlobals->curtime + flTime, "ScriptThinkH" );
 	}
 	else
 	{

@@ -827,7 +827,12 @@ void CEventQueue::Dump( void )
 //-----------------------------------------------------------------------------
 // Purpose: adds the action into the correct spot in the priority queue, targeting entity via string name
 //-----------------------------------------------------------------------------
-void CEventQueue::AddEvent( const char *target, const char *targetInput, variant_t Value, float fireDelay, CBaseEntity *pActivator, CBaseEntity *pCaller, int outputID )
+#ifdef MAPBASE_VSCRIPT
+intptr_t
+#else
+void
+#endif
+CEventQueue::AddEvent( const char *target, const char *targetInput, variant_t Value, float fireDelay, CBaseEntity *pActivator, CBaseEntity *pCaller, int outputID )
 {
 	// build the new event
 	EventQueuePrioritizedEvent_t *newEvent = new EventQueuePrioritizedEvent_t;
@@ -845,12 +850,21 @@ void CEventQueue::AddEvent( const char *target, const char *targetInput, variant
 	newEvent->m_iOutputID = outputID;
 
 	AddEvent( newEvent );
+
+#ifdef MAPBASE_VSCRIPT
+	return reinterpret_cast<intptr_t>(newEvent);  // POINTER_TO_INT
+#endif
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: adds the action into the correct spot in the priority queue, targeting entity via pointer
 //-----------------------------------------------------------------------------
-void CEventQueue::AddEvent( CBaseEntity *target, const char *targetInput, variant_t Value, float fireDelay, CBaseEntity *pActivator, CBaseEntity *pCaller, int outputID )
+#ifdef MAPBASE_VSCRIPT
+intptr_t
+#else
+void
+#endif
+CEventQueue::AddEvent( CBaseEntity *target, const char *targetInput, variant_t Value, float fireDelay, CBaseEntity *pActivator, CBaseEntity *pCaller, int outputID )
 {
 	// build the new event
 	EventQueuePrioritizedEvent_t *newEvent = new EventQueuePrioritizedEvent_t;
@@ -868,6 +882,10 @@ void CEventQueue::AddEvent( CBaseEntity *target, const char *targetInput, varian
 	newEvent->m_iOutputID = outputID;
 
 	AddEvent( newEvent );
+
+#ifdef MAPBASE_VSCRIPT
+	return reinterpret_cast<intptr_t>(newEvent);  // POINTER_TO_INT
+#endif
 }
 
 void CEventQueue::AddEvent( CBaseEntity *target, const char *action, float fireDelay, CBaseEntity *pActivator, CBaseEntity *pCaller, int outputID )
@@ -1143,6 +1161,81 @@ void ServiceEventQueue( void )
 	g_EventQueue.ServiceEvents();
 }
 
+
+
+#ifdef MAPBASE_VSCRIPT
+//-----------------------------------------------------------------------------
+// Remove events on entity by input.
+//-----------------------------------------------------------------------------
+void CEventQueue::CancelEventsByInput( CBaseEntity *pTarget, const char *szInput )
+{
+	if ( !pTarget )
+		return;
+
+	string_t iszDebugName = MAKE_STRING( pTarget->GetDebugName() );
+	EventQueuePrioritizedEvent_t *pCur = m_Events.m_pNext;
+
+	while ( pCur )
+	{
+		bool bRemove = false;
+
+		if ( pTarget == pCur->m_pEntTarget || pCur->m_iTarget == iszDebugName )
+		{
+			if ( !V_strncmp( STRING(pCur->m_iTargetInput), szInput, strlen(szInput) ) )
+			{
+				bRemove = true;
+			}
+		}
+
+		EventQueuePrioritizedEvent_t *pPrev = pCur;
+		pCur = pCur->m_pNext;
+
+		if ( bRemove )
+		{
+			RemoveEvent(pPrev);
+			delete pPrev;
+		}
+	}
+}
+
+bool CEventQueue::RemoveEvent( intptr_t event )
+{
+	if ( !event )
+		return false;
+
+	EventQueuePrioritizedEvent_t *pe = reinterpret_cast<EventQueuePrioritizedEvent_t*>(event); // INT_TO_POINTER
+
+	for ( EventQueuePrioritizedEvent_t *pCur = m_Events.m_pNext; pCur; pCur = pCur->m_pNext )
+	{
+		if ( pCur == pe )
+		{
+			RemoveEvent(pCur);
+			delete pCur;
+			return true;
+		}
+	}
+
+	return false;
+}
+
+float CEventQueue::GetTimeLeft( intptr_t event )
+{
+	if ( !event )
+		return 0.f;
+
+	EventQueuePrioritizedEvent_t *pe = reinterpret_cast<EventQueuePrioritizedEvent_t*>(event); // INT_TO_POINTER
+
+	for ( EventQueuePrioritizedEvent_t *pCur = m_Events.m_pNext; pCur; pCur = pCur->m_pNext )
+	{
+		if ( pCur == pe )
+		{
+			return (pCur->m_flFireTime - gpGlobals->curtime);
+		}
+	}
+
+	return 0.f;
+}
+#endif // MAPBASE_VSCRIPT
 
 
 // save data description for the event queue

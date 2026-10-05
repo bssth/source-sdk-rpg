@@ -2146,6 +2146,14 @@ void CBaseEntity::UpdateOnRemove( void )
 #endif
 		g_pScriptVM->RemoveInstance( m_hScriptInstance );
 		m_hScriptInstance = NULL;
+
+#ifdef MAPBASE_VSCRIPT
+		if ( m_hfnThink )
+		{
+			g_pScriptVM->ReleaseScript( m_hfnThink );
+			m_hfnThink = NULL;
+		}
+#endif // MAPBASE_VSCRIPT
 	}
 }
 

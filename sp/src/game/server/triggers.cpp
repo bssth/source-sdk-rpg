@@ -121,6 +121,17 @@ BEGIN_DATADESC( CBaseTrigger )
 
 END_DATADESC()
 
+#ifdef MAPBASE_VSCRIPT
+
+BEGIN_ENT_SCRIPTDESC( CBaseTrigger, CBaseEntity, "Trigger entity" )
+	DEFINE_SCRIPTFUNC( Enable, "" )
+	DEFINE_SCRIPTFUNC( Disable, "" )
+	DEFINE_SCRIPTFUNC( TouchTest, "" )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptIsTouching, "IsTouching", "Checks whether the passed entity is touching the trigger." )
+END_SCRIPTDESC();
+
+#endif // MAPBASE_VSCRIPT
+
 
 LINK_ENTITY_TO_CLASS( trigger, CBaseTrigger );
 
@@ -540,6 +551,19 @@ bool CBaseTrigger::IsTouching( CBaseEntity *pOther )
 	hOther = pOther;
 	return ( m_hTouchingEntities.Find( hOther ) != m_hTouchingEntities.InvalidIndex() );
 }
+
+#ifdef MAPBASE_VSCRIPT
+bool CBaseTrigger::ScriptIsTouching( HSCRIPT hOther )
+{
+	CBaseEntity *pOther = ToEnt(hOther);
+	if ( !pOther )
+		return false;
+
+	EHANDLE eOther;
+	eOther = pOther;
+	return ( m_hTouchingEntities.Find( eOther ) != m_hTouchingEntities.InvalidIndex() );
+}
+#endif // MAPBASE_VSCRIPT
 
 //-----------------------------------------------------------------------------
 // Purpose: Return a pointer to the first entity of the specified type being touched by this trigger
