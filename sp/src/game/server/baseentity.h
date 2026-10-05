@@ -1891,6 +1891,11 @@ public:
 	void RunPrecacheScripts(void);
 	void RunOnPostSpawnScripts(void);
 
+#ifdef MAPBASE_VSCRIPT
+	HSCRIPT LookupScriptFunction(const char* pFunctionName);
+	bool CallScriptFunctionHandle(HSCRIPT hFunc, ScriptVariant_t* pFunctionReturn);
+#endif
+
 	HSCRIPT ScriptGetMoveParent(void);
 	HSCRIPT ScriptGetRootMoveParent();
 	HSCRIPT ScriptFirstMoveChild(void);

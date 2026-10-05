@@ -3330,13 +3330,12 @@ void CBasePlayer::PlayerRunCommand(CUserCmd *ucmd, IMoveHelper *moveHelper)
 	
 #ifdef MAPBASE_VSCRIPT
 	// Movement hook for VScript
-	if ( m_ScriptScope.IsInitialized() )
+	if ( HSCRIPT hFunc = LookupScriptFunction("PlayerRunCommand") )
 	{
-		CUserCmdAccessor accessor = CUserCmdAccessor( ucmd );
-		HSCRIPT hCmd = g_pScriptVM->RegisterInstance( &accessor );
+		HSCRIPT hCmd = g_pScriptVM->RegisterInstance( ucmd );
 
 		g_pScriptVM->SetValue( "command", hCmd );
-		CallScriptFunction( "PlayerRunCommand", NULL );
+		CallScriptFunctionHandle( hFunc, NULL );
 		g_pScriptVM->ClearValue( "command" );
 
 		g_pScriptVM->RemoveInstance( hCmd );

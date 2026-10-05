@@ -286,6 +286,36 @@ bool CBaseEntity::CallScriptFunction(const char* pFunctionName, ScriptVariant_t*
 	return false;
 }
 
+#ifdef MAPBASE_VSCRIPT
+//-----------------------------------------------------------------------------
+// Gets a function handle
+//-----------------------------------------------------------------------------
+HSCRIPT CBaseEntity::LookupScriptFunction(const char* pFunctionName)
+{
+	START_VMPROFILE
+
+	if (!m_ScriptScope.IsInitialized())
+	{
+		return NULL;
+	}
+
+	return m_ScriptScope.LookupFunction(pFunctionName);
+}
+
+//-----------------------------------------------------------------------------
+// Calls and releases a function handle (ASSUMES SCRIPT SCOPE AND FUNCTION ARE VALID!)
+//-----------------------------------------------------------------------------
+bool CBaseEntity::CallScriptFunctionHandle(HSCRIPT hFunc, ScriptVariant_t* pFunctionReturn)
+{
+	m_ScriptScope.Call(hFunc, pFunctionReturn);
+	m_ScriptScope.ReleaseFunction(hFunc);
+
+	UPDATE_VMPROFILE
+
+	return true;
+}
+#endif
+
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------

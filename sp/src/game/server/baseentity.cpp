@@ -2725,6 +2725,30 @@ void CBaseEntity::VPhysicsCollision( int index, gamevcollisionevent_t *pEvent )
 	int otherIndex = !index;
 	CBaseEntity *pHitEntity = pEvent->pEntities[otherIndex];
 
+#ifdef MAPBASE_VSCRIPT
+	if (HSCRIPT hFunc = LookupScriptFunction("VPhysicsCollision"))
+	{
+		// TODO: Unique class for collision events
+		g_pScriptVM->SetValue( "entity", ScriptVariant_t( pHitEntity->GetScriptInstance() ) );
+		g_pScriptVM->SetValue( "speed", pEvent->collisionSpeed );
+
+		Vector vecContactPoint;
+		pEvent->pInternalData->GetContactPoint( vecContactPoint );
+		g_pScriptVM->SetValue( "point", vecContactPoint );
+
+		Vector vecSurfaceNormal;
+		pEvent->pInternalData->GetSurfaceNormal( vecSurfaceNormal );
+		g_pScriptVM->SetValue( "normal", vecSurfaceNormal );
+
+		CallScriptFunctionHandle( hFunc, NULL );
+
+		g_pScriptVM->ClearValue( "entity" );
+		g_pScriptVM->ClearValue( "speed" );
+		g_pScriptVM->ClearValue( "point" );
+		g_pScriptVM->ClearValue( "normal" );
+	}
+#endif
+
 	// Don't make sounds / effects if neither entity is MOVETYPE_VPHYSICS.  The game
 	// physics should have done so.
 	if ( GetMoveType() != MOVETYPE_VPHYSICS && pHitEntity->GetMoveType() != MOVETYPE_VPHYSICS )
