@@ -2020,6 +2020,9 @@ BEGIN_DATADESC_NO_BASE( CBaseEntity )
 	DEFINE_FUNCTION( SUB_CallUseToggle ),
 	DEFINE_THINKFUNC( ShadowCastDistThink ),
 	DEFINE_THINKFUNC( ScriptThink ),
+#ifdef MAPBASE_VSCRIPT
+	DEFINE_THINKFUNC( ScriptThinkH ),
+#endif
 
 	DEFINE_FIELD( m_hEffectEntity, FIELD_EHANDLE ),
 
@@ -2134,6 +2137,13 @@ void CBaseEntity::UpdateOnRemove( void )
 
 	if ( m_hScriptInstance )
 	{
+#ifdef MAPBASE_VSCRIPT
+		HSCRIPT hFunc = LookupScriptFunction("UpdateOnRemove");
+		if ( hFunc )
+		{
+			CallScriptFunctionHandle( hFunc, NULL );
+		}
+#endif
 		g_pScriptVM->RemoveInstance( m_hScriptInstance );
 		m_hScriptInstance = NULL;
 	}
