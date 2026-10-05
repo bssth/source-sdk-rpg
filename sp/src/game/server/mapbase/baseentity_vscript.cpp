@@ -125,6 +125,19 @@ BEGIN_ENT_SCRIPTDESC_ROOT_WITH_HELPER( CBaseEntity, "Root class of all server-si
 
 	DEFINE_SCRIPTFUNC_NAMED( ScriptGetKeyValue, "GetKeyValue", "Get a keyvalue" )
 
+	DEFINE_SCRIPTFUNC( GetSpawnFlags, "Get spawnflags" )
+	DEFINE_SCRIPTFUNC( AddSpawnFlags, "Add spawnflag(s)" )
+	DEFINE_SCRIPTFUNC( RemoveSpawnFlags, "Remove spawnflag(s)" )
+	DEFINE_SCRIPTFUNC( ClearSpawnFlags, "Clear spawnflag(s)" )
+	DEFINE_SCRIPTFUNC( HasSpawnFlags, "Check if the entity has specific spawnflag(s) ticked" )
+
+	DEFINE_SCRIPTFUNC( GetEffects, "Get effects" )
+	DEFINE_SCRIPTFUNC( AddEffects, "Add effect(s)" )
+	DEFINE_SCRIPTFUNC( RemoveEffects, "Remove effect(s)" )
+	DEFINE_SCRIPTFUNC( ClearEffects, "Clear effect(s)" )
+	DEFINE_SCRIPTFUNC( SetEffects, "Set effect(s)" )
+	DEFINE_SCRIPTFUNC( IsEffectActive, "Check if an effect is active" )
+
 	DEFINE_SCRIPTFUNC( IsPlayer, "Returns true if this entity is a player." )
 	DEFINE_SCRIPTFUNC( IsNPC, "Returns true if this entity is a NPC." )
 	DEFINE_SCRIPTFUNC( IsCombatCharacter, "Returns true if this entity is a combat character (player or NPC)." )
@@ -198,18 +211,9 @@ void CBaseEntity::InputCallScriptFunction(inputdata_t& inputdata)
 //---------------------------------------------------------
 void CBaseEntity::InputRunScriptQuotable(inputdata_t& inputdata)
 {
-	CUtlStringList vecStrings;
-	V_SplitString( inputdata.value.String(), "''", vecStrings );
-	if (vecStrings.Count() > 1)
+	char szQuotableCode[1024];
+	if (V_StrSubst( inputdata.value.String(), "''", "\"", szQuotableCode, sizeof( szQuotableCode ), false ))
 	{
-		char szQuotableCode[1024];
-		Q_strncpy( szQuotableCode, vecStrings[0], sizeof( szQuotableCode ) );
-
-		for ( int i = 1; i < vecStrings.Count(); i++ )
-		{
-			Q_snprintf( szQuotableCode, sizeof( szQuotableCode ), "%s\"%s", szQuotableCode, vecStrings[i] );
-		}
-
 		RunScript( szQuotableCode, "InputRunScriptQuotable" );
 	}
 	else
