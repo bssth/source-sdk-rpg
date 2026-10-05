@@ -5,8 +5,8 @@
 // $NoKeywords: $
 //=============================================================================
 
-#ifndef VSCRIPT_FUNCS_MATH
-#define VSCRIPT_FUNCS_MATH
+#ifndef VSCRIPT_SINGLETONS_H
+#define VSCRIPT_SINGLETONS_H
 #ifdef _WIN32
 #pragma once
 #endif

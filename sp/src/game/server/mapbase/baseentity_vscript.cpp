@@ -61,6 +61,7 @@ BEGIN_ENT_SCRIPTDESC_ROOT_WITH_HELPER( CBaseEntity, "Root class of all server-si
 	DEFINE_SCRIPTFUNC_NAMED( ScriptGetModelName, "GetModelName", "Returns the name of the model" )
 
 	DEFINE_SCRIPTFUNC_NAMED( ScriptEmitSound, "EmitSound", "Plays a sound from this entity." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptStopSound, "StopSound", "Stops a sound from this entity." )
 	DEFINE_SCRIPTFUNC_NAMED( VScriptPrecacheScriptSound, "PrecacheSoundScript", "Precache a sound for later playing." )
 	DEFINE_SCRIPTFUNC_NAMED( ScriptSoundDuration, "GetSoundDuration", "Returns float duration of the sound. Takes soundname and optional actormodelname.")
 
@@ -120,11 +121,11 @@ BEGIN_ENT_SCRIPTDESC_ROOT_WITH_HELPER( CBaseEntity, "Root class of all server-si
 	DEFINE_SCRIPTFUNC_NAMED( ScriptSetAngles, "SetAngles", "Set entity pitch, yaw, roll")
 	DEFINE_SCRIPTFUNC_NAMED( ScriptGetAngles, "GetAngles", "Get entity pitch, yaw, roll as a vector")
 
-	DEFINE_SCRIPTFUNC_NAMED( ScriptSetSize, "SetSize", ""  )
+	DEFINE_SCRIPTFUNC( SetSize, ""  )
 	DEFINE_SCRIPTFUNC_NAMED( ScriptGetBoundingMins, "GetBoundingMins", "Get a vector containing min bounds, centered on object")
 	DEFINE_SCRIPTFUNC_NAMED( ScriptGetBoundingMaxs, "GetBoundingMaxs", "Get a vector containing max bounds, centered on object")
 
-	DEFINE_SCRIPTFUNC_NAMED( ScriptUtilRemove, "Destroy", ""  )
+	DEFINE_SCRIPTFUNC_NAMED( Remove, "Destroy", ""  )
 	DEFINE_SCRIPTFUNC_NAMED( ScriptSetOwner, "SetOwner", ""  )
 	DEFINE_SCRIPTFUNC_NAMED( GetTeamNumber, "GetTeam", ""  )
 	DEFINE_SCRIPTFUNC_NAMED( ChangeTeam, "SetTeam", ""  )
