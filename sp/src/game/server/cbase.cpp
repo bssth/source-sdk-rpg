@@ -1165,7 +1165,10 @@ void ServiceEventQueue( void )
 
 #ifdef MAPBASE_VSCRIPT
 //-----------------------------------------------------------------------------
-// Remove events on entity by input.
+// Remove pending events on entity by input.
+//
+// Also removes events that were targeted with their debug name (classname when unnamed).
+// E.g. CancelEventsByInput( pRelay, "Trigger" ) removes all pending logic_relay "Trigger" events.
 //-----------------------------------------------------------------------------
 void CEventQueue::CancelEventsByInput( CBaseEntity *pTarget, const char *szInput )
 {
@@ -1200,9 +1203,6 @@ void CEventQueue::CancelEventsByInput( CBaseEntity *pTarget, const char *szInput
 
 bool CEventQueue::RemoveEvent( intptr_t event )
 {
-	if ( !event )
-		return false;
-
 	EventQueuePrioritizedEvent_t *pe = reinterpret_cast<EventQueuePrioritizedEvent_t*>(event); // INT_TO_POINTER
 
 	for ( EventQueuePrioritizedEvent_t *pCur = m_Events.m_pNext; pCur; pCur = pCur->m_pNext )
@@ -1220,9 +1220,6 @@ bool CEventQueue::RemoveEvent( intptr_t event )
 
 float CEventQueue::GetTimeLeft( intptr_t event )
 {
-	if ( !event )
-		return 0.f;
-
 	EventQueuePrioritizedEvent_t *pe = reinterpret_cast<EventQueuePrioritizedEvent_t*>(event); // INT_TO_POINTER
 
 	for ( EventQueuePrioritizedEvent_t *pCur = m_Events.m_pNext; pCur; pCur = pCur->m_pNext )

@@ -5,19 +5,18 @@
 //
 //			See vscript_funcs_shared.cpp for more information.
 //
-//			NOTE (port): split out of vscript_funcs_shared.cpp following Mapbase eb014cce
-//			(v6.0). For now this only holds CScriptNetPropManager (moved here verbatim).
-//			The brand-new v6.0 singletons (CScriptLocalize, CScriptGameEventListener,
-//			CScriptSaveRestoreUtil, CScriptReadWriteFile, CNetMsgScriptHelper, plus the
-//			AmmoDef/Squads instances) are deferred to follow-up port sub-commits because
-//			they pull heavier dependencies (vgui ILocalize, usermessages, ai_squad,
-//			filesystem, igameevents).
+//			NOTE (port): server-only for now (not in the client project). Not yet ported:
+//			CScriptLocalize ("Localize": vgui ILocalize, which server.dll does not link) and
+//			the ef7d9ccc0 CNetMsgScriptHelper redesign (script-to-script messages over a new
+//			"ScriptMsg" usermessage and CUserCmd), which needs client VScript. "NetMsg" stays
+//			at its eb014cce server-only form below.
 //
 // $NoKeywords: $
 //=============================================================================//
 
 #include "cbase.h"
 #include "ammodef.h"
+#include "tier1/utlcommon.h"
 
 #ifndef CLIENT_DLL
 #include "ai_squad.h"
@@ -28,6 +27,7 @@
 #include "filesystem.h"
 #include "tier1/utlbuffer.h"
 #include "igameevents.h"
+#include "engine/ivdebugoverlay.h"
 #include "tier1/mapbase_con_groups.h"
 
 #include "vscript_singletons.h"
@@ -344,12 +344,11 @@ public:
 
 private:
 	bool m_bActive;
-	const char *m_pszContext;
+	unsigned int m_iContextHash;
 	HSCRIPT m_hCallback;
 
-	static const char *FindContext( const char *szContext, CScriptGameEventListener *pIgnore = NULL );
-	//inline const char *GetContext( CScriptGameEventListener *p );
-	//inline const char *GetContext();
+	static StringHashFunctor Hash;
+	static inline unsigned int HashContext( const char* c ) { return (c && *c) ? Hash(c) : 0; }
 
 public:
 	static void DumpEventListeners();
@@ -359,18 +358,34 @@ public:
 	static void WriteEventData( IGameEvent *event, HSCRIPT hTable );
 #endif // !CLIENT_DLL
 
-private:
+public:
 #ifndef CLIENT_DLL
-	static CUtlVector< KeyValues* > s_GameEvents;
-#endif // !CLIENT_DLL
+	static CUtlMap< unsigned int, KeyValues* > s_GameEvents;
+#endif
 	static CUtlVectorAutoPurge< CScriptGameEventListener* > s_GameEventListeners;
-
+	static CUtlVector< KeyValues* > s_LoadedFiles;
 };
 
 #ifndef CLIENT_DLL
-CUtlVector< KeyValues* > CScriptGameEventListener::s_GameEvents;
-#endif // !CLIENT_DLL
+CUtlMap< unsigned int, KeyValues* > CScriptGameEventListener::s_GameEvents( DefLessFunc(unsigned int) );
+#endif
 CUtlVectorAutoPurge< CScriptGameEventListener* > CScriptGameEventListener::s_GameEventListeners;
+CUtlVector< KeyValues* > CScriptGameEventListener::s_LoadedFiles;
+StringHashFunctor CScriptGameEventListener::Hash;
+
+#if _DEBUG
+#ifdef CLIENT_DLL
+CON_COMMAND_F( cl_dump_script_game_event_listeners, "Dump all game event listeners created from script.", FCVAR_CHEAT )
+{
+	CScriptGameEventListener::DumpEventListeners();
+}
+#else // GAME_DLL
+CON_COMMAND_F( dump_script_game_event_listeners, "Dump all game event listeners created from script.", FCVAR_CHEAT )
+{
+	CScriptGameEventListener::DumpEventListeners();
+}
+#endif // CLIENT_DLL
+#endif
 
 //-----------------------------------------------------------------------------
 //
@@ -380,9 +395,9 @@ void CScriptGameEventListener::DumpEventListeners()
 	CGMsg( 0, CON_GROUP_VSCRIPT, "--- Script game event listener dump start\n" );
 	FOR_EACH_VEC( s_GameEventListeners, i )
 	{
-		CGMsg( 0, CON_GROUP_VSCRIPT, " %d   (0x%p) %d : %s\n", i,s_GameEventListeners[i],
+		CGMsg( 0, CON_GROUP_VSCRIPT, " %d   (0x%p) %d : %d\n", i,s_GameEventListeners[i],
 										s_GameEventListeners[i],
-										s_GameEventListeners[i]->m_pszContext ? s_GameEventListeners[i]->m_pszContext : "");
+										s_GameEventListeners[i]->m_iContextHash );
 	}
 	CGMsg( 0, CON_GROUP_VSCRIPT, "--- Script game event listener dump end\n" );
 }
@@ -429,10 +444,11 @@ void CScriptGameEventListener::LoadAllEvents()
 	};
 
 	// Destroy old KeyValues
-	if ( s_GameEvents.Count() )
+	if ( s_LoadedFiles.Count() )
 	{
-		for ( int i = 0; i < s_GameEvents.Count(); ++i )
-			s_GameEvents[i]->deleteThis();
+		for ( int i = s_LoadedFiles.Count(); i--; )
+			s_LoadedFiles[i]->deleteThis();
+		s_LoadedFiles.Purge();
 		s_GameEvents.Purge();
 	}
 
@@ -452,7 +468,7 @@ void CScriptGameEventListener::LoadEventsFromFile( const char *filename, const c
 
 	if ( !pKV->LoadFromFile( filesystem, filename, pathID ) )
 	{
-		// CGMsg( 1, CON_GROUP_VSCRIPT, "CScriptGameEventListener::LoadEventsFromFile: Failed to load file %s, %s\n", filename, pathID );
+		// CGMsg( 1, CON_GROUP_VSCRIPT, "CScriptGameEventListener::LoadEventsFromFile: Failed to load file [%s]%s\n", pathID, filename );
 		pKV->deleteThis();
 		return;
 	}
@@ -460,6 +476,7 @@ void CScriptGameEventListener::LoadEventsFromFile( const char *filename, const c
 	// Set the key value types to what they are from their string description values to read the correct data type in WriteEventData.
 	// There might be a better way of doing this, but this is okay since it's only done on file load.
 	for ( KeyValues *key = pKV->GetFirstSubKey(); key; key = key->GetNextKey() )
+	{
 		for ( KeyValues *sub = key->GetFirstSubKey(); sub; sub = sub->GetNextKey() )
 		{
 			if ( sub->GetDataType() == KeyValues::TYPE_STRING )
@@ -483,9 +500,16 @@ void CScriptGameEventListener::LoadEventsFromFile( const char *filename, const c
 			// float  : float, 32 bit
 		}
 
-	CGMsg( 2, CON_GROUP_VSCRIPT, "CScriptGameEventListener::LoadEventsFromFile: Loaded %s, %s\n", filename, pathID );
+		// Store event subkeys
+		// Replace key so modevents can overwrite gameevents.
+		// It does not check for hash collisions, however.
+		s_GameEvents.InsertOrReplace( Hash( key->GetName() ), key );
+	}
 
-	s_GameEvents.AddToTail(pKV);
+	// Store files (allocated KV)
+	s_LoadedFiles.AddToTail( pKV );
+
+	CGMsg( 2, CON_GROUP_VSCRIPT, "CScriptGameEventListener::LoadEventsFromFile: Loaded [%s]%s\n", pathID, filename );
 }
 
 //-----------------------------------------------------------------------------
@@ -493,94 +517,55 @@ void CScriptGameEventListener::LoadEventsFromFile( const char *filename, const c
 //-----------------------------------------------------------------------------
 void CScriptGameEventListener::WriteEventData( IGameEvent *event, HSCRIPT hTable )
 {
-	// TODO: Something more efficient than iterating through all the events that ever exist one by one
-
-	const char *szEvent = event->GetName();
-	for ( int i = 0; i < s_GameEvents.Count(); ++i )
+	int i = s_GameEvents.Find( Hash( event->GetName() ) );
+	if ( i != s_GameEvents.InvalidIndex() )
 	{
 		KeyValues *pKV = s_GameEvents[i];
-		for ( KeyValues *key = pKV->GetFirstSubKey(); key; key = key->GetNextKey() )
+		for ( KeyValues *sub = pKV->GetFirstSubKey(); sub; sub = sub->GetNextKey() )
 		{
-			if ( !V_stricmp( key->GetName(), szEvent ) )
+			const char *szKey = sub->GetName();
+			switch ( sub->GetDataType() )
 			{
-				for ( KeyValues *sub = key->GetFirstSubKey(); sub; sub = sub->GetNextKey() )
-				{
-					const char *szKey = sub->GetName();
-					switch ( sub->GetDataType() )
-					{
-						case KeyValues::TYPE_STRING: g_pScriptVM->SetValue( hTable, szKey, event->GetString( szKey ) ); break;
-						case KeyValues::TYPE_INT:    g_pScriptVM->SetValue( hTable, szKey, event->GetInt   ( szKey ) ); break;
-						case KeyValues::TYPE_FLOAT:  g_pScriptVM->SetValue( hTable, szKey, event->GetFloat ( szKey ) ); break;
-						// default: DevWarning( 2, "CScriptGameEventListener::WriteEventData: unknown data type '%d' on key '%s' in event '%s'\n", sub->GetDataType(), szKey, szEvent );
-					}
-				}
-				return;
+				case KeyValues::TYPE_STRING: g_pScriptVM->SetValue( hTable, szKey, event->GetString( szKey ) ); break;
+				case KeyValues::TYPE_INT:    g_pScriptVM->SetValue( hTable, szKey, event->GetInt   ( szKey ) ); break;
+				case KeyValues::TYPE_FLOAT:  g_pScriptVM->SetValue( hTable, szKey, event->GetFloat ( szKey ) ); break;
+				// default: DevWarning( 2, "CScriptGameEventListener::WriteEventData: unknown data type '%d' on key '%s' in event '%s'\n", sub->GetDataType(), szKey, szEvent );
 			}
 		}
 	}
 }
 #endif // !CLIENT_DLL
-//-----------------------------------------------------------------------------
-// Find if context is in use by others; used to alloc/dealloc only when required.
-// Returns allocated pointer to string
-// Expects non-NULL context input
-//-----------------------------------------------------------------------------
-const char *CScriptGameEventListener::FindContext( const char *szContext, CScriptGameEventListener *pIgnore )
-{
-	for ( int i = s_GameEventListeners.Count(); i--; )
-	{
-		CScriptGameEventListener *pCur = s_GameEventListeners[i];
-		if ( pCur != pIgnore )
-		{
-			if ( pCur->m_pszContext && !V_stricmp( szContext, pCur->m_pszContext ) )
-			{
-				return pCur->m_pszContext;
-			}
-		}
-	}
-	return NULL;
-}
 
 //-----------------------------------------------------------------------------
 //
 //-----------------------------------------------------------------------------
 intptr_t CScriptGameEventListener::ListenToGameEvent( const char* szEvent, HSCRIPT hFunc, const char* szContext )
 {
-	m_bActive = true;
+	bool bValid;
 
-	char *psz;
+	if ( gameeventmanager && hFunc )
+#ifdef CLIENT_DLL
+		bValid = gameeventmanager->AddListener( this, szEvent, false );
+#else
+		bValid = gameeventmanager->AddListener( this, szEvent, true );
+#endif
+	else bValid = false;
 
-	if ( szContext && *szContext )
+	if ( bValid )
 	{
-		psz = const_cast<char*>(FindContext(szContext));
-		if ( !psz )
-		{
-			int len = V_strlen(szContext) + 1;
-			if ( len > 1 )
-			{
-				int size = min( len, 256 ); // arbitrary clamp
-				psz = new char[size];
-				V_strncpy( psz, szContext, size );
-			}
-		}
+		m_iContextHash = HashContext( szContext );
+		m_hCallback = hFunc;
+		m_bActive = true;
+
+		s_GameEventListeners.AddToTail( this );
+
+		return reinterpret_cast<intptr_t>( this ); // POINTER_TO_INT
 	}
 	else
 	{
-		psz = NULL;
+		delete this;
+		return 0x0;
 	}
-
-	m_pszContext = psz;
-	m_hCallback = hFunc;
-
-	if ( gameeventmanager )
-#ifdef CLIENT_DLL
-		gameeventmanager->AddListener( this, szEvent, false );
-#else
-		gameeventmanager->AddListener( this, szEvent, true );
-#endif
-	s_GameEventListeners.AddToTail( this );
-
-	return reinterpret_cast<intptr_t>(this); // POINTER_TO_INT
 }
 
 //-----------------------------------------------------------------------------
@@ -595,27 +580,16 @@ void CScriptGameEventListener::StopListeningForEvent()
 	{
 		g_pScriptVM->ReleaseScript( m_hCallback );
 	}
-	else if ( m_hCallback )
+	else
 	{
-		AssertMsg( 0, "LEAK (0x%p)\n", (void*)m_hCallback );
-	}
-
-	if ( m_pszContext )
-	{
-		if ( !FindContext( m_pszContext, this ) )
-		{
-			delete[] m_pszContext;
-		}
-
-		m_pszContext = NULL;
+		// AssertMsg( !m_hCallback, "LEAK (0x%p)\n", (void*)m_hCallback );
 	}
 
 	m_hCallback = NULL;
+	m_bActive = false;
 
 	if ( gameeventmanager )
 		gameeventmanager->RemoveListener( this );
-
-	m_bActive = false;
 }
 
 //-----------------------------------------------------------------------------
@@ -623,7 +597,7 @@ void CScriptGameEventListener::StopListeningForEvent()
 //-----------------------------------------------------------------------------
 bool CScriptGameEventListener::StopListeningToGameEvent( intptr_t listener )
 {
-	CScriptGameEventListener *p = reinterpret_cast<CScriptGameEventListener*>(listener); // INT_TO_POINTER
+	CScriptGameEventListener *p = reinterpret_cast<CScriptGameEventListener*>(listener); // INT_TO_POINTER	
 
 	bool bRemoved = s_GameEventListeners.FindAndFastRemove(p);
 	if ( bRemoved )
@@ -639,42 +613,18 @@ bool CScriptGameEventListener::StopListeningToGameEvent( intptr_t listener )
 //-----------------------------------------------------------------------------
 void CScriptGameEventListener::StopListeningToAllGameEvents( const char* szContext )
 {
-	if ( szContext )
+	unsigned int hash = HashContext( szContext );
+
+	// Iterate from the end so they can be safely removed as they are deleted
+	for ( int i = s_GameEventListeners.Count(); i--; )
 	{
-		if ( *szContext )
+		CScriptGameEventListener *pCur = s_GameEventListeners[i];
+		if ( pCur->m_iContextHash == hash )
 		{
-			// Iterate from the end so they can be safely removed as they are deleted
-			for ( int i = s_GameEventListeners.Count(); i--; )
-			{
-				CScriptGameEventListener *pCur = s_GameEventListeners[i];
-				if ( pCur->m_pszContext && !V_stricmp( szContext, pCur->m_pszContext ) )
-				{
-					s_GameEventListeners.Remove(i); // keep list order
-					delete pCur;
-				}
-			}
-		}
-		else // empty (NULL) context
-		{
-			for ( int i = s_GameEventListeners.Count(); i--; )
-			{
-				CScriptGameEventListener *pCur = s_GameEventListeners[i];
-				if ( !pCur->m_pszContext )
-				{
-					s_GameEventListeners.Remove(i);
-					delete pCur;
-				}
-			}
+			s_GameEventListeners.Remove(i); // keep list order
+			delete pCur;
 		}
 	}
-#if 0
-	if ( !szContext )
-	{
-		for ( int i = s_GameEventListeners.Count(); i--; )
-			delete s_GameEventListeners[i];
-		s_GameEventListeners.Purge();
-	}
-#endif
 }
 
 //=============================================================================
@@ -750,7 +700,7 @@ static void FireGameEventLocal( const char* szEvent, HSCRIPT hTable )
 
 //=============================================================================
 // Save/Restore Utility
-// Based on Source 2 API
+// Based on L4D2 API
 //=============================================================================
 class CScriptSaveRestoreUtil : public CAutoGameSystem
 {
@@ -759,8 +709,8 @@ public:
 	static void RestoreTable( const char *szId, HSCRIPT hTable );
 	static void ClearSavedTable( const char *szId );
 
-// IGameSystem interface
-public:
+public: // IGameSystem
+
 	void OnSave()
 	{
 		if ( g_pScriptVM )
@@ -769,6 +719,7 @@ public:
 			if ( hFunc )
 			{
 				g_pScriptVM->Call( hFunc );
+				g_pScriptVM->ReleaseScript( hFunc );
 			}
 		}
 	}
@@ -781,72 +732,43 @@ public:
 			if ( hFunc )
 			{
 				g_pScriptVM->Call( hFunc );
+				g_pScriptVM->ReleaseScript( hFunc );
 			}
 		}
 	}
 
 	void Shutdown()
 	{
-		FOR_EACH_VEC( m_aKeyValues, i )
-			m_aKeyValues[i]->deleteThis();
-		m_aKeyValues.Purge();
-		m_aContext.PurgeAndDeleteElements();
+		FOR_EACH_MAP_FAST( m_Lookup, i )
+			m_Lookup[i]->deleteThis();
+		m_Lookup.Purge();
 	}
 
 private:
-	static int GetIndexForContext( const char *szId );
-
-	// indices must match, always remove keeping order
-	static CUtlStringList m_aContext;
-	static CUtlVector<KeyValues*> m_aKeyValues;
+	static StringHashFunctor Hash;
+	static CUtlMap< unsigned int, KeyValues* > m_Lookup;
 
 } g_ScriptSaveRestoreUtil;
 
-CUtlStringList CScriptSaveRestoreUtil::m_aContext;
-CUtlVector<KeyValues*> CScriptSaveRestoreUtil::m_aKeyValues;
-
-int CScriptSaveRestoreUtil::GetIndexForContext( const char *szId )
-{
-	int idx = -1;
-	FOR_EACH_VEC( m_aContext, i )
-	{
-		if ( !V_stricmp( szId, m_aContext[i] ) )
-		{
-			idx = i;
-			break;
-		}
-	}
-	return idx;
-}
+CUtlMap< unsigned int, KeyValues* > CScriptSaveRestoreUtil::m_Lookup( DefLessFunc(unsigned int) );
+StringHashFunctor CScriptSaveRestoreUtil::Hash;
 
 //-----------------------------------------------------------------------------
 // Store a table with primitive values that will persist across level transitions and save loads.
+// Case sensitive
 //-----------------------------------------------------------------------------
 void CScriptSaveRestoreUtil::SaveTable( const char *szId, HSCRIPT hTable )
 {
-	int idx = GetIndexForContext(szId);
-
 	KeyValues *pKV;
-
-	if ( idx == -1 )
+	int idx = m_Lookup.Find( Hash(szId) );
+	if ( idx == m_Lookup.InvalidIndex() )
 	{
 		pKV = new KeyValues("ScriptSavedTable");
-		m_aKeyValues.AddToTail(pKV);
-
-		if ( V_strlen(szId) > 255 ) // arbitrary clamp
-		{
-			char c[256];
-			V_strncpy( c, szId, sizeof(c) );
-			m_aContext.CopyAndAddToTail(c);
-		}
-		else
-		{
-			m_aContext.CopyAndAddToTail(szId);
-		}
+		m_Lookup.Insert( Hash(szId), pKV );
 	}
 	else
 	{
-		pKV = m_aKeyValues[idx];
+		pKV = m_Lookup[idx];
 		pKV->Clear();
 	}
 
@@ -872,20 +794,14 @@ void CScriptSaveRestoreUtil::SaveTable( const char *szId, HSCRIPT hTable )
 //-----------------------------------------------------------------------------
 void CScriptSaveRestoreUtil::RestoreTable( const char *szId, HSCRIPT hTable )
 {
-	int idx = GetIndexForContext(szId);
-
-	KeyValues *pKV;
-
-	if ( idx == -1 )
+	int idx = m_Lookup.Find( Hash(szId) );
+	if ( idx == m_Lookup.InvalidIndex() )
 	{
 		// DevWarning( 2, "RestoreTable could not find saved table with context '%s'\n", szId );
 		return;
 	}
-	else
-	{
-		pKV = m_aKeyValues[idx];
-	}
 
+	KeyValues *pKV = m_Lookup[idx];
 	FOR_EACH_SUBKEY( pKV, key )
 	{
 		switch ( key->GetDataType() )
@@ -902,19 +818,16 @@ void CScriptSaveRestoreUtil::RestoreTable( const char *szId, HSCRIPT hTable )
 //-----------------------------------------------------------------------------
 void CScriptSaveRestoreUtil::ClearSavedTable( const char *szId )
 {
-	int idx = GetIndexForContext(szId);
-
-	if ( idx == -1 )
+	int idx = m_Lookup.Find( Hash(szId) );
+	if ( idx != m_Lookup.InvalidIndex() )
+	{
+		m_Lookup[idx]->deleteThis();
+		m_Lookup.RemoveAt( idx );
+	}
+	else
 	{
 		// DevWarning( 2, "ClearSavedTable could not find saved table with context '%s'\n", szId );
-		return;
 	}
-
-	m_aKeyValues[idx]->deleteThis();
-	m_aKeyValues.Remove(idx);
-
-	delete[] m_aContext[idx];
-	m_aContext.Remove(idx);
 }
 
 //=============================================================================
@@ -928,14 +841,15 @@ void CScriptSaveRestoreUtil::ClearSavedTable( const char *szId )
 
 class CScriptReadWriteFile : public CAutoGameSystem
 {
+	// A singleton class with all static members is used to be able to free the read string on level shutdown,
+	// and register script funcs directly. Same reason applies to CScriptSaveRestoreUtil
 public:
-	static bool ScriptFileWrite( const char *szFile, const char *szInput );
-	static const char *ScriptFileRead( const char *szFile );
-	//static const char *CRC32_Checksum( const char *szFilename );
+	static bool FileWrite( const char *szFile, const char *szInput );
+	static const char *FileRead( const char *szFile );
 
 	// NOTE: These two functions are new with Mapbase and have no Valve equivalent
-	static bool ScriptKeyValuesWrite( const char *szFile, HSCRIPT hInput );
-	static HSCRIPT ScriptKeyValuesRead( const char *szFile );
+	static bool KeyValuesWrite( const char *szFile, HSCRIPT hInput );
+	static HSCRIPT KeyValuesRead( const char *szFile );
 
 	void LevelShutdownPostEntity()
 	{
@@ -944,27 +858,19 @@ public:
 			delete[] m_pszReturnReadFile;
 			m_pszReturnReadFile = NULL;
 		}
-
-		//if ( m_pszReturnCRC32 )
-		//{
-		//	delete[] m_pszReturnCRC32;
-		//	m_pszReturnCRC32 = NULL;
-		//}
 	}
 
 private:
 	static const char *m_pszReturnReadFile;
-	//static const char *m_pszReturnCRC32;
 
 } g_ScriptReadWrite;
 
 const char *CScriptReadWriteFile::m_pszReturnReadFile = NULL;
-//const char *CScriptReadWriteFile::m_pszReturnCRC32 = NULL;
 
 //-----------------------------------------------------------------------------
 //
 //-----------------------------------------------------------------------------
-bool CScriptReadWriteFile::ScriptFileWrite( const char *szFile, const char *szInput )
+bool CScriptReadWriteFile::FileWrite( const char *szFile, const char *szInput )
 {
 	size_t len = strlen(szInput);
 	if ( len > SCRIPT_MAX_FILE_WRITE_SIZE )
@@ -999,7 +905,7 @@ bool CScriptReadWriteFile::ScriptFileWrite( const char *szFile, const char *szIn
 //-----------------------------------------------------------------------------
 //
 //-----------------------------------------------------------------------------
-const char *CScriptReadWriteFile::ScriptFileRead( const char *szFile )
+const char *CScriptReadWriteFile::FileRead( const char *szFile )
 {
 	char pszFullName[MAX_PATH];
 	V_snprintf( pszFullName, sizeof(pszFullName), SCRIPT_RW_FULL_PATH_FMT, szFile );
@@ -1033,9 +939,31 @@ const char *CScriptReadWriteFile::ScriptFileRead( const char *szFile )
 }
 
 //-----------------------------------------------------------------------------
+// Get the checksum of any file. Can be used to check the existence or validity of a file.
+// Returns unsigned int as hex string.
+//-----------------------------------------------------------------------------
+/*
+const char *CScriptReadWriteFile::CRC32_Checksum( const char *szFilename )
+{
+	CUtlBuffer buf( 0, 0, CUtlBuffer::READ_ONLY );
+	if ( !g_pFullFileSystem->ReadFile( szFilename, NULL, buf ) )
+		return NULL;
+
+	// first time calling, allocate
+	if ( !m_pszReturnCRC32 )
+		m_pszReturnCRC32 = new char[9]; // 'FFFFFFFF\0'
+
+	V_snprintf( const_cast<char*>(m_pszReturnCRC32), 9, "%X", CRC32_ProcessSingleBuffer( buf.Base(), buf.Size()-1 ) );
+	buf.Purge();
+
+	return m_pszReturnCRC32;
+}
+*/
+
+//-----------------------------------------------------------------------------
 //
 //-----------------------------------------------------------------------------
-bool CScriptReadWriteFile::ScriptKeyValuesWrite( const char *szFile, HSCRIPT hInput )
+bool CScriptReadWriteFile::KeyValuesWrite( const char *szFile, HSCRIPT hInput )
 {
 	KeyValues *pKV = scriptmanager->GetKeyValuesFromScriptKV( g_pScriptVM, hInput );
 	if (!pKV)
@@ -1048,7 +976,7 @@ bool CScriptReadWriteFile::ScriptKeyValuesWrite( const char *szFile, HSCRIPT hIn
 
 	if ( buf.Size() > SCRIPT_MAX_FILE_WRITE_SIZE )
 	{
-		DevWarning( 2, "Input is too large for a ScriptFileWrite ( %s / %d MB )\n", V_pretifymem(buf.Size(),2,true), (SCRIPT_MAX_FILE_WRITE_SIZE >> 20) );
+		DevWarning( 2, "Input is too large for a ScriptKeyValuesWrite ( %s / %d MB )\n", V_pretifymem(buf.Size(),2,true), (SCRIPT_MAX_FILE_WRITE_SIZE >> 20) );
 		buf.Purge();
 		return false;
 	}
@@ -1077,7 +1005,7 @@ bool CScriptReadWriteFile::ScriptKeyValuesWrite( const char *szFile, HSCRIPT hIn
 //-----------------------------------------------------------------------------
 //
 //-----------------------------------------------------------------------------
-HSCRIPT CScriptReadWriteFile::ScriptKeyValuesRead( const char *szFile )
+HSCRIPT CScriptReadWriteFile::KeyValuesRead( const char *szFile )
 {
 	char pszFullName[MAX_PATH];
 	V_snprintf( pszFullName, sizeof(pszFullName), SCRIPT_RW_FULL_PATH_FMT, szFile );
@@ -1091,7 +1019,7 @@ HSCRIPT CScriptReadWriteFile::ScriptKeyValuesRead( const char *szFile )
 	unsigned int size = g_pFullFileSystem->Size( pszFullName, SCRIPT_RW_PATH_ID );
 	if ( size >= SCRIPT_MAX_FILE_READ_SIZE )
 	{
-		DevWarning( 2, "File '%s' (from '%s') is too large for a ScriptFileRead ( %s / %u bytes )\n", pszFullName, szFile, V_pretifymem(size,2,true), SCRIPT_MAX_FILE_READ_SIZE );
+		DevWarning( 2, "File '%s' (from '%s') is too large for a ScriptKeyValuesRead ( %s / %u bytes )\n", pszFullName, szFile, V_pretifymem(size,2,true), SCRIPT_MAX_FILE_READ_SIZE );
 		return NULL;
 	}
 
@@ -1118,7 +1046,8 @@ HSCRIPT CScriptReadWriteFile::ScriptKeyValuesRead( const char *szFile )
 // NOTE (port): server-only. SendUserMessage only dispatches usermessages that are
 // ALREADY registered (it raises a script exception for unknown ones) and never
 // registers new ones, so this does NOT alter the network protocol / usermessage
-// table — safe alongside the prebuilt client.dll.
+// table. The ef7d9ccc0 redesign (Start/Send/Recieve over "ScriptMsg") is deferred until
+// client VScript is ported.
 //=============================================================================
 #ifndef CLIENT_DLL
 class CNetMsgScriptHelper
@@ -1258,24 +1187,426 @@ END_SCRIPTDESC();
 
 #endif // !CLIENT_DLL
 
-//=============================================================================
-//=============================================================================
+#define RETURN_IF_CANNOT_DRAW_OVERLAY\
+	if (engine->IsPaused())\
+	{\
+		CGWarning( 1, CON_GROUP_VSCRIPT, "debugoverlay: cannot draw while the game is paused!\n");\
+		return;\
+	}
+class CDebugOverlayScriptHelper
+{
+public:
+
+	void Box( const Vector &origin, const Vector &mins, const Vector &maxs, int r, int g, int b, int a, float flDuration )
+	{
+		RETURN_IF_CANNOT_DRAW_OVERLAY
+
+		debugoverlay->AddBoxOverlay(origin, mins, maxs, vec3_angle, r, g, b, a, flDuration);
+	}
+	void BoxDirection( const Vector &origin, const Vector &mins, const Vector &maxs, const Vector &forward, int r, int g, int b, int a, float flDuration )
+	{
+		RETURN_IF_CANNOT_DRAW_OVERLAY
+
+		QAngle f_angles = vec3_angle;
+		f_angles.y = UTIL_VecToYaw(forward);
+
+		debugoverlay->AddBoxOverlay(origin, mins, maxs, f_angles, r, g, b, a, flDuration);
+	}
+	void BoxAngles( const Vector &origin, const Vector &mins, const Vector &maxs, const QAngle &angles, int r, int g, int b, int a, float flDuration )
+	{
+		RETURN_IF_CANNOT_DRAW_OVERLAY
+
+		debugoverlay->AddBoxOverlay(origin, mins, maxs, angles, r, g, b, a, flDuration);
+	}
+	void SweptBox( const Vector& start, const Vector& end, const Vector& mins, const Vector& maxs, const QAngle & angles, int r, int g, int b, int a, float flDuration )
+	{
+		RETURN_IF_CANNOT_DRAW_OVERLAY
+
+		debugoverlay->AddSweptBoxOverlay(start, end, mins, maxs, angles, r, g, b, a, flDuration);
+	}
+	void EntityBounds( HSCRIPT pEntity, int r, int g, int b, int a, float flDuration )
+	{
+		RETURN_IF_CANNOT_DRAW_OVERLAY
+
+		CBaseEntity *pEnt = ToEnt(pEntity);
+		if (!pEnt)
+			return;
+
+		const CCollisionProperty *pCollide = pEnt->CollisionProp();
+		debugoverlay->AddBoxOverlay(pCollide->GetCollisionOrigin(), pCollide->OBBMins(), pCollide->OBBMaxs(), pCollide->GetCollisionAngles(), r, g, b, a, flDuration);
+	}
+	void Line( const Vector &origin, const Vector &target, int r, int g, int b, bool noDepthTest, float flDuration )
+	{
+		RETURN_IF_CANNOT_DRAW_OVERLAY
+
+		debugoverlay->AddLineOverlay(origin, target, r, g, b, noDepthTest, flDuration);
+	}
+	void Triangle( const Vector &p1, const Vector &p2, const Vector &p3, int r, int g, int b, int a, bool noDepthTest, float duration )
+	{
+		RETURN_IF_CANNOT_DRAW_OVERLAY
+
+		debugoverlay->AddTriangleOverlay(p1, p2, p3, r, g, b, a, noDepthTest, duration);
+	}
+	void EntityText( int entityID, int text_offset, const char *text, float flDuration, int r, int g, int b, int a )
+	{
+		RETURN_IF_CANNOT_DRAW_OVERLAY
+
+		debugoverlay->AddEntityTextOverlay(entityID, text_offset, flDuration,
+				(int)clamp(r * 255.f, 0.f, 255.f), (int)clamp(g * 255.f, 0.f, 255.f), (int)clamp(b * 255.f, 0.f, 255.f),
+				(int)clamp(a * 255.f, 0.f, 255.f), text);
+	}
+	void EntityTextAtPosition( const Vector &origin, int text_offset, const char *text, float flDuration, int r, int g, int b, int a )
+	{
+		RETURN_IF_CANNOT_DRAW_OVERLAY
+
+		debugoverlay->AddTextOverlayRGB(origin, text_offset, flDuration, r, g, b, a, "%s", text);
+	}
+	void Grid( const Vector &vPosition )
+	{
+		RETURN_IF_CANNOT_DRAW_OVERLAY
+
+		debugoverlay->AddGridOverlay(vPosition);
+	}
+	void Text( const Vector &origin, const char *text, float flDuration )
+	{
+		RETURN_IF_CANNOT_DRAW_OVERLAY
+
+		debugoverlay->AddTextOverlay(origin, flDuration, "%s", text);
+	}
+	void ScreenText( float fXpos, float fYpos, const char *text, int r, int g, int b, int a, float flDuration )
+	{
+		RETURN_IF_CANNOT_DRAW_OVERLAY
+
+		debugoverlay->AddScreenTextOverlay(fXpos, fYpos, flDuration, r, g, b, a, text);
+	}
+	void Cross3D( const Vector &position, float size, int r, int g, int b, bool noDepthTest, float flDuration )
+	{
+		RETURN_IF_CANNOT_DRAW_OVERLAY
+
+		Line( position + Vector(size,0,0), position - Vector(size,0,0), r, g, b, noDepthTest, flDuration );
+		Line( position + Vector(0,size,0), position - Vector(0,size,0), r, g, b, noDepthTest, flDuration );
+		Line( position + Vector(0,0,size), position - Vector(0,0,size), r, g, b, noDepthTest, flDuration );
+	}
+	void Cross3DOriented( const Vector &position, const QAngle &angles, float size, int r, int g, int b, bool noDepthTest, float flDuration )
+	{
+		RETURN_IF_CANNOT_DRAW_OVERLAY
+
+		Vector forward, right, up;
+		AngleVectors( angles, &forward, &right, &up );
+
+		forward *= size;
+		right *= size;
+		up *= size;
+
+		Line( position + right, position - right, r, g, b, noDepthTest, flDuration );
+		Line( position + forward, position - forward, r, g, b, noDepthTest, flDuration );
+		Line( position + up, position - up, r, g, b, noDepthTest, flDuration );
+	}
+	void DrawTickMarkedLine( const Vector &startPos, const Vector &endPos, float tickDist, int tickTextDist, int r, int g, int b, bool noDepthTest, float flDuration )
+	{
+		RETURN_IF_CANNOT_DRAW_OVERLAY
+
+		Vector	lineDir = (endPos - startPos);
+		float	lineDist = VectorNormalize(lineDir);
+		int		numTicks = lineDist / tickDist;
+
+		Vector  upVec = Vector(0,0,4);
+		Vector	sideDir;
+		Vector	tickPos = startPos;
+		int		tickTextCnt = 0;
+
+		CrossProduct(lineDir, upVec, sideDir);
+
+		Line(startPos, endPos, r, g, b, noDepthTest, flDuration);
+
+		for (int i = 0; i<numTicks + 1; i++)
+		{
+			Vector tickLeft = tickPos - sideDir;
+			Vector tickRight = tickPos + sideDir;
+
+			if (tickTextCnt == tickTextDist)
+			{
+				char text[25];
+				Q_snprintf(text, sizeof(text), "%i", i);
+				Vector textPos = tickLeft + Vector(0, 0, 8);
+				Line(tickLeft, tickRight, 255, 255, 255, noDepthTest, flDuration);
+				Text(textPos, text, flDuration);
+				tickTextCnt = 0;
+			}
+			else
+			{
+				Line(tickLeft, tickRight, r, g, b, noDepthTest, flDuration);
+			}
+
+			tickTextCnt++;
+
+			tickPos = tickPos + (tickDist * lineDir);
+		}
+	}
+	void HorzArrow( const Vector &startPos, const Vector &endPos, float width, int r, int g, int b, int a, bool noDepthTest, float flDuration )
+	{
+		RETURN_IF_CANNOT_DRAW_OVERLAY
+
+		Vector	lineDir		= (endPos - startPos);
+		VectorNormalize( lineDir );
+		Vector  upVec		= Vector( 0, 0, 1 );
+		Vector	sideDir;
+		float   radius		= width / 2.0;
+
+		CrossProduct(lineDir, upVec, sideDir);
+
+		Vector p1 =	startPos - sideDir * radius;
+		Vector p2 = endPos - lineDir * width - sideDir * radius;
+		Vector p3 = endPos - lineDir * width - sideDir * width;
+		Vector p4 = endPos;
+		Vector p5 = endPos - lineDir * width + sideDir * width;
+		Vector p6 = endPos - lineDir * width + sideDir * radius;
+		Vector p7 =	startPos + sideDir * radius;
+
+		Line(p1, p2, r,g,b,noDepthTest,flDuration);
+		Line(p2, p3, r,g,b,noDepthTest,flDuration);
+		Line(p3, p4, r,g,b,noDepthTest,flDuration);
+		Line(p4, p5, r,g,b,noDepthTest,flDuration);
+		Line(p5, p6, r,g,b,noDepthTest,flDuration);
+		Line(p6, p7, r,g,b,noDepthTest,flDuration);
+
+		if ( a > 0 )
+		{
+			Triangle( p5, p4, p3, r, g, b, a, noDepthTest, flDuration );
+			Triangle( p1, p7, p6, r, g, b, a, noDepthTest, flDuration );
+			Triangle( p6, p2, p1, r, g, b, a, noDepthTest, flDuration );
+
+			Triangle( p3, p4, p5, r, g, b, a, noDepthTest, flDuration );
+			Triangle( p6, p7, p1, r, g, b, a, noDepthTest, flDuration );
+			Triangle( p1, p2, p6, r, g, b, a, noDepthTest, flDuration );
+		}
+	}
+	void YawArrow( const Vector &startPos, float yaw, float length, float width, int r, int g, int b, int a, bool noDepthTest, float flDuration )
+	{
+		RETURN_IF_CANNOT_DRAW_OVERLAY
+
+		Vector forward = UTIL_YawToVector( yaw );
+		HorzArrow( startPos, startPos + forward * length, width, r, g, b, a, noDepthTest, flDuration );
+	}
+	void VertArrow( const Vector &startPos, const Vector &endPos, float width, int r, int g, int b, int a, bool noDepthTest, float flDuration )
+	{
+		RETURN_IF_CANNOT_DRAW_OVERLAY
+
+		Vector	lineDir		= (endPos - startPos);
+		VectorNormalize( lineDir );
+		Vector  upVec;
+		Vector	sideDir;
+		float   radius		= width / 2.0;
+
+		VectorVectors( lineDir, sideDir, upVec );
+
+		Vector p1 =	startPos - upVec * radius;
+		Vector p2 = endPos - lineDir * width - upVec * radius;
+		Vector p3 = endPos - lineDir * width - upVec * width;
+		Vector p4 = endPos;
+		Vector p5 = endPos - lineDir * width + upVec * width;
+		Vector p6 = endPos - lineDir * width + upVec * radius;
+		Vector p7 =	startPos + upVec * radius;
+
+		Line(p1, p2, r,g,b,noDepthTest,flDuration);
+		Line(p2, p3, r,g,b,noDepthTest,flDuration);
+		Line(p3, p4, r,g,b,noDepthTest,flDuration);
+		Line(p4, p5, r,g,b,noDepthTest,flDuration);
+		Line(p5, p6, r,g,b,noDepthTest,flDuration);
+		Line(p6, p7, r,g,b,noDepthTest,flDuration);
+
+		if ( a > 0 )
+		{
+			Triangle( p5, p4, p3, r, g, b, a, noDepthTest, flDuration );
+			Triangle( p1, p7, p6, r, g, b, a, noDepthTest, flDuration );
+			Triangle( p6, p2, p1, r, g, b, a, noDepthTest, flDuration );
+
+			Triangle( p3, p4, p5, r, g, b, a, noDepthTest, flDuration );
+			Triangle( p6, p7, p1, r, g, b, a, noDepthTest, flDuration );
+			Triangle( p1, p2, p6, r, g, b, a, noDepthTest, flDuration );
+		}
+	}
+	void Axis( const Vector &position, const QAngle &angles, float size, bool noDepthTest, float flDuration )
+	{
+		RETURN_IF_CANNOT_DRAW_OVERLAY
+
+		Vector xvec, yvec, zvec;
+		AngleVectors( angles, &xvec, &yvec, &zvec );
+
+		xvec = position + (size * xvec);
+		yvec = position - (size * yvec);
+		zvec = position + (size * zvec);
+
+		Line( position, xvec, 255, 0, 0, noDepthTest, flDuration );
+		Line( position, yvec, 0, 255, 0, noDepthTest, flDuration );
+		Line( position, zvec, 0, 0, 255, noDepthTest, flDuration );
+	}
+	void Sphere( const Vector &center, float radius, int r, int g, int b, bool noDepthTest, float flDuration )
+	{
+		RETURN_IF_CANNOT_DRAW_OVERLAY
+
+		Vector edge, lastEdge;
+
+		float axisSize = radius;
+		Line( center + Vector( 0, 0, -axisSize ), center + Vector( 0, 0, axisSize ), r, g, b, noDepthTest, flDuration );
+		Line( center + Vector( 0, -axisSize, 0 ), center + Vector( 0, axisSize, 0 ), r, g, b, noDepthTest, flDuration );
+		Line( center + Vector( -axisSize, 0, 0 ), center + Vector( axisSize, 0, 0 ), r, g, b, noDepthTest, flDuration );
+
+		lastEdge = Vector( radius + center.x, center.y, center.z );
+		float angle;
+		for( angle=0.0f; angle <= 360.0f; angle += 22.5f )
+		{
+			edge.x = radius * cosf( angle / 180.0f * M_PI ) + center.x;
+			edge.y = center.y;
+			edge.z = radius * sinf( angle / 180.0f * M_PI ) + center.z;
+
+			Line( edge, lastEdge, r, g, b, noDepthTest, flDuration );
+
+			lastEdge = edge;
+		}
+
+		lastEdge = Vector( center.x, radius + center.y, center.z );
+		for( angle=0.0f; angle <= 360.0f; angle += 22.5f )
+		{
+			edge.x = center.x;
+			edge.y = radius * cosf( angle / 180.0f * M_PI ) + center.y;
+			edge.z = radius * sinf( angle / 180.0f * M_PI ) + center.z;
+
+			Line( edge, lastEdge, r, g, b, noDepthTest, flDuration );
+
+			lastEdge = edge;
+		}
+
+		lastEdge = Vector( center.x, radius + center.y, center.z );
+		for( angle=0.0f; angle <= 360.0f; angle += 22.5f )
+		{
+			edge.x = radius * cosf( angle / 180.0f * M_PI ) + center.x;
+			edge.y = radius * sinf( angle / 180.0f * M_PI ) + center.y;
+			edge.z = center.z;
+
+			Line( edge, lastEdge, r, g, b, noDepthTest, flDuration );
+
+			lastEdge = edge;
+		}
+	}
+	void CircleOriented( const Vector &position, const QAngle &angles, float radius, int r, int g, int b, int a, bool bNoDepthTest, float flDuration )
+	{
+		RETURN_IF_CANNOT_DRAW_OVERLAY
+
+		matrix3x4_t xform;
+		AngleMatrix(angles, position, xform);
+		Vector xAxis, yAxis;
+		MatrixGetColumn(xform, 2, xAxis);
+		MatrixGetColumn(xform, 1, yAxis);
+		Circle(position, xAxis, yAxis, radius, r, g, b, a, bNoDepthTest, flDuration);
+	}
+	void Circle( const Vector &position, const Vector &xAxis, const Vector &yAxis, float radius, int r, int g, int b, int a, bool bNoDepthTest, float flDuration )
+	{
+		RETURN_IF_CANNOT_DRAW_OVERLAY
+
+		const unsigned int nSegments = 16;
+		const float flRadStep = (M_PI*2.0f) / (float) nSegments;
+
+		Vector vecLastPosition;
+		Vector vecStart = position + xAxis * radius;
+		Vector vecPosition = vecStart;
+
+		for ( int i = 1; i <= nSegments; i++ )
+		{
+			vecLastPosition = vecPosition;
+
+			float flSin, flCos;
+			SinCos( flRadStep*i, &flSin, &flCos );
+			vecPosition = position + (xAxis * flCos * radius) + (yAxis * flSin * radius);
+
+			Line( vecLastPosition, vecPosition, r, g, b, bNoDepthTest, flDuration );
+
+			if ( a && i > 1 )
+			{		
+				debugoverlay->AddTriangleOverlay( vecStart, vecLastPosition, vecPosition, r, g, b, a, bNoDepthTest, flDuration );
+			}
+		}
+	}
+#ifndef CLIENT_DLL
+	void SetDebugBits( HSCRIPT hEntity, int bit ) // DebugOverlayBits_t
+	{
+		CBaseEntity *pEnt = ToEnt(hEntity);
+		if (!pEnt)
+			return;
+
+		if (pEnt->m_debugOverlays & bit)
+		{
+			pEnt->m_debugOverlays &= ~bit;
+		}
+		else
+		{
+			pEnt->m_debugOverlays |= bit;
+
+#ifdef AI_MONITOR_FOR_OSCILLATION
+			if (pEnt->IsNPC())
+			{
+				pEnt->MyNPCPointer()->m_ScheduleHistory.RemoveAll();
+			}
+#endif//AI_MONITOR_FOR_OSCILLATION
+		}
+	}
+#endif
+	void ClearAllOverlays()
+	{
+#ifndef CLIENT_DLL
+		// Clear all entities of their debug overlays
+		for (CBaseEntity *pEntity = gEntList.FirstEnt(); pEntity; pEntity = gEntList.NextEnt(pEntity))
+		{
+			pEntity->m_debugOverlays = 0;
+		}
+#endif
+
+		debugoverlay->ClearAllOverlays();
+	}
+
+private:
+} g_ScriptDebugOverlay;
+
+BEGIN_SCRIPTDESC_ROOT( CDebugOverlayScriptHelper, SCRIPT_SINGLETON "CDebugOverlayScriptHelper" )
+	DEFINE_SCRIPTFUNC( Box, "Draws a world-space axis-aligned box. Specify bounds in world space." )
+	DEFINE_SCRIPTFUNC( BoxDirection, "Draw box oriented to a Vector direction" )
+	DEFINE_SCRIPTFUNC( BoxAngles, "Draws an oriented box at the origin. Specify bounds in local space." )
+	DEFINE_SCRIPTFUNC( SweptBox, "Draws a swept box. Specify endpoints in world space and the bounds in local space." )
+	DEFINE_SCRIPTFUNC( EntityBounds, "Draws bounds of an entity" )
+	DEFINE_SCRIPTFUNC( Line, "Draws a line between two points" )
+	DEFINE_SCRIPTFUNC( Triangle, "Draws a filled triangle. Specify vertices in world space." )
+	DEFINE_SCRIPTFUNC( EntityText, "Draws text on an entity" )
+	DEFINE_SCRIPTFUNC( EntityTextAtPosition, "Draw entity text overlay at a specific position" )
+	DEFINE_SCRIPTFUNC( Grid, "Add grid overlay" )
+	DEFINE_SCRIPTFUNC( Text, "Draws 2D text. Specify origin in world space." )
+	DEFINE_SCRIPTFUNC( ScreenText, "Draws 2D text. Specify coordinates in screen space." )
+	DEFINE_SCRIPTFUNC( Cross3D, "Draws a world-aligned cross. Specify origin in world space." )
+	DEFINE_SCRIPTFUNC( Cross3DOriented, "Draws an oriented cross. Specify origin in world space." )
+	DEFINE_SCRIPTFUNC( DrawTickMarkedLine, "Draws a dashed line. Specify endpoints in world space." )
+	DEFINE_SCRIPTFUNC( HorzArrow, "Draws a horizontal arrow. Specify endpoints in world space." )
+	DEFINE_SCRIPTFUNC( YawArrow, "Draws a arrow associated with a specific yaw. Specify endpoints in world space." )
+	DEFINE_SCRIPTFUNC( VertArrow, "Draws a vertical arrow. Specify endpoints in world space." )
+	DEFINE_SCRIPTFUNC( Axis, "Draws an axis. Specify origin + orientation in world space." )
+	DEFINE_SCRIPTFUNC( Sphere, "Draws a wireframe sphere. Specify center in world space." )
+	DEFINE_SCRIPTFUNC( CircleOriented, "Draws a circle oriented. Specify center in world space." )
+	DEFINE_SCRIPTFUNC( Circle, "Draws a circle. Specify center in world space." )
+#ifndef CLIENT_DLL
+	DEFINE_SCRIPTFUNC( SetDebugBits, "Set debug bits on entity" )
+#endif
+	DEFINE_SCRIPTFUNC( ClearAllOverlays, "Clear all debug overlays at once" )
+END_SCRIPTDESC();
+
+
 
 void RegisterScriptSingletons()
 {
-	// NOTE (port): partial port of Mapbase eb014cce (v6.0) RegisterScriptSingletons.
-	// Brought over: NetProps (moved), SaveRestore table funcs, file R/W funcs, the
-	// game-event listener funcs, and the AmmoDef + Squads + NetMsg instances. Still
-	// DEFERRED: CScriptLocalize ("Localize", needs vgui which server.dll does not link).
-	// "AmmoDef" was introduced by Mapbase 418a9dcc (v4.1) in RegisterSharedScriptFunctions;
-	// it is registered here, where v6.0 moved it.
 	ScriptRegisterFunctionNamed( g_pScriptVM, CScriptSaveRestoreUtil::SaveTable, "SaveTable", "Store a table with primitive values that will persist across level transitions and save loads." );
 	ScriptRegisterFunctionNamed( g_pScriptVM, CScriptSaveRestoreUtil::RestoreTable, "RestoreTable", "Retrieves a table from storage. Write into input table." );
 	ScriptRegisterFunctionNamed( g_pScriptVM, CScriptSaveRestoreUtil::ClearSavedTable, "ClearSavedTable", "Removes the table with the given context." );
-	ScriptRegisterFunctionNamed( g_pScriptVM, CScriptReadWriteFile::ScriptFileWrite, "StringToFile", "Stores the string into the file" );
-	ScriptRegisterFunctionNamed( g_pScriptVM, CScriptReadWriteFile::ScriptFileRead, "FileToString", "Returns the string from the file, null if no file or file is too big." );
-	ScriptRegisterFunctionNamed( g_pScriptVM, CScriptReadWriteFile::ScriptKeyValuesWrite, "KeyValuesToFile", "Stores the CScriptKeyValues into the file" );
-	ScriptRegisterFunctionNamed( g_pScriptVM, CScriptReadWriteFile::ScriptKeyValuesRead, "FileToKeyValues", "Returns the CScriptKeyValues from the file, null if no file or file is too big." );
+	ScriptRegisterFunctionNamed( g_pScriptVM, CScriptReadWriteFile::FileWrite, "StringToFile", "Stores the string into the file" );
+	ScriptRegisterFunctionNamed( g_pScriptVM, CScriptReadWriteFile::FileRead, "FileToString", "Returns the string from the file, null if no file or file is too big." );
+	ScriptRegisterFunctionNamed( g_pScriptVM, CScriptReadWriteFile::KeyValuesWrite, "KeyValuesToFile", "Stores the CScriptKeyValues into the file" );
+	ScriptRegisterFunctionNamed( g_pScriptVM, CScriptReadWriteFile::KeyValuesRead, "FileToKeyValues", "Returns the CScriptKeyValues from the file, null if no file or file is too big." );
 
 	ScriptRegisterFunction( g_pScriptVM, ListenToGameEvent, "Register as a listener for a game event from script." );
 	ScriptRegisterFunctionNamed( g_pScriptVM, CScriptGameEventListener::StopListeningToGameEvent, "StopListeningToGameEvent", "Stop the specified event listener." );
@@ -1286,10 +1617,10 @@ void RegisterScriptSingletons()
 #endif
 
 	g_pScriptVM->RegisterInstance( &g_ScriptNetPropManager, "NetProps" );
-
 #ifndef CLIENT_DLL
 	g_pScriptVM->RegisterInstance( &g_ScriptNetMsg, "NetMsg" );
 #endif
+	g_pScriptVM->RegisterInstance( &g_ScriptDebugOverlay, "debugoverlay" );
 
 	// Singletons not unique to VScript (not declared or defined here)
 	g_pScriptVM->RegisterInstance( GameRules(), "GameRules" );

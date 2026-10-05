@@ -2052,7 +2052,7 @@ BEGIN_DATADESC_NO_BASE( CBaseEntity )
 	DEFINE_THINKFUNC( ShadowCastDistThink ),
 	DEFINE_THINKFUNC( ScriptThink ),
 #ifdef MAPBASE_VSCRIPT
-	DEFINE_THINKFUNC( ScriptThinkH ),
+	DEFINE_THINKFUNC( ScriptContextThink ),
 #endif
 
 	DEFINE_FIELD( m_hEffectEntity, FIELD_EHANDLE ),
@@ -2178,11 +2178,12 @@ void CBaseEntity::UpdateOnRemove( void )
 		m_hScriptInstance = NULL;
 
 #ifdef MAPBASE_VSCRIPT
-		if ( m_hfnThink )
+		FOR_EACH_VEC( m_ScriptThinkFuncs, i )
 		{
-			g_pScriptVM->ReleaseScript( m_hfnThink );
-			m_hfnThink = NULL;
+			HSCRIPT h = m_ScriptThinkFuncs[i].m_hfnThink;
+			if ( h ) g_pScriptVM->ReleaseScript( h );
 		}
+		m_ScriptThinkFuncs.Purge();
 #endif // MAPBASE_VSCRIPT
 	}
 }
