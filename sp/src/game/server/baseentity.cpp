@@ -4061,22 +4061,11 @@ bool CBaseEntity::AcceptInput( const char *szInputName, CBaseEntity *pActivator,
 						// Now, see if there's a function named Input<Name of Input> in this entity's script file.
 						// If so, execute it and let it decide whether to allow the default behavior to also execute.
 						bool bCallInputFunc = true; // Always assume default behavior (do call the input function)
-						ScriptVariant_t functionReturn;
 
 						if ( m_ScriptScope.IsInitialized() )
 						{
-							char szScriptFunctionName[255];
-							Q_strcpy( szScriptFunctionName, "Input" );
-							Q_strcat( szScriptFunctionName, szInputName, 255 );
-
-							g_pScriptVM->SetValue( "activator", ( pActivator ) ? ScriptVariant_t( pActivator->GetScriptInstance() ) : SCRIPT_VARIANT_NULL );
-							g_pScriptVM->SetValue( "caller", ( pCaller ) ? ScriptVariant_t( pCaller->GetScriptInstance() ) : SCRIPT_VARIANT_NULL );
-#ifdef MAPBASE_VSCRIPT
-							Value.SetScriptVariant( functionReturn );
-							g_pScriptVM->SetValue( "parameter", functionReturn );
-#endif
-
-							if( CallScriptFunction( szScriptFunctionName, &functionReturn ) )
+							ScriptVariant_t functionReturn;
+							if ( ScriptInputHook( szInputName, pActivator, pCaller, Value, functionReturn ) )
 							{
 								bCallInputFunc = functionReturn.m_bool;
 							}
@@ -4085,15 +4074,6 @@ bool CBaseEntity::AcceptInput( const char *szInputName, CBaseEntity *pActivator,
 						if( bCallInputFunc )
 						{
 							(this->*pfnInput)( data );
-						}
-
-						if ( m_ScriptScope.IsInitialized() )
-						{
-							g_pScriptVM->ClearValue( "activator" );
-							g_pScriptVM->ClearValue( "caller" );
-#ifdef MAPBASE_VSCRIPT
-							g_pScriptVM->ClearValue( "parameter" );
-#endif
 						}
 					}
 					else if ( dmap->dataDesc[i].flags & FTYPEDESC_KEY )
@@ -4117,8 +4097,53 @@ bool CBaseEntity::AcceptInput( const char *szInputName, CBaseEntity *pActivator,
 		}
 	}
 
+#ifdef MAPBASE_VSCRIPT
+	// Allow VScript to handle unhandled inputs.
+	if (m_ScriptScope.IsInitialized())
+	{
+		ScriptVariant_t functionReturn;
+
+		if ( ScriptInputHook( szInputName, pActivator, pCaller, Value, functionReturn ) )
+		{
+			if (functionReturn.m_bool)
+				return true;
+		}
+	}
+#endif
+
 	DevMsg( 2, "unhandled input: (%s) -> (%s,%s)\n", szInputName, STRING(m_iClassname), GetDebugName()/*,", from (%s,%s)" STRING(pCaller->m_iClassname), STRING(pCaller->m_iName)*/ );
 	return false;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+bool CBaseEntity::ScriptInputHook( const char *szInputName, CBaseEntity *pActivator, CBaseEntity *pCaller, variant_t Value, ScriptVariant_t &functionReturn )
+{
+	char szScriptFunctionName[255];
+	Q_strcpy( szScriptFunctionName, "Input" );
+	Q_strcat( szScriptFunctionName, szInputName, 255 );
+
+	g_pScriptVM->SetValue( "activator", ( pActivator ) ? ScriptVariant_t( pActivator->GetScriptInstance() ) : SCRIPT_VARIANT_NULL );
+	g_pScriptVM->SetValue( "caller", ( pCaller ) ? ScriptVariant_t( pCaller->GetScriptInstance() ) : SCRIPT_VARIANT_NULL );
+#ifdef MAPBASE_VSCRIPT
+	Value.SetScriptVariant( functionReturn );
+	g_pScriptVM->SetValue( "parameter", functionReturn );
+#endif
+
+	bool bHandled = false;
+	if( CallScriptFunction( szScriptFunctionName, &functionReturn ) )
+	{
+		bHandled = true;
+	}
+
+	g_pScriptVM->ClearValue( "activator" );
+	g_pScriptVM->ClearValue( "caller" );
+#ifdef MAPBASE_VSCRIPT
+	g_pScriptVM->ClearValue( "parameter" );
+#endif
+
+	return bHandled;
 }
 
 //-----------------------------------------------------------------------------

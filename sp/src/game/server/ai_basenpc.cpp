@@ -10818,6 +10818,15 @@ BEGIN_ENT_SCRIPTDESC( CAI_BaseNPC, CBaseCombatCharacter, "The base class all NPC
 
 	DEFINE_SCRIPTFUNC_NAMED( VScriptGetState, "GetNPCState", "Get the NPC's current state." )
 
+	DEFINE_SCRIPTFUNC_NAMED( VScriptWake, "Wake", "Awakens the NPC if it is currently asleep." )
+	DEFINE_SCRIPTFUNC_NAMED( VScriptSleep, "Sleep", "Puts the NPC into a sleeping state." )
+
+	DEFINE_SCRIPTFUNC_NAMED( VScriptGetSleepState, "GetSleepState", "Get the NPC's sleep state. (see AISS_ set of constants)" )
+	DEFINE_SCRIPTFUNC_NAMED( VScriptSetSleepState, "SetSleepState", "Set the NPC's sleep state. (see AISS_ set of constants)" )
+	DEFINE_SCRIPTFUNC( AddSleepFlags, "Add to the NPC's sleep flags. (see AI_SLEEP_ set of constants)" )
+	DEFINE_SCRIPTFUNC( RemoveSleepFlags, "Remove from NPC's sleep flags. (see AI_SLEEP_ set of constants)" )
+	DEFINE_SCRIPTFUNC( HasSleepFlags, "Return true if the NPC has the specified sleep flags. (see AI_SLEEP_ set of constants)" )
+
 	DEFINE_SCRIPTFUNC_NAMED( VScriptGetHintGroup, "GetHintGroup", "Get the name of the NPC's hint group." )
 	DEFINE_SCRIPTFUNC_NAMED( VScriptGetHintNode, "GetHintNode", "Get the NPC's current AI hint." )
 

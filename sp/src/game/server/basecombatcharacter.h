@@ -358,6 +358,7 @@ public:
 	void				GetScriptAllWeapons( HSCRIPT hTable );
 	int					ScriptGetCurrentWeaponProficiency() { return GetCurrentWeaponProficiency(); }
 
+	void				ScriptDropWeapon( HSCRIPT hWeapon );
 	void				ScriptEquipWeapon( HSCRIPT hWeapon );
 
 	int					ScriptGetAmmoCount( int iType ) const;

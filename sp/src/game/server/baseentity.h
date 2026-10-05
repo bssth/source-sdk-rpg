@@ -661,6 +661,8 @@ public:
 	bool ScriptAcceptInput(const char *szInputName, const char *szValue, HSCRIPT hActivator, HSCRIPT hCaller);
 #endif
 
+	bool ScriptInputHook( const char *szInputName, CBaseEntity *pActivator, CBaseEntity *pCaller, variant_t Value, ScriptVariant_t &functionReturn );
+
 	//
 	// Input handlers.
 	//
@@ -1996,6 +1998,8 @@ public:
 
 	void ScriptAddContext( const char *name, const char *value, float duration = 0.0f );
 	const char *ScriptGetContext( const char *name );
+	float GetContextExpireTime( const char *name );
+	HSCRIPT ScriptGetContextIndex( int index );
 
 	int ScriptClassify(void);
 
@@ -2019,6 +2023,9 @@ public:
 
 	int ScriptGetMoveType() { return GetMoveType(); }
 	void ScriptSetMoveType( int iMoveType ) { SetMoveType( (MoveType_t)iMoveType ); }
+
+	int ScriptGetTakeDamage() { return m_takedamage; }
+	void ScriptSetTakeDamage( int val ) { m_takedamage = val; }
 
 	static ScriptHook_t	g_Hook_UpdateOnRemove;
 	static ScriptHook_t	g_Hook_VPhysicsCollision;

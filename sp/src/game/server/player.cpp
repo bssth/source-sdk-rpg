@@ -391,6 +391,10 @@ BEGIN_ENT_SCRIPTDESC( CBasePlayer, CBaseCombatCharacter, "The player entity." )
 	DEFINE_SCRIPTFUNC_NAMED( ScriptGetAutoaimVectorCustomMaxDist, "GetAutoaimVectorCustomMaxDist", "Gets the player's autoaim shooting direction with the specified scale and a custom max distance." )
 	DEFINE_SCRIPTFUNC( ShouldAutoaim, "Returns true if the player should be autoaiming." )
 
+	DEFINE_SCRIPTFUNC_NAMED( ScriptGetEyeForward, "GetEyeForward", "Gets the player's forward eye vector." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptGetEyeRight, "GetEyeRight", "Gets the player's right eye vector." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptGetEyeUp, "GetEyeUp", "Gets the player's up eye vector." )
+
 	//
 	// Hooks
 	//

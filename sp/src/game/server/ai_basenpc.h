@@ -1135,6 +1135,12 @@ public:
 
 	int					VScriptGetState();
 
+	void				VScriptWake( HSCRIPT hActivator ) { Wake( ToEnt(hActivator) ); }
+	void				VScriptSleep() { Sleep(); }
+
+	int					VScriptGetSleepState()	{ return (int)GetSleepState(); }
+	void				VScriptSetSleepState( int sleepState ) { SetSleepState( (AI_SleepState_t)sleepState ); }
+
 	const char*			VScriptGetHintGroup() { return STRING( GetHintGroup() ); }
 	HSCRIPT				VScriptGetHintNode();
 

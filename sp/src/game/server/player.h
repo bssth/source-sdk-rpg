@@ -375,6 +375,10 @@ public:
 	int						GetButtonDisabled() { return m_afButtonDisabled; }
 	int						GetButtonForced() { return m_afButtonForced; }
 
+	const Vector&			ScriptGetEyeForward() { static Vector vecForward; EyeVectors( &vecForward, NULL, NULL ); return vecForward; }
+	const Vector&			ScriptGetEyeRight() { static Vector vecRight; EyeVectors( NULL, &vecRight, NULL ); return vecRight; }
+	const Vector&			ScriptGetEyeUp() { static Vector vecUp; EyeVectors( NULL, NULL, &vecUp ); return vecUp; }
+
 	virtual const Vector	GetPlayerMins( void ) const; // uses local player
 	virtual const Vector	GetPlayerMaxs( void ) const; // uses local player
 

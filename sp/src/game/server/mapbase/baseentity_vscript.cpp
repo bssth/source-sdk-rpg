@@ -161,13 +161,16 @@ BEGIN_ENT_SCRIPTDESC_ROOT_WITH_HELPER( CBaseEntity, "Root class of all server-si
 
 	DEFINE_SCRIPTFUNC_NAMED( ScriptGetContext, "GetContext", "Get a response context value" )
 	DEFINE_SCRIPTFUNC_NAMED( ScriptAddContext, "AddContext", "Add a response context value" )
+	DEFINE_SCRIPTFUNC( GetContextExpireTime, "Get a response context's expiration time" )
+	DEFINE_SCRIPTFUNC( GetContextCount, "Get the number of response contexts" )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptGetContextIndex, "GetContextIndex", "Get a response context at a specific index in the form of a table" )
 
 	DEFINE_SCRIPTFUNC_NAMED( ScriptFollowEntity, "FollowEntity", "Begin following the specified entity. This makes this entity non-solid, parents it to the target entity, and teleports it to the specified entity's origin. The second parameter is whether or not to use bonemerging while following." )
 	DEFINE_SCRIPTFUNC( StopFollowingEntity, "Stops following an entity if we're following one." )
 	DEFINE_SCRIPTFUNC( IsFollowingEntity, "Returns true if this entity is following another entity." )
 	DEFINE_SCRIPTFUNC_NAMED( ScriptGetFollowedEntity, "GetFollowedEntity", "Get the entity we're following." )
 
-	DEFINE_SCRIPTFUNC_NAMED( ScriptClassify, "Classify", "Get Class_T class ID" )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptClassify, "Classify", "Get Class_T class ID (corresponds to the CLASS_ set of constants)" )
 
 	DEFINE_SCRIPTFUNC_NAMED( ScriptAcceptInput, "AcceptInput", "" )
 	DEFINE_SCRIPTFUNC_NAMED( ScriptFireOutput, "FireOutput", "Fire an entity output" )
@@ -249,6 +252,9 @@ BEGIN_ENT_SCRIPTDESC_ROOT_WITH_HELPER( CBaseEntity, "Root class of all server-si
 	DEFINE_SCRIPTFUNC( IsCombatCharacter, "Returns true if this entity is a combat character (player or NPC)." )
 	DEFINE_SCRIPTFUNC_NAMED( IsBaseCombatWeapon, "IsWeapon", "Returns true if this entity is a weapon." )
 	DEFINE_SCRIPTFUNC( IsWorld, "Returns true if this entity is the world." )
+
+	DEFINE_SCRIPTFUNC_NAMED( ScriptGetTakeDamage, "GetTakeDamage", "Gets this entity's m_takedamage value. (DAMAGE_YES, DAMAGE_NO, etc.)" )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptSetTakeDamage, "SetTakeDamage", "Sets this entity's m_takedamage value. (DAMAGE_YES, DAMAGE_NO, etc.)" )
 
 	// DEFINE_SCRIPTFUNC( IsMarkedForDeletion, "Returns true if the entity is valid and marked for deletion." )
 #endif
@@ -1112,6 +1118,36 @@ const char *CBaseEntity::ScriptGetContext( const char *name )
 	if ( idx == -1 )
 		return NULL;
 	return GetContextValue( idx );
+}
+
+//-----------------------------------------------------------------------------
+// NOTE (port): Mapbase defines this next to its by-name GetContextValue (MAPBASE-only
+// in this tree), so it lives here with the other script context accessors.
+//-----------------------------------------------------------------------------
+float CBaseEntity::GetContextExpireTime( const char *name )
+{
+	int idx = FindContextByName( name );
+	if ( idx == -1 )
+		return 0.0f;
+
+	return m_ResponseContexts[ idx ].m_fExpirationTime;
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+HSCRIPT CBaseEntity::ScriptGetContextIndex( int index )
+{
+	if (index >= m_ResponseContexts.Count())
+		return NULL;
+
+	ScriptVariant_t varTable;
+	g_pScriptVM->CreateTable( varTable );
+
+	g_pScriptVM->SetValue( varTable, "name", STRING( m_ResponseContexts[index].m_iszName ) );
+	g_pScriptVM->SetValue( varTable, "value", STRING( m_ResponseContexts[index].m_iszValue ) );
+	g_pScriptVM->SetValue( varTable, "expiration_time", m_ResponseContexts[index].m_fExpirationTime );
+
+	return varTable.m_hScript;
 }
 
 //-----------------------------------------------------------------------------
