@@ -1189,6 +1189,106 @@ END_SCRIPTDESC();
 
 #endif // !CLIENT_DLL
 
+//=============================================================================
+// Convar Lookup
+//
+// NOTE (port): Mapbase eb014cce moved this into the vscript library
+// (vscript_bindings_base.cpp) and final Mapbase moved it back here as
+// CScriptConvarAccessor. Our prebuilt vscript.lib is the final version, so it no
+// longer provides "Convars" at all; this is the eb014cce-era library class,
+// verbatim, so the script API and vscript_server.nut's
+// CConvars::GetClientConvarValue work as they did at this point in history.
+//=============================================================================
+class CScriptConvarLookup
+{
+public:
+
+	float GetFloat( const char *pszConVar )
+	{
+		ConVarRef cvar( pszConVar );
+		return cvar.GetFloat();
+	}
+
+	int GetInt( const char *pszConVar )
+	{
+		ConVarRef cvar( pszConVar );
+		return cvar.GetInt();
+	}
+
+	bool GetBool( const char *pszConVar )
+	{
+		ConVarRef cvar( pszConVar );
+		return cvar.GetBool();
+	}
+
+	const char *GetStr( const char *pszConVar )
+	{
+		ConVarRef cvar( pszConVar );
+		return cvar.GetString();
+	}
+
+	const char *GetDefaultValue( const char *pszConVar )
+	{
+		ConVarRef cvar( pszConVar );
+		return cvar.GetDefault();
+	}
+
+	bool IsFlagSet( const char *pszConVar, int nFlags )
+	{
+		ConVarRef cvar( pszConVar );
+		return cvar.IsFlagSet( nFlags );
+	}
+
+	void SetFloat( const char *pszConVar, float value )
+	{
+		SetValue( pszConVar, value );
+	}
+
+	void SetInt( const char *pszConVar, int value )
+	{
+		SetValue( pszConVar, value );
+	}
+
+	void SetBool( const char *pszConVar, bool value )
+	{
+		SetValue( pszConVar, value );
+	}
+
+	void SetStr( const char *pszConVar, const char *value )
+	{
+		SetValue( pszConVar, value );
+	}
+
+	template <typename T>
+	void SetValue( const char *pszConVar, T value )
+	{
+		ConVarRef cvar( pszConVar );
+		if (!cvar.IsValid())
+			return;
+
+		// FCVAR_NOT_CONNECTED can be used to protect specific convars from nefarious interference
+		if (cvar.IsFlagSet(FCVAR_NOT_CONNECTED))
+			return;
+
+		cvar.SetValue( value );
+	}
+
+private:
+} g_ScriptConvarLookup;
+
+BEGIN_SCRIPTDESC_ROOT_NAMED( CScriptConvarLookup, "CConvars", SCRIPT_SINGLETON "Provides an interface for getting and setting convars." )
+	DEFINE_SCRIPTFUNC( GetFloat, "Returns the convar as a float. May return null if no such convar." )
+	DEFINE_SCRIPTFUNC( GetInt, "Returns the convar as an int. May return null if no such convar." )
+	DEFINE_SCRIPTFUNC( GetBool, "Returns the convar as a bool. May return null if no such convar." )
+	DEFINE_SCRIPTFUNC( GetStr, "Returns the convar as a string. May return null if no such convar." )
+	DEFINE_SCRIPTFUNC( GetDefaultValue, "Returns the convar's default value as a string. May return null if no such convar." )
+	DEFINE_SCRIPTFUNC( IsFlagSet, "Returns the convar's flags. May return null if no such convar." )
+	DEFINE_SCRIPTFUNC( SetFloat, "Sets the value of the convar as a float." )
+	DEFINE_SCRIPTFUNC( SetInt, "Sets the value of the convar as an int." )
+	DEFINE_SCRIPTFUNC( SetBool, "Sets the value of the convar as a bool." )
+	DEFINE_SCRIPTFUNC( SetStr, "Sets the value of the convar as a string." )
+END_SCRIPTDESC();
+
 #define RETURN_IF_CANNOT_DRAW_OVERLAY\
 	if (engine->IsPaused())\
 	{\
@@ -1619,6 +1719,7 @@ void RegisterScriptSingletons()
 #endif
 
 	g_pScriptVM->RegisterInstance( &g_ScriptNetPropManager, "NetProps" );
+	g_pScriptVM->RegisterInstance( &g_ScriptConvarLookup, "Convars" );
 #ifndef CLIENT_DLL
 	g_pScriptVM->RegisterInstance( &g_ScriptNetMsg, "NetMsg" );
 #endif
