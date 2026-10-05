@@ -46,6 +46,7 @@ ScriptHook_t	CBaseEntity::g_Hook_UpdateOnRemove;
 ScriptHook_t	CBaseEntity::g_Hook_VPhysicsCollision;
 ScriptHook_t	CBaseEntity::g_Hook_FireBullets;
 ScriptHook_t	CBaseEntity::g_Hook_OnDeath;
+ScriptHook_t	CBaseEntity::g_Hook_OnKilledOther;
 #endif
 
 BEGIN_ENT_SCRIPTDESC_ROOT_WITH_HELPER( CBaseEntity, "Root class of all server-side entities", &g_BaseEntityScriptInstanceHelper )
@@ -304,6 +305,11 @@ BEGIN_ENT_SCRIPTDESC_ROOT_WITH_HELPER( CBaseEntity, "Root class of all server-si
 	END_SCRIPTHOOK()
 
 	BEGIN_SCRIPTHOOK( CBaseEntity::g_Hook_OnDeath, "OnDeath", FIELD_BOOLEAN, "Called when the entity dies (Event_Killed). Returning false makes the entity cancel death, although this could have unforeseen consequences. For hooking any damage instead of just death, see filter_script and PassesFinalDamageFilter." )
+		DEFINE_SCRIPTHOOK_PARAM( "info", FIELD_HSCRIPT )
+	END_SCRIPTHOOK()
+
+	BEGIN_SCRIPTHOOK( CBaseEntity::g_Hook_OnKilledOther, "OnKilledOther", FIELD_VOID, "Called when the entity kills another entity." )
+		DEFINE_SCRIPTHOOK_PARAM( "victim", FIELD_HSCRIPT )
 		DEFINE_SCRIPTHOOK_PARAM( "info", FIELD_HSCRIPT )
 	END_SCRIPTHOOK()
 #endif

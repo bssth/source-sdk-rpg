@@ -1670,6 +1670,22 @@ void CBaseEntity::SendOnKilledGameEvent( const CTakeDamageInfo &info )
 	}
 }
 
+void CBaseEntity::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &info )
+{
+#ifdef MAPBASE_VSCRIPT
+	if (m_ScriptScope.IsInitialized() && g_Hook_OnKilledOther.CanRunInScope( m_ScriptScope ))
+	{
+		HSCRIPT hInfo = g_pScriptVM->RegisterInstance( const_cast<CTakeDamageInfo*>(&info) );
+
+		// victim, info
+		ScriptVariant_t args[] = { ScriptVariant_t( pVictim->GetScriptInstance() ), ScriptVariant_t( hInfo ) };
+		g_Hook_OnKilledOther.Call( m_ScriptScope, NULL, args );
+
+		g_pScriptVM->RemoveInstance( hInfo );
+	}
+#endif
+}
+
 
 bool CBaseEntity::HasTarget( string_t targetname )
 {
