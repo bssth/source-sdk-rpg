@@ -1,0 +1,3 @@
+[submodule "sp/.claude/skills/vmf"]
+	path = sp/.claude/skills/vmf
+	url = git@github.com:bssth/claude-vmf-skill.git
