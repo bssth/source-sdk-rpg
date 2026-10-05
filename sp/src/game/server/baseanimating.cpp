@@ -290,6 +290,8 @@ BEGIN_ENT_SCRIPTDESC( CBaseAnimating, CBaseEntity, "Animating models" )
 	DEFINE_SCRIPTFUNC_NAMED( ScriptSelectWeightedSequence, "SelectWeightedSequence", "Selects a sequence for the specified activity ID" )
 	DEFINE_SCRIPTFUNC_NAMED( ScriptSelectHeaviestSequence, "SelectHeaviestSequence", "Selects the sequence with the heaviest weight for the specified activity ID" )
 	DEFINE_SCRIPTFUNC_NAMED( ScriptGetSequenceKeyValues, "GetSequenceKeyValues", "Get a KeyValue class instance on the specified sequence. WARNING: This uses the same KeyValue pointer as GetModelKeyValues!" )
+	DEFINE_SCRIPTFUNC( GetSkin, "Gets the model's skin" )
+	DEFINE_SCRIPTFUNC( SetSkin, "Sets the model's skin" )
 #endif
 	DEFINE_SCRIPTFUNC( IsSequenceFinished, "Ask whether the main sequence is done playing" )
 	DEFINE_SCRIPTFUNC( SetBodygroup, "Sets a bodygroup")
