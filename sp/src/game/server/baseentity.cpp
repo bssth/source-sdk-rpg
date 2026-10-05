@@ -1631,22 +1631,9 @@ int CBaseEntity::VPhysicsTakeDamage( const CTakeDamageInfo &info )
 void CBaseEntity::Event_Killed( const CTakeDamageInfo &info )
 {
 #ifdef MAPBASE_VSCRIPT
-	if (m_ScriptScope.IsInitialized() && g_Hook_OnDeath.CanRunInScope( m_ScriptScope ))
-	{
-		HSCRIPT hInfo = g_pScriptVM->RegisterInstance( const_cast<CTakeDamageInfo*>(&info) );
-
-		// info
-		ScriptVariant_t functionReturn;
-		ScriptVariant_t args[] = { ScriptVariant_t( hInfo ) };
-		if ( g_Hook_OnDeath.Call( m_ScriptScope, &functionReturn, args ) && (functionReturn.m_type == FIELD_BOOLEAN && functionReturn.m_bool == false) )
-		{
-			// Make this entity cheat death
-			g_pScriptVM->RemoveInstance( hInfo );
-			return;
-		}
-
-		g_pScriptVM->RemoveInstance( hInfo );
-	}
+	// False = Cheat death
+	if (ScriptDeathHook( const_cast<CTakeDamageInfo*>(&info) ) == false)
+		return;
 #endif
 
 	if( info.GetAttacker() )
@@ -4148,6 +4135,33 @@ bool CBaseEntity::ScriptInputHook( const char *szInputName, CBaseEntity *pActiva
 
 	return bHandled;
 }
+
+#ifdef MAPBASE_VSCRIPT
+//-----------------------------------------------------------------------------
+// Purpose: OnDeath hook. Returns false if the script made this entity cheat death.
+//-----------------------------------------------------------------------------
+bool CBaseEntity::ScriptDeathHook( CTakeDamageInfo *info )
+{
+	if (m_ScriptScope.IsInitialized() && g_Hook_OnDeath.CanRunInScope( m_ScriptScope ))
+	{
+		HSCRIPT hInfo = g_pScriptVM->RegisterInstance( info );
+
+		// info
+		ScriptVariant_t functionReturn;
+		ScriptVariant_t args[] = { ScriptVariant_t( hInfo ) };
+		if ( g_Hook_OnDeath.Call( m_ScriptScope, &functionReturn, args ) && (functionReturn.m_type == FIELD_BOOLEAN && functionReturn.m_bool == false) )
+		{
+			// Make this entity cheat death
+			g_pScriptVM->RemoveInstance( hInfo );
+			return false;
+		}
+
+		g_pScriptVM->RemoveInstance( hInfo );
+	}
+
+	return true;
+}
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: Input handler for the entity alpha.
