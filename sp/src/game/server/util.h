@@ -298,6 +298,7 @@ private:
 int			UTIL_EntitiesInBox( const Vector &mins, const Vector &maxs, CFlaggedEntitiesEnum *pEnum  );
 int			UTIL_EntitiesAlongRay( const Ray_t &ray, CFlaggedEntitiesEnum *pEnum  );
 int			UTIL_EntitiesInSphere( const Vector &center, float radius, CFlaggedEntitiesEnum *pEnum  );
+int			UTIL_EntitiesAtPoint( const Vector &point, CFlaggedEntitiesEnum *pEnum );
 
 inline int UTIL_EntitiesInBox( CBaseEntity **pList, int listMax, const Vector &mins, const Vector &maxs, int flagMask )
 {
@@ -315,6 +316,12 @@ inline int UTIL_EntitiesInSphere( CBaseEntity **pList, int listMax, const Vector
 {
 	CFlaggedEntitiesEnum sphereEnum( pList, listMax, flagMask );
 	return UTIL_EntitiesInSphere( center, radius, &sphereEnum );
+}
+
+inline int UTIL_EntitiesAtPoint( CBaseEntity **pList, int listMax, const Vector &point, int flagMask )
+{
+	CFlaggedEntitiesEnum pointEnum( pList, listMax, flagMask );
+	return UTIL_EntitiesAtPoint( point, &pointEnum );
 }
 
 // marks the entity for deletion so it will get removed next frame

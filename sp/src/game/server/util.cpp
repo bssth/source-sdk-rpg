@@ -290,6 +290,12 @@ int UTIL_EntitiesInSphere( const Vector &center, float radius, CFlaggedEntitiesE
 	return pEnum->GetCount();
 }
 
+int UTIL_EntitiesAtPoint( const Vector &point, CFlaggedEntitiesEnum *pEnum )
+{
+	partition->EnumerateElementsAtPoint( PARTITION_ENGINE_NON_STATIC_EDICTS, point, false, pEnum );
+	return pEnum->GetCount();
+}
+
 CEntitySphereQuery::CEntitySphereQuery( const Vector &center, float radius, int flagMask )
 {
 	m_listIndex = 0;
