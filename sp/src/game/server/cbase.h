@@ -80,6 +80,9 @@
 #include "baseentity_shared.h"
 #include "basetoggle.h"
 #include "igameevents.h"
+#ifdef MAPBASE_VSCRIPT // NOTE (port): Mapbase includes this under MAPBASE, which isn't defined here
+#include "tier1/mapbase_con_groups.h"
+#endif
 
 // saverestore.h declarations
 class ISave;

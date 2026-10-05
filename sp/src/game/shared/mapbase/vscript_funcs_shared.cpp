@@ -1,10 +1,15 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Mapbase - https://github.com/mapbase-source/source-sdk-2013 ============//
 //
-// Purpose: Due to this being a custom integration of VScript based on the Alien Swarm SDK, we don't have access to
-//			some of the code normally available in games like L4D2 or Valve's original VScript DLL.
-//			Instead, that code is recreated here, shared between server and client.
+// Purpose: This file contains general shared VScript bindings which Mapbase adds onto
+//			what was ported from Alien Swarm instead of cluttering the existing files.
 //
-//			It also contains other functions unique to Mapbase.
+//			This includes various functions, classes, etc. which were either created from
+//			scratch or were based on/inspired by things documented in APIs from L4D2 or even
+//			Source 2 games like Dota 2 or Half-Life: Alyx.
+//
+//			Other VScript bindings can be found in files like vscript_singletons.cpp and
+//			things not exclusive to the game DLLs are embedded/recreated in the library itself
+//			via vscript_bindings_base.cpp.
 //
 // $NoKeywords: $
 //=============================================================================//
@@ -12,26 +17,23 @@
 #include "cbase.h"
 #include "matchers.h"
 #include "takedamageinfo.h"
-#include "vscript_singletons.h"
 
 #ifndef CLIENT_DLL
 #include "globalstate.h"
 #include "vscript_server.h"
-#include "enginecallback.h"
+#include "soundent.h"
 #endif // !CLIENT_DLL
 
 #include "con_nprint.h"
 #include "particle_parse.h"
 
 #include "vscript_funcs_shared.h"
+#include "vscript_singletons.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-// NOTE (port): CScriptNetPropManager moved to vscript_singletons.cpp, and
-// CScriptConvarLookup ("CConvars"/"Convars") moved into the VScript library itself
-// (vscript_bindings_base.cpp, registered by RegisterBaseBindings) following Mapbase
-// eb014cce (v6.0). Our prebuilt vscript.lib already provides and auto-registers it.
+extern IScriptManager *scriptmanager;
 
 #ifndef CLIENT_DLL
 void EmitSoundOn( const char *pszSound, HSCRIPT hEnt )
@@ -68,11 +70,6 @@ void AddThinkToEnt( HSCRIPT entity, const char *pszFuncName )
 		return;
 
 	pEntity->ScriptSetThinkFunction(pszFuncName, TICK_INTERVAL);
-}
-
-HSCRIPT EntIndexToHScript( int index )
-{
-	return ToHScript( UTIL_EntityByIndex( index ) );
 }
 
 void ParseScriptTableKeyValues( CBaseEntity *pEntity, HSCRIPT hKV )
@@ -143,26 +140,28 @@ HSCRIPT SpawnEntityFromTable( const char *pszClassname, HSCRIPT hKV )
 }
 #endif
 
+HSCRIPT EntIndexToHScript( int index )
+{
+#ifdef GAME_DLL
+    edict_t *e = INDEXENT(index);
+    if ( e && !e->IsFree() )
+    {
+        return ToHScript( GetContainingEntity( e ) );
+    }
+#else // CLIENT_DLL
+    if ( index < NUM_ENT_ENTRIES )
+    {
+        return ToHScript( CBaseEntity::Instance( index ) );
+    }
+#endif
+    return NULL;
+}
+
 //-----------------------------------------------------------------------------
 // Mapbase-specific functions start here
 //-----------------------------------------------------------------------------
 
-static void ScriptColorPrint( int r, int g, int b, const char *pszMsg )
-{
-	const Color clr(r, g, b, 255);
-	ConColorMsg( clr, "%s", pszMsg );
-}
-
-static void ScriptColorPrintL( int r, int g, int b, const char *pszMsg )
-{
-	const Color clr(r, g, b, 255);
-	ConColorMsg( clr, "%s\n", pszMsg );
-}
-
 #ifndef CLIENT_DLL
-// Since IScriptVM::GetKeyValue() is unsupported, Mapbase uses this CScriptKeyValues version.
-// NOTE (port): the final vscript.lib owns CScriptKeyValues; obtain its KeyValues via the
-// script manager instead of the game-side wrapper that earlier Mapbase commits used.
 HSCRIPT SpawnEntityFromKeyValues( const char *pszClassname, HSCRIPT hKV )
 {
 	if ( IsEntityCreationAllowedInScripts() == false )
@@ -181,7 +180,7 @@ HSCRIPT SpawnEntityFromKeyValues( const char *pszClassname, HSCRIPT hKV )
 	gEntList.NotifyCreateEntity( pEntity );
 
 	KeyValues *pKV = scriptmanager->GetKeyValuesFromScriptKV( g_pScriptVM, hKV );
-	if (pKV)
+	if (pKV) // NOTE (port): guard against a non-CScriptKeyValues handle
 	{
 		for (pKV = pKV->GetFirstSubKey(); pKV != NULL; pKV = pKV->GetNextKey())
 		{
@@ -203,7 +202,7 @@ void ScriptDispatchSpawn( HSCRIPT hEntity )
 		DispatchSpawn( pEntity );
 	}
 }
-#endif
+#endif // !CLIENT_DLL
 
 //-----------------------------------------------------------------------------
 //
@@ -557,22 +556,6 @@ static void AddPhysVelocity( HSCRIPT hPhys, const Vector& vecVelocity, const Vec
 //=============================================================================
 //=============================================================================
 
-#ifndef CLIENT_DLL
-// NOTE (port): Mapbase 66a44d07 put this in vscript_funcs_math.cpp. Everything else in that
-// file (matrix3x4_t, the math wrappers, RandomFloat/RandomInt/AngleDiff) moved into the
-// VScript library in eb014cce (v6.0) and our prebuilt vscript.lib already registers it,
-// so only this entity-dependent helper stays game-side (where v6.0 puts it too).
-const Vector& ScriptPredictedPosition( HSCRIPT hTarget, float flTimeDelta )
-{
-	static Vector predicted;
-	UTIL_PredictedPosition( ToEnt(hTarget), flTimeDelta, &predicted );
-	return predicted;
-}
-#endif
-
-//=============================================================================
-//=============================================================================
-
 static int ScriptPrecacheModel( const char *modelname )
 {
 	return CBaseEntity::PrecacheModel( modelname );
@@ -582,6 +565,14 @@ static void ScriptPrecacheOther( const char *classname )
 {
 	UTIL_PrecacheOther( classname );
 }
+
+#ifndef CLIENT_DLL
+// TODO: Move this?
+static void ScriptInsertSound( int iType, const Vector &vecOrigin, int iVolume, float flDuration, HSCRIPT hOwner, int soundChannelIndex, HSCRIPT hSoundTarget )
+{
+	CSoundEnt::InsertSound( iType, vecOrigin, iVolume, flDuration, ToEnt(hOwner), soundChannelIndex, ToEnt(hSoundTarget) );
+}
+#endif
 
 //=============================================================================
 //=============================================================================
@@ -630,10 +621,19 @@ static void ScriptDecalTrace( HSCRIPT hTrace, const char *decalName )
 //-----------------------------------------------------------------------------
 // Simple particle effect dispatch
 //-----------------------------------------------------------------------------
-static void ScriptDispatchParticleEffect( const char *pszParticleName, const Vector &vecOrigin, const QAngle &vecAngles )
+static void ScriptDispatchParticleEffect( const char *pszParticleName, const Vector &vecOrigin, const QAngle &vecAngles, HSCRIPT hEntity )
 {
-	DispatchParticleEffect( pszParticleName, vecOrigin, vecAngles );
+	DispatchParticleEffect( pszParticleName, vecOrigin, vecAngles, ToEnt(hEntity) );
 }
+
+#ifndef CLIENT_DLL
+const Vector& ScriptPredictedPosition( HSCRIPT hTarget, float flTimeDelta )
+{
+	static Vector predicted;
+	UTIL_PredictedPosition( ToEnt(hTarget), flTimeDelta, &predicted );
+	return predicted;
+}
+#endif
 
 //=============================================================================
 //=============================================================================
@@ -690,29 +690,35 @@ void NXPrint( int pos, int r, int g, int b, bool fixed, float ftime, const char*
 	// delete info;
 }
 
+//=============================================================================
+//=============================================================================
+
 void RegisterSharedScriptFunctions()
 {
-	//
+	// 
 	// Due to this being a custom integration of VScript based on the Alien Swarm SDK, we don't have access to
 	// some of the code normally available in games like L4D2 or Valve's original VScript DLL.
 	// Instead, that code is recreated here, shared between server and client.
-	//
+	// 
 
 #ifndef CLIENT_DLL
 	ScriptRegisterFunction( g_pScriptVM, EmitSoundOn, "Play named sound on an entity." );
 	ScriptRegisterFunction( g_pScriptVM, EmitSoundOnClient, "Play named sound only on the client for the specified player." );
 
 	ScriptRegisterFunction( g_pScriptVM, AddThinkToEnt, "This will put a think function onto an entity, or pass null to remove it. This is NOT chained, so be careful." );
-	ScriptRegisterFunction( g_pScriptVM, EntIndexToHScript, "Returns the script handle for the given entity index." );
 	ScriptRegisterFunction( g_pScriptVM, PrecacheEntityFromTable, "Precache an entity from KeyValues in a table." );
 	ScriptRegisterFunction( g_pScriptVM, SpawnEntityFromTable, "Native function for entity spawning." );
-#endif
+#endif // !CLIENT_DLL
+	ScriptRegisterFunction( g_pScriptVM, EntIndexToHScript, "Returns the script handle for the given entity index." );
 
-	// Functions unique to Mapbase
+	//-----------------------------------------------------------------------------
+	// Functions, etc. unique to Mapbase
+	//-----------------------------------------------------------------------------
+
+	//-----------------------------------------------------------------------------
+
 	ScriptRegisterFunction( g_pScriptVM, NPrint, "Notification print" );
 	ScriptRegisterFunction( g_pScriptVM, NXPrint, "Notification print, customised" );
-	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptColorPrint, "printc", "Version of print() which takes a color before the message." );
-	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptColorPrintL, "printcl", "Version of printl() which takes a color before the message." );
 
 #ifndef CLIENT_DLL
 	ScriptRegisterFunction( g_pScriptVM, SpawnEntityFromKeyValues, "Spawns an entity with the keyvalues in a CScriptKeyValues handle." );
@@ -733,45 +739,52 @@ void RegisterSharedScriptFunctions()
 	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptTraceLineComplex, "TraceLineComplex", "Complex version of TraceLine which takes 2 points, an ent to ignore, a trace mask, and a collision group. Returns a handle which can access all trace info." );
 	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptTraceHullComplex, "TraceHullComplex", "Takes 2 points, min/max hull bounds, an ent to ignore, a trace mask, and a collision group to trace to a point using a hull. Returns a handle which can access all trace info." );
 
-	//
+	// 
 	// VPhysics
-	//
+	// 
 	ScriptRegisterFunction( g_pScriptVM, GetPhysVelocity, "Gets physics velocity for the given VPhysics object" );
 	ScriptRegisterFunction( g_pScriptVM, GetPhysAngVelocity, "Gets physics angular velocity for the given VPhysics object" );
 	ScriptRegisterFunction( g_pScriptVM, SetPhysVelocity, "Sets physics velocity for the given VPhysics object" );
 	ScriptRegisterFunction( g_pScriptVM, AddPhysVelocity, "Adds physics velocity for the given VPhysics object" );
 
-	//
+	// 
 	// Precaching
-	//
+	// 
 	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptPrecacheModel, "PrecacheModel", "Precaches a model for later usage." );
 	ScriptRegisterFunction( g_pScriptVM, PrecacheMaterial, "Precaches a material for later usage." );
 	ScriptRegisterFunction( g_pScriptVM, PrecacheParticleSystem, "Precaches a particle system for later usage." );
 	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptPrecacheOther, "PrecacheOther", "Precaches an entity class for later usage." );
 
-	//
+	// 
+	// NPCs
+	// 
+#ifndef CLIENT_DLL
+	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptInsertSound, "InsertAISound", "Inserts an AI sound." );
+#endif
+
+	// 
 	// Misc. Utility
-	//
-	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptEntitiesInBox, "EntitiesInBox", "Gets all entities which are within a worldspace box." );
-	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptEntitiesAtPoint, "EntitiesAtPoint", "Gets all entities which are intersecting a point in space." );
-	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptEntitiesInSphere, "EntitiesInSphere", "Gets all entities which are within a sphere." );
+	// 
+	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptEntitiesInBox, "EntitiesInBox", "Gets all entities which are within a worldspace box. This function copies them to an array with a maximum number of elements." );
+	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptEntitiesAtPoint, "EntitiesAtPoint", "Gets all entities which are intersecting a point in space. This function copies them to an array with a maximum number of elements." );
+	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptEntitiesInSphere, "EntitiesInSphere", "Gets all entities which are within a sphere. This function copies them to an array with a maximum number of elements." );
 
 	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptDecalTrace, "DecalTrace", "Creates a dynamic decal based on the given trace info. The trace information can be generated by TraceLineComplex() and the decal name must be from decals_subrect.txt." );
-	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptDispatchParticleEffect, "DispatchParticleEffect", "Dispatches a one-off particle system" );
+	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptDispatchParticleEffect, "DoDispatchParticleEffect", SCRIPT_ALIAS( "DispatchParticleEffect", "Dispatches a one-off particle system" ) );
 
 	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptMatcherMatch, "Matcher_Match", "Compares a string to a query using Mapbase's matcher system, supporting wildcards, RS matchers, etc." );
 	ScriptRegisterFunction( g_pScriptVM, Matcher_NamesMatch, "Compares a string to a query using Mapbase's matcher system using wildcards only." );
 	ScriptRegisterFunction( g_pScriptVM, AppearsToBeANumber, "Checks if the given string appears to be a number." );
 
 #ifndef CLIENT_DLL
+	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptPredictedPosition, "PredictedPosition", "Predicts what an entity's position will be in a given amount of time." );
+#endif
+
+#ifndef CLIENT_DLL
 	ScriptRegisterFunction( g_pScriptVM, IsDedicatedServer, "Is this a dedicated server?" );
 #endif
 	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptIsServer, "IsServer", "Returns true if the script is being run on the server." );
 	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptIsClient, "IsClient", "Returns true if the script is being run on the client." );
-
-#ifndef CLIENT_DLL
-	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptPredictedPosition, "PredictedPosition", "Predicts what an entity's position will be in a given amount of time." );
-#endif
 
 	RegisterScriptSingletons();
 

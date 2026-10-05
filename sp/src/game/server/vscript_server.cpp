@@ -141,7 +141,7 @@ END_SCRIPTDESC();
 #define RETURN_IF_CANNOT_DRAW_OVERLAY\
 	if (engine->IsPaused())\
 	{\
-		DevWarning("debugoverlay: cannot draw while the game is paused!\n");\
+		CGWarning( 1, CON_GROUP_VSCRIPT, "debugoverlay: cannot draw while the game is paused!\n");\
 		return;\
 	}
 class CDebugOverlayScriptHelper
@@ -615,7 +615,11 @@ static void SendToConsole( const char *pszCommand )
 	CBasePlayer *pPlayer = UTIL_GetLocalPlayerOrListenServerHost();
 	if ( !pPlayer )
 	{
+#ifdef MAPBASE
+		CGMsg( 1, CON_GROUP_VSCRIPT, "Cannot execute \"%s\", no player\n", pszCommand );
+#else
 		DevMsg ("Cannot execute \"%s\", no player\n", pszCommand );
+#endif
 		return;
 	}
 
@@ -737,7 +741,7 @@ static void DoEntFireByInstanceHandle( HSCRIPT hTarget, const char *pszAction, c
 
 	if ( !pTarget )
 	{
-		Warning( "VScript error: DoEntFire was passed an invalid entity instance.\n" );
+		CGWarning( 0, CON_GROUP_VSCRIPT, "VScript error: DoEntFire was passed an invalid entity instance.\n" );
 #ifdef MAPBASE_VSCRIPT
 		return 0;
 #else
@@ -776,6 +780,12 @@ static bool CancelEntityIOEvent( int event )
 static float GetEntityIOEventTimeLeft( int event )
 {
 	return g_EventQueue.GetTimeLeft(event);
+}
+
+// vscript_server.nut adds this to the base CConvars class
+static const char *ScriptGetClientConvarValue( const char *pszConVar, int entindex )
+{
+	return engine->GetClientConVarValue( entindex, pszConVar );
 }
 #endif // MAPBASE_VSCRIPT
 
@@ -822,7 +832,7 @@ bool VScriptServerInit()
 #endif
 			else
 			{
-				DevWarning("-server_script does not recognize a language named '%s'. virtual machine did NOT start.\n", pszScriptLanguage );
+				CGWarning( 1, CON_GROUP_VSCRIPT, "-server_script does not recognize a language named '%s'. virtual machine did NOT start.\n", pszScriptLanguage );
 				scriptLanguage = SL_NONE;
 			}
 
@@ -835,7 +845,7 @@ bool VScriptServerInit()
 			if( g_pScriptVM )
 			{
 #ifdef MAPBASE_VSCRIPT
-				Log( "VSCRIPT SERVER: Started VScript virtual machine using script language '%s'\n", g_pScriptVM->GetLanguageName() );
+				CGMsg( 0, CON_GROUP_VSCRIPT, "VSCRIPT SERVER: Started VScript virtual machine using script language '%s'\n", g_pScriptVM->GetLanguageName() );
 #else
 				Log( "VSCRIPT: Started VScript virtual machine using script language '%s'\n", g_pScriptVM->GetLanguageName() );
 #endif
@@ -867,6 +877,7 @@ bool VScriptServerInit()
 
 				ScriptRegisterFunction( g_pScriptVM, CancelEntityIOEvent, "Remove entity I/O event." );
 				ScriptRegisterFunction( g_pScriptVM, GetEntityIOEventTimeLeft, "Get time left on entity I/O event." );
+				ScriptRegisterFunction( g_pScriptVM, ScriptGetClientConvarValue, SCRIPT_HIDE );
 #else
 				ScriptRegisterFunction( g_pScriptVM, DoEntFire, SCRIPT_ALIAS( "EntFire", "Generate and entity i/o event" ) );
 				ScriptRegisterFunctionNamed( g_pScriptVM, DoEntFireByInstanceHandle, "EntFireByHandle", "Generate and entity i/o event. First parameter is an entity instance." );
@@ -920,13 +931,13 @@ bool VScriptServerInit()
 			}
 			else
 			{
-				DevWarning("VM Did not start!\n");
+				CGWarning( 1, CON_GROUP_VSCRIPT, "VM Did not start!\n" );
 			}
 		}
 	}
 	else
 	{
-		Log( "\nVSCRIPT: Scripting is disabled.\n" );
+		CGMsg( 0, CON_GROUP_VSCRIPT, "\nVSCRIPT: Scripting is disabled.\n" );
 	}
 	g_pScriptVM = NULL;
 	return false;
@@ -971,13 +982,13 @@ CON_COMMAND( script_reload_code, "Execute a vscript file, replacing existing fun
 {
 	if ( !*args[1] )
 	{
-		Warning( "No script specified\n" );
+		CGWarning( 0, CON_GROUP_VSCRIPT, "No script specified\n" );
 		return;
 	}
 
 	if ( !g_pScriptVM )
 	{
-		Warning( "Scripting disabled or no server running\n" );
+		CGWarning( 0, CON_GROUP_VSCRIPT, "Scripting disabled or no server running\n" );
 		return;
 	}
 
@@ -996,7 +1007,7 @@ CON_COMMAND( script_reload_entity_code, "Execute all of this entity's VScripts, 
 
 	if ( !g_pScriptVM )
 	{
-		Warning( "Scripting disabled or no server running\n" );
+		CGWarning( 0, CON_GROUP_VSCRIPT, "Scripting disabled or no server running\n" );
 		return;
 	}
 
@@ -1034,7 +1045,7 @@ CON_COMMAND( script_reload_think, "Execute an activation script, replacing exist
 
 	if ( !g_pScriptVM )
 	{
-		Warning( "Scripting disabled or no server running\n" );
+		CGWarning( 0, CON_GROUP_VSCRIPT, "Scripting disabled or no server running\n" );
 		return;
 	}
 
