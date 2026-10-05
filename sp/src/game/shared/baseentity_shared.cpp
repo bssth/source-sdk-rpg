@@ -1571,21 +1571,21 @@ typedef CTraceFilterSimpleList CBulletsTraceFilter;
 void CBaseEntity::FireBullets( const FireBulletsInfo_t &info )
 {
 #if defined(MAPBASE_VSCRIPT) && defined(GAME_DLL)
-	if (HSCRIPT hFunc = LookupScriptFunction("FireBullets"))
+	// NOTE (port): our vscript.lib's ScriptHook_t::Call() relies on CanRunInScope() having
+	// looked the function up first (as later Mapbase does here).
+	if (m_ScriptScope.IsInitialized() && g_Hook_FireBullets.CanRunInScope( m_ScriptScope ))
 	{
 		HSCRIPT hInfo = g_pScriptVM->RegisterInstance( const_cast<FireBulletsInfo_t*>(&info) );
 
-		g_pScriptVM->SetValue( "info", hInfo );
-
 		ScriptVariant_t functionReturn;
-		CallScriptFunctionHandle( hFunc, &functionReturn );
+		ScriptVariant_t args[] = { hInfo };
+		if (g_Hook_FireBullets.Call( m_ScriptScope, &functionReturn, args ))
+		{
+			if (!functionReturn.m_bool)
+				return;
+		}
 
 		g_pScriptVM->RemoveInstance( hInfo );
-
-		g_pScriptVM->ClearValue( "info" );
-
-		if (!functionReturn.m_bool)
-			return;
 	}
 #endif
 

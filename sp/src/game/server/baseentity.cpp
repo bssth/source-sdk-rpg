@@ -610,6 +610,18 @@ CBaseEntity *CBaseEntity::GetFollowedEntity()
 	return GetMoveParent();
 }
 
+#ifdef MAPBASE_VSCRIPT
+void CBaseEntity::ScriptFollowEntity( HSCRIPT hBaseEntity, bool bBoneMerge )
+{
+	FollowEntity( ToEnt( hBaseEntity ), bBoneMerge );
+}
+
+HSCRIPT CBaseEntity::ScriptGetFollowedEntity()
+{
+	return ToHScript( GetFollowedEntity() );
+}
+#endif
+
 void CBaseEntity::SetClassname( const char *className )
 {
 	m_iClassname = AllocPooledString( className );
@@ -1607,6 +1619,25 @@ int CBaseEntity::VPhysicsTakeDamage( const CTakeDamageInfo &info )
 	// Character killed (only fired once)
 void CBaseEntity::Event_Killed( const CTakeDamageInfo &info )
 {
+#ifdef MAPBASE_VSCRIPT
+	if (m_ScriptScope.IsInitialized() && g_Hook_OnDeath.CanRunInScope( m_ScriptScope ))
+	{
+		HSCRIPT hInfo = g_pScriptVM->RegisterInstance( const_cast<CTakeDamageInfo*>(&info) );
+
+		// info
+		ScriptVariant_t functionReturn;
+		ScriptVariant_t args[] = { ScriptVariant_t( hInfo ) };
+		if ( g_Hook_OnDeath.Call( m_ScriptScope, &functionReturn, args ) && (functionReturn.m_type == FIELD_BOOLEAN && functionReturn.m_bool == false) )
+		{
+			// Make this entity cheat death
+			g_pScriptVM->RemoveInstance( hInfo );
+			return;
+		}
+
+		g_pScriptVM->RemoveInstance( hInfo );
+	}
+#endif
+
 	if( info.GetAttacker() )
 	{
 		info.GetAttacker()->Event_KilledOther(this, info);
@@ -2138,10 +2169,9 @@ void CBaseEntity::UpdateOnRemove( void )
 	if ( m_hScriptInstance )
 	{
 #ifdef MAPBASE_VSCRIPT
-		HSCRIPT hFunc = LookupScriptFunction("UpdateOnRemove");
-		if ( hFunc )
+		if (m_ScriptScope.IsInitialized() && g_Hook_UpdateOnRemove.CanRunInScope( m_ScriptScope ))
 		{
-			CallScriptFunctionHandle( hFunc, NULL );
+			g_Hook_UpdateOnRemove.Call( m_ScriptScope, NULL, NULL );
 		}
 #endif
 		g_pScriptVM->RemoveInstance( m_hScriptInstance );
@@ -2744,26 +2774,17 @@ void CBaseEntity::VPhysicsCollision( int index, gamevcollisionevent_t *pEvent )
 	CBaseEntity *pHitEntity = pEvent->pEntities[otherIndex];
 
 #ifdef MAPBASE_VSCRIPT
-	if (HSCRIPT hFunc = LookupScriptFunction("VPhysicsCollision"))
+	if (m_ScriptScope.IsInitialized() && g_Hook_VPhysicsCollision.CanRunInScope(m_ScriptScope))
 	{
-		// TODO: Unique class for collision events
-		g_pScriptVM->SetValue( "entity", ScriptVariant_t( pHitEntity->GetScriptInstance() ) );
-		g_pScriptVM->SetValue( "speed", pEvent->collisionSpeed );
-
 		Vector vecContactPoint;
 		pEvent->pInternalData->GetContactPoint( vecContactPoint );
-		g_pScriptVM->SetValue( "point", vecContactPoint );
 
 		Vector vecSurfaceNormal;
 		pEvent->pInternalData->GetSurfaceNormal( vecSurfaceNormal );
-		g_pScriptVM->SetValue( "normal", vecSurfaceNormal );
 
-		CallScriptFunctionHandle( hFunc, NULL );
-
-		g_pScriptVM->ClearValue( "entity" );
-		g_pScriptVM->ClearValue( "speed" );
-		g_pScriptVM->ClearValue( "point" );
-		g_pScriptVM->ClearValue( "normal" );
+		// entity, speed, point, normal
+		ScriptVariant_t args[] = { ScriptVariant_t( pHitEntity->GetScriptInstance() ), pEvent->collisionSpeed, vecContactPoint, vecSurfaceNormal };
+		g_Hook_VPhysicsCollision.Call( m_ScriptScope, NULL, args );
 	}
 #endif
 

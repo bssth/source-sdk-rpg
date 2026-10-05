@@ -544,6 +544,11 @@ public:
 	bool IsFollowingEntity();
 	CBaseEntity *GetFollowedEntity();
 
+#ifdef MAPBASE_VSCRIPT
+	void ScriptFollowEntity( HSCRIPT hBaseEntity, bool bBoneMerge );
+	HSCRIPT ScriptGetFollowedEntity();
+#endif
+
 	// initialization
 	virtual void Spawn( void );
 	virtual void Precache( void ) {}
@@ -1966,6 +1971,9 @@ public:
 #endif
 
 	const char* ScriptGetModelName(void) const;
+#ifdef MAPBASE_VSCRIPT
+	HSCRIPT_RC ScriptGetModelKeyValues(void);
+#endif
 
 	void ScriptEmitSound(const char* soundname);
 	float ScriptSoundDuration(const char* soundname, const char* actormodel);
@@ -2011,6 +2019,11 @@ public:
 
 	int ScriptGetMoveType() { return GetMoveType(); }
 	void ScriptSetMoveType( int iMoveType ) { SetMoveType( (MoveType_t)iMoveType ); }
+
+	static ScriptHook_t	g_Hook_UpdateOnRemove;
+	static ScriptHook_t	g_Hook_VPhysicsCollision;
+	static ScriptHook_t	g_Hook_FireBullets;
+	static ScriptHook_t	g_Hook_OnDeath;
 #endif
 
 	string_t		m_iszVScripts;

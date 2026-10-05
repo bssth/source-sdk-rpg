@@ -356,11 +356,15 @@ public:
 	HSCRIPT				GetScriptWeaponIndex( int i );
 	HSCRIPT				GetScriptWeaponByType( const char *pszWeapon, int iSubType = 0 );
 	void				GetScriptAllWeapons( HSCRIPT hTable );
+	int					ScriptGetCurrentWeaponProficiency() { return GetCurrentWeaponProficiency(); }
 
 	void				ScriptEquipWeapon( HSCRIPT hWeapon );
 
 	int					ScriptGetAmmoCount( int iType ) const;
 	void				ScriptSetAmmoCount( int iType, int iCount );
+
+	const Vector&		ScriptGetAttackSpread( HSCRIPT hWeapon, HSCRIPT hTarget );
+	float				ScriptGetSpreadBias( HSCRIPT hWeapon, HSCRIPT hTarget );
 
 	int					ScriptRelationType( HSCRIPT pTarget );
 	int					ScriptRelationPriority( HSCRIPT pTarget );
