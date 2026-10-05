@@ -554,7 +554,9 @@ intptr_t CScriptGameEventListener::ListenToGameEvent( const char* szEvent, HSCRI
 	if ( bValid )
 	{
 		m_iContextHash = HashContext( szContext );
-		m_hCallback = hFunc;
+		// NOTE (port): final Mapbase form; our final vscript.lib only lends HSCRIPT parameters
+		// for the duration of the call, so the callback has to be copied to be kept.
+		m_hCallback = g_pScriptVM->CopyObject( hFunc );
 		m_bActive = true;
 
 		s_GameEventListeners.AddToTail( this );

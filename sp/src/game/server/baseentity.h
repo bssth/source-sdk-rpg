@@ -331,10 +331,10 @@ struct thinkfunc_t
 #ifdef MAPBASE_VSCRIPT
 struct scriptthinkfunc_t
 {
-	HSCRIPT			m_hfnThink;
-	unsigned short	m_iContextHash;
-	int				m_nNextThinkTick;
-	bool			m_bNoParam;
+	float		m_flNextThink;
+	HSCRIPT		m_hfnThink;
+	unsigned	m_iContextHash;
+	bool		m_bNoParam;
 };
 #endif
 
@@ -1928,7 +1928,7 @@ public:
 	void ScriptStopThink();
 	void ScriptContextThink();
 private:
-	CUtlVector< scriptthinkfunc_t > m_ScriptThinkFuncs;
+	CUtlVector< scriptthinkfunc_t* > m_ScriptThinkFuncs;
 public:
 #endif
 	const char* GetScriptId();
