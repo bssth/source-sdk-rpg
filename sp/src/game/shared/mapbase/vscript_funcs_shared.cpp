@@ -26,6 +26,7 @@
 
 #include "con_nprint.h"
 #include "particle_parse.h"
+#include "npcevent.h"
 
 #include "vscript_funcs_shared.h"
 #include "vscript_singletons.h"
@@ -503,6 +504,64 @@ static void DestroyFireBulletsInfo( HSCRIPT hBulletsInfo )
 FireBulletsInfo_t *GetFireBulletsInfoFromInfo( HSCRIPT hBulletsInfo )
 {
 	return HScriptToClass<FireBulletsInfo_t>( hBulletsInfo );
+}
+
+//-----------------------------------------------------------------------------
+//
+//-----------------------------------------------------------------------------
+CAnimEventTInstanceHelper g_AnimEventTInstanceHelper;
+
+// NOTE (port): *_WITH_HELPER form, as for cplane_t above.
+BEGIN_SCRIPTDESC_ROOT_WITH_HELPER( animevent_t, "Handle for accessing animevent_t info.", &g_AnimEventTInstanceHelper )
+END_SCRIPTDESC();
+
+bool CAnimEventTInstanceHelper::Get( void *p, const char *pszKey, ScriptVariant_t &variant )
+{
+	animevent_t *ani = ((animevent_t *)p);
+	if (FStrEq( pszKey, "event" ))
+		variant = ani->event;
+	else if (FStrEq( pszKey, "options" ))
+		variant = ani->options;
+	else if (FStrEq( pszKey, "cycle" ))
+		variant = ani->cycle;
+	else if (FStrEq( pszKey, "eventtime" ))
+		variant = ani->eventtime;
+	else if (FStrEq( pszKey, "type" ))
+		variant = ani->type;
+	else if (FStrEq( pszKey, "source" ))
+		variant = ToHScript(ani->pSource);
+	else
+		return false;
+
+	return true;
+}
+
+bool CAnimEventTInstanceHelper::Set( void *p, const char *pszKey, ScriptVariant_t &variant )
+{
+	animevent_t *ani = ((animevent_t *)p);
+	if (FStrEq( pszKey, "event" ))
+		ani->event = variant;
+	else if (FStrEq( pszKey, "options" ))
+		// NOTE (port): pooled copy; a script string only lives as long as the VM keeps it, but
+		// HandleAnimEvent() reads options after the hook returns. (Final Mapbase copies it into
+		// scriptanimevent_t, 256cdfb7/7d78384b.)
+		ani->options = STRING( AllocPooledString( variant ) );
+	else if (FStrEq( pszKey, "cycle" ))
+		ani->cycle = variant;
+	else if (FStrEq( pszKey, "eventtime" ))
+		ani->eventtime = variant;
+	else if (FStrEq( pszKey, "type" ))
+		ani->type = variant;
+	else if (FStrEq( pszKey, "source" ))
+	{
+		CBaseEntity *pEnt = ToEnt( variant.m_hScript );
+		if (pEnt)
+			ani->pSource = pEnt->GetBaseAnimating();
+	}
+	else
+		return false;
+
+	return true;
 }
 
 //-----------------------------------------------------------------------------
