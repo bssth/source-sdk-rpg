@@ -1727,9 +1727,11 @@ public:
 	}
 
 	CScriptConCommand( const char *name, HSCRIPT fn, const char *helpString, int flags ) :
-		m_hCompletionCallback(NULL)
+		m_hCompletionCallback(NULL),
+		m_Name( name ),
+		m_HelpString( helpString )
 	{
-		m_cmd = new ConCommand( name, this, helpString, flags, 0 );
+		m_cmd = new ConCommand( m_Name.Get(), this, m_HelpString.Get(), flags, 0 );
 		// NOTE (port): CopyObject as in final Mapbase; our final vscript.lib only lends HSCRIPT parameters for the call.
 		m_hCallback = g_pScriptVM->CopyObject( fn );
 		m_nCmdNameLen = V_strlen(name) + 1;
@@ -1862,6 +1864,14 @@ public:
 	HSCRIPT m_hCompletionCallback;
 	int m_nCmdNameLen;
 	ConCommand *m_cmd;
+
+	// NOTE (port): ConCommandBase/ConVar keep the name, help and default value pointers as-is
+	// (tier1 never copies them), and script string parameters only live as long as the
+	// VM string does, so registering from a one-off `script` command left a dangling name
+	// and the command could not be found. Final Mapbase has the same latent issue; keep
+	// owned copies here.
+	CUtlString m_Name;
+	CUtlString m_HelpString;
 };
 
 class CScriptConVar
@@ -1873,9 +1883,12 @@ public:
 		delete m_cvar;
 	}
 
-	CScriptConVar( const char *pName, const char *pDefaultValue, const char *pHelpString, int flags/*, float fMin, float fMax*/ )
+	CScriptConVar( const char *pName, const char *pDefaultValue, const char *pHelpString, int flags/*, float fMin, float fMax*/ ) :
+		m_Name( pName ),
+		m_DefaultValue( pDefaultValue ),
+		m_HelpString( pHelpString )
 	{
-		m_cvar = new ConVar( pName, pDefaultValue, flags, pHelpString );
+		m_cvar = new ConVar( m_Name.Get(), m_DefaultValue.Get(), flags, m_HelpString.Get() );
 	}
 
 	inline void Unregister()
@@ -1885,6 +1898,11 @@ public:
 	}
 
 	ConVar *m_cvar;
+
+	// NOTE (port): owned copies, see CScriptConCommand.
+	CUtlString m_Name;
+	CUtlString m_DefaultValue;
+	CUtlString m_HelpString;
 };
 
 class CScriptConvarAccessor : public CAutoGameSystem
