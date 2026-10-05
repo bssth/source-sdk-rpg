@@ -32,8 +32,7 @@ extern CBaseEntityScriptInstanceHelper g_BaseEntityScriptInstanceHelper;
 // Only allow scripts to create entities during map initialization
 bool IsEntityCreationAllowedInScripts( void );
 
-// NOTE (port): CScriptKeyValues lives in the vscript library (vscript_bindings_base.h)
-// in the final Mapbase. The richer refcounted version + GetModelKeyValues hookup is
-// wired up by a later commit; deferred here.
+// NOTE (port): CScriptKeyValues lives in the prebuilt vscript library (as in Mapbase
+// eb014cce); game code makes handles with scriptmanager->CreateScriptKeyValues().
 
 #endif // VSCRIPT_SERVER_H
