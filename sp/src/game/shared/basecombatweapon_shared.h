@@ -404,6 +404,45 @@ public:
 	void				ScriptSetClip2( int ammo ) { m_iClip2 = ammo; }
 #endif
 
+#if defined( MAPBASE_VSCRIPT ) && !defined( CLIENT_DLL ) // NOTE (port): server-only until client VScript is ported
+	HSCRIPT				ScriptGetOwner();
+	void				ScriptSetOwner( HSCRIPT owner );
+
+#ifdef MAPBASE // NOTE (port): weapon classify is Mapbase-only
+	int					ScriptWeaponClassify() { return WeaponClassify(); }
+#endif
+	void				ScriptWeaponSound( int sound_type, float soundtime = 0.0f ) { WeaponSound( (WeaponSound_t)sound_type, soundtime ); }
+
+	const Vector&		ScriptGetBulletSpread( void ) { return GetBulletSpread(); }
+	Vector				ScriptGetBulletSpreadForProficiency( int proficiency ) { return GetBulletSpread( (WeaponProficiency_t)proficiency ); }
+
+	int					ScriptGetPrimaryAttackActivity( void ) { return GetPrimaryAttackActivity(); }
+	int					ScriptGetSecondaryAttackActivity( void ) { return GetSecondaryAttackActivity(); }
+	int					ScriptGetDrawActivity( void ) { return GetDrawActivity(); }
+
+	bool				FiresUnderwater() { return m_bFiresUnderwater; }
+	void				SetFiresUnderwater( bool bVal ) { m_bFiresUnderwater = bVal; }
+	bool				AltFiresUnderwater() { return m_bAltFiresUnderwater; }
+	void				SetAltFiresUnderwater( bool bVal ) { m_bAltFiresUnderwater = bVal; }
+	float				MinRange1() { return m_fMinRange1; }
+	void				SetMinRange1( float flVal ) { m_fMinRange1 = flVal; }
+	float				MinRange2() { return m_fMinRange2; }
+	void				SetMinRange2( float flVal ) { m_fMinRange2 = flVal; }
+	float				MaxRange1() { return m_fMaxRange1; }
+	void				SetMaxRange1( float flVal ) { m_fMaxRange1 = flVal; }
+	float				MaxRange2() { return m_fMaxRange2; }
+	void				SetMaxRange2( float flVal ) { m_fMaxRange2 = flVal; }
+	//bool				ReloadsSingly() { return m_bReloadsSingly; }
+	void				SetReloadsSingly( bool bVal ) { m_bReloadsSingly = bVal; }
+	float				FireDuration() { return m_fFireDuration; }
+	void				SetFireDuration( float flVal ) { m_fFireDuration = flVal; }
+
+	float				NextPrimaryAttack() { return m_flNextPrimaryAttack; }
+	void				SetNextPrimaryAttack( float flVal ) { m_flNextPrimaryAttack = flVal; }
+	float				NextSecondaryAttack() { return m_flNextSecondaryAttack; }
+	void				SetNextSecondaryAttack( float flVal ) { m_flNextSecondaryAttack = flVal; }
+#endif
+
 public:
 // Server Only Methods
 #if !defined( CLIENT_DLL )
