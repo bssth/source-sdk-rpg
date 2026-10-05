@@ -31,7 +31,7 @@ BEGIN_SIMPLE_DATADESC( CTakeDamageInfo )
 	DEFINE_FIELD( m_iDamagedOtherPlayers, FIELD_INTEGER),
 END_DATADESC()
 
-#ifdef MAPBASE_VSCRIPT
+#if defined( MAPBASE_VSCRIPT ) && !defined( CLIENT_DLL ) // NOTE (port): server-only until client VScript is ported
 BEGIN_SCRIPTDESC_ROOT( CTakeDamageInfo, "Damage information handler." )
 	DEFINE_SCRIPTFUNC_NAMED( ScriptGetInflictor, "GetInflictor", "Gets the inflictor." )
 	DEFINE_SCRIPTFUNC_NAMED( ScriptSetInflictor, "SetInflictor", "Sets the inflictor." )
@@ -220,7 +220,7 @@ const char *CTakeDamageInfo::GetAmmoName() const
 	return pszAmmoType;
 }
 
-#ifdef MAPBASE_VSCRIPT
+#if defined( MAPBASE_VSCRIPT ) && !defined( CLIENT_DLL ) // NOTE (port): server-only until client VScript is ported
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 HSCRIPT CTakeDamageInfo::ScriptGetInflictor() const

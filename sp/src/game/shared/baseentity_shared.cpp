@@ -38,7 +38,7 @@
 #include "tf_weaponbase.h"
 #endif // TF_DLL
 
-#ifdef MAPBASE_VSCRIPT
+#if defined(MAPBASE_VSCRIPT) && defined(GAME_DLL)
 #include "mapbase/vscript_funcs_shared.h"
 #endif
 

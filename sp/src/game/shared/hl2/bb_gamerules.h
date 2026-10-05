@@ -41,7 +41,7 @@ public:
 	virtual bool			ShouldCollide( int collisionGroup0, int collisionGroup1 );
 	virtual bool			ShouldUseRobustRadiusDamage(CBaseEntity *pEntity);
 
-#ifdef MAPBASE_VSCRIPT
+#if defined( MAPBASE_VSCRIPT ) && !defined( CLIENT_DLL ) // NOTE (port): defined in vscript_funcs_hl2.cpp, which only the server compiles for now
 	virtual void			RegisterScriptFunctions( void );
 #endif
 
