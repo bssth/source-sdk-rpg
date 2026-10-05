@@ -2038,6 +2038,10 @@ public:
 	int ScriptGetMoveType() { return GetMoveType(); }
 	void ScriptSetMoveType( int iMoveType ) { SetMoveType( (MoveType_t)iMoveType ); }
 
+	// NOTE (port): 6ed8b310 binds these but upstream only declared them in d7a06e86.
+	int ScriptGetSolid() { return GetSolid(); }
+	void ScriptSetSolid( int i ) { SetSolid( (SolidType_t)i ); }
+
 	int ScriptGetTakeDamage() { return m_takedamage; }
 	void ScriptSetTakeDamage( int val ) { m_takedamage = val; }
 
