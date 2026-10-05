@@ -268,6 +268,9 @@ BEGIN_ENT_SCRIPTDESC( CBaseAnimating, CBaseEntity, "Animating models" )
 	DEFINE_SCRIPTFUNC( LookupAttachment, "Get the named attachement id"  )
 	DEFINE_SCRIPTFUNC_NAMED( ScriptGetAttachmentOrigin, "GetAttachmentOrigin", "Get the attachement id's origin vector"  )
 	DEFINE_SCRIPTFUNC_NAMED( ScriptGetAttachmentAngles, "GetAttachmentAngles", "Get the attachement id's angles as a p,y,r vector"  )
+#ifdef MAPBASE_VSCRIPT
+	DEFINE_SCRIPTFUNC_NAMED( ScriptGetAttachmentMatrix, "GetAttachmentMatrix", "Get the attachement id's matrix transform" )
+#endif
 	DEFINE_SCRIPTFUNC( IsSequenceFinished, "Ask whether the main sequence is done playing" )
 	DEFINE_SCRIPTFUNC( SetBodygroup, "Sets a bodygroup")
 END_SCRIPTDESC();
@@ -2042,6 +2045,18 @@ const Vector& CBaseAnimating::ScriptGetAttachmentAngles( int iAttachment )
 	absAngles.z = qa.z;
 	return absAngles;
 }
+
+#ifdef MAPBASE_VSCRIPT
+// NOTE (port): 66a44d07 used ScriptCreateMatrixInstance() here; matrix3x4_t is registered by
+// our prebuilt vscript.lib, so the instance is registered directly (as later Mapbase does).
+HSCRIPT CBaseAnimating::ScriptGetAttachmentMatrix( int iAttachment )
+{
+	static matrix3x4_t matrix;
+
+	CBaseAnimating::GetAttachment( iAttachment, matrix );
+	return g_pScriptVM->RegisterInstance( &matrix );
+}
+#endif
 
 bool CBaseAnimating::GetAttachment( int iAttachment, Vector &absOrigin, Vector *forward, Vector *right, Vector *up )
 {
