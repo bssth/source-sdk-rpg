@@ -195,6 +195,10 @@ BEGIN_ENT_SCRIPTDESC_ROOT_WITH_HELPER( CBaseEntity, "Root class of all server-si
 	DEFINE_SCRIPTFUNC( SetEffects, "Set effect(s)" )
 	DEFINE_SCRIPTFUNC( IsEffectActive, "Check if an effect is active" )
 
+	DEFINE_SCRIPTFUNC( GetFlags, "Get flags" )
+	DEFINE_SCRIPTFUNC( AddFlag, "Add flag" )
+	DEFINE_SCRIPTFUNC( RemoveFlag, "Remove flag" )
+
 	DEFINE_SCRIPTFUNC( GetEFlags, "Get Eflags" )
 	DEFINE_SCRIPTFUNC( AddEFlags, "Add Eflags" )
 	DEFINE_SCRIPTFUNC( RemoveEFlags, "Remove Eflags" )
@@ -760,6 +764,13 @@ void CBaseEntity::RunVScripts()
 		return;
 	}
 
+#ifdef MAPBASE_VSCRIPT
+	if (g_pScriptVM == NULL)
+	{
+		return;
+	}
+#endif
+
 	ValidateScriptScope();
 
 	// All functions we want to have call chained instead of overwritten
@@ -835,6 +846,13 @@ void CBaseEntity::RunPrecacheScripts(void)
 		return;
 	}
 
+#ifdef MAPBASE_VSCRIPT
+	if (g_pScriptVM == NULL)
+	{
+		return;
+	}
+#endif
+
 	HSCRIPT hScriptPrecache = m_ScriptScope.LookupFunction("DispatchPrecache");
 	if (hScriptPrecache)
 	{
@@ -849,6 +867,13 @@ void CBaseEntity::RunOnPostSpawnScripts(void)
 	{
 		return;
 	}
+
+#ifdef MAPBASE_VSCRIPT
+	if (g_pScriptVM == NULL)
+	{
+		return;
+	}
+#endif
 
 	HSCRIPT hFuncConnect = g_pScriptVM->LookupFunction("ConnectOutputs");
 	if (hFuncConnect)

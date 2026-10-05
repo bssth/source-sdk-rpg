@@ -452,7 +452,7 @@ bool CWorld::KeyValue( const char *szKeyName, const char *szValue )
 
 
 extern bool		g_fGameOver;
-static CWorld *g_WorldEntity = NULL;
+CWorld *g_WorldEntity = NULL;
 
 CWorld* GetWorldEntity()
 {

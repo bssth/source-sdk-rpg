@@ -60,7 +60,7 @@ public:
 	virtual void ModifyOrAppendCriteria( AI_CriteriaSet& set );
 	void SetSourceClassName( const char *pClassname );
 #ifdef MAPBASE_VSCRIPT // NOTE (port): Mapbase has this under MAPBASE; the script desc needs it
-	const char *GetSourceClassName() { return STRING( m_strSourceClassName ); }
+	const char *GetSourceClassNameAsCStr() { return STRING( m_strSourceClassName ); }
 #endif
 
 	// Physics attacker
