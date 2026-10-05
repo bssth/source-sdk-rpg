@@ -368,7 +368,7 @@ private:
 	//int m_nEventTick;
 
 	static StringHashFunctor Hash;
-	static inline unsigned int HashContext( const char* c ) { return (c && *c) ? Hash(c) : 0; }
+	static inline unsigned int HashContext( const char* c ) { return c ? Hash(c) : 0; }
 
 	inline int GetIndex()
 	{
@@ -541,11 +541,10 @@ void CScriptGameEventListener::LoadEventsFromFile( const char *filename, const c
 void CScriptGameEventListener::DumpEventListeners()
 {
 	CGMsg( 0, CON_GROUP_VSCRIPT, "--- Script game event listener dump start\n" );
-	CGMsg( 0, CON_GROUP_VSCRIPT, "#    ADDRESS      ID         CONTEXT\n" );
+	CGMsg( 0, CON_GROUP_VSCRIPT, "#    ID         CONTEXT\n" );
 	FOR_EACH_VEC( s_Listeners, i )
 	{
-		CGMsg( 0, CON_GROUP_VSCRIPT, " %d   (0x%p) %d : %u\n", i,
-										(void*)s_Listeners[i],
+		CGMsg( 0, CON_GROUP_VSCRIPT, " %d : %d : %u\n", i,
 										s_Listeners[i]->GetIndex(),
 										s_Listeners[i]->m_iContextHash );
 	}
@@ -723,14 +722,12 @@ bool CScriptGameEventListener::StopListeningToGameEvent( int listener )
 void CScriptGameEventListener::StopListeningToAllGameEvents( const char* szContext )
 {
 	unsigned int hash = HashContext( szContext );
-
-	// Iterate from the end so they can be safely removed as they are deleted
 	for ( int i = s_Listeners.Count(); i--; )
 	{
 		CScriptGameEventListener *pCur = s_Listeners[i];
 		if ( pCur->m_iContextHash == hash )
 		{
-			s_Listeners.Remove(i); // keep list order
+			s_Listeners.FastRemove(i);
 			delete pCur;
 		}
 	}
@@ -1170,10 +1167,7 @@ HSCRIPT CScriptReadWriteFile::KeyValuesRead( const char *szFile )
 
 	return hScript;
 }
-#undef SCRIPT_MAX_FILE_READ_SIZE
-#undef SCRIPT_MAX_FILE_WRITE_SIZE
-#undef SCRIPT_RW_PATH_ID
-#undef SCRIPT_RW_FULL_PATH_FMT
+
 
 //=============================================================================
 // User Message Helper
@@ -1734,26 +1728,43 @@ END_SCRIPTDESC();
 //=============================================================================
 // ConVars
 //=============================================================================
-class CScriptConCommand : public ICommandCallback, public ICommandCompletionCallback
+//-----------------------------------------------------------------------------
+// NOTE (port): ConCommandBase/ConVar keep the name, help and default value pointers as-is
+// (tier1 never copies them), and script string parameters only live as long as the
+// VM string does, so registering from a one-off `script` command left a dangling name
+// and the command could not be found. Final Mapbase has the same latent issue; keep
+// owned copies here.
+// The strings live in a base class listed before ConCommand/ConVar, so they are
+// built before those base constructors store the pointers and destroyed after.
+//-----------------------------------------------------------------------------
+struct CScriptConStrings
 {
+	CScriptConStrings( const char *pszName, const char *pszHelpString, const char *pszDefaultValue = NULL ) :
+		m_Name( pszName ), m_HelpString( pszHelpString ), m_DefaultValue( pszDefaultValue ) {}
+
+	CUtlString m_Name;
+	CUtlString m_HelpString;
+	CUtlString m_DefaultValue;
+};
+
+class CScriptConCommand : private CScriptConStrings, public ConCommand, public ICommandCallback, public ICommandCompletionCallback
+{
+	typedef ConCommand BaseClass;
+
 public:
 	~CScriptConCommand()
 	{
 		Unregister();
-		delete m_pBase;
 	}
 
-	CScriptConCommand( const char *name, HSCRIPT fn, const char *helpString, int flags, ConCommand *pLinked = NULL ) :
-		m_Name( name ),
-		m_HelpString( helpString )
+	CScriptConCommand( const char *name, HSCRIPT fn, const char *helpString, int flags, ConCommand *pLinked = NULL )
+		: CScriptConStrings( name, helpString ),
+		BaseClass( CScriptConStrings::m_Name.Get(), this, CScriptConStrings::m_HelpString.Get(), flags, 0 ),
+		m_pLinked(pLinked),
+		m_hCallback( g_pScriptVM->CopyObject( fn ) ), // NOTE (port): CopyObject as in final Mapbase; our final vscript.lib only lends HSCRIPT parameters for the call.
+		m_hCompletionCallback(NULL)
 	{
-		m_pBase = new ConCommand( m_Name.Get(), this, m_HelpString.Get(), flags, 0 );
-		m_pLinked = pLinked;
-		// NOTE (port): CopyObject as in final Mapbase; our final vscript.lib only lends HSCRIPT parameters for the call.
-		m_hCallback = g_pScriptVM->CopyObject( fn );
-		m_hCompletionCallback = NULL;
 		m_nCmdNameLen = V_strlen(name) + 1;
-
 		Assert( m_nCmdNameLen - 1 <= 128 );
 	}
 
@@ -1828,18 +1839,18 @@ public:
 
 		if (fn)
 		{
-			if ( !m_pBase->IsRegistered() )
+			if ( !BaseClass::IsRegistered() )
 				return;
 
-			m_pBase->m_pCommandCompletionCallback = this;
-			m_pBase->m_bHasCompletionCallback = true;
+			BaseClass::m_pCommandCompletionCallback = this;
+			BaseClass::m_bHasCompletionCallback = true;
 			// NOTE (port): CopyObject as in final Mapbase; our final vscript.lib only lends HSCRIPT parameters for the call.
 			m_hCompletionCallback = g_pScriptVM->CopyObject( fn );
 		}
 		else
 		{
-			m_pBase->m_pCommandCompletionCallback = NULL;
-			m_pBase->m_bHasCompletionCallback = false;
+			BaseClass::m_pCommandCompletionCallback = NULL;
+			BaseClass::m_bHasCompletionCallback = false;
 			m_hCompletionCallback = NULL;
 		}
 	}
@@ -1848,7 +1859,7 @@ public:
 	{
 		if (fn)
 		{
-			if ( !m_pBase->IsRegistered() )
+			if ( !BaseClass::IsRegistered() )
 				Register();
 
 			if ( m_hCallback )
@@ -1864,8 +1875,8 @@ public:
 
 	inline void Unregister()
 	{
-		if ( g_pCVar && m_pBase->IsRegistered() )
-			g_pCVar->UnregisterConCommand( m_pBase );
+		if ( g_pCVar && BaseClass::IsRegistered() )
+			g_pCVar->UnregisterConCommand( this );
 
 		if ( g_pScriptVM )
 		{
@@ -1882,41 +1893,30 @@ public:
 	inline void Register()
 	{
 		if ( g_pCVar )
-			g_pCVar->RegisterConCommand( m_pBase );
+			g_pCVar->RegisterConCommand( this );
 	}
 
 	HSCRIPT m_hCallback;
+	ConCommand *m_pLinked;
 	HSCRIPT m_hCompletionCallback;
 	int m_nCmdNameLen;
-	ConCommand *m_pLinked;
-	ConCommand *m_pBase;
-
-	// NOTE (port): ConCommandBase/ConVar keep the name, help and default value pointers as-is
-	// (tier1 never copies them), and script string parameters only live as long as the
-	// VM string does, so registering from a one-off `script` command left a dangling name
-	// and the command could not be found. Final Mapbase has the same latent issue; keep
-	// owned copies here.
-	CUtlString m_Name;
-	CUtlString m_HelpString;
 };
 
-class CScriptConVar
+class CScriptConVar : private CScriptConStrings, public ConVar
 {
+	typedef ConVar BaseClass;
+
 public:
 	~CScriptConVar()
 	{
 		Unregister();
-		delete m_pBase;
 	}
 
-	CScriptConVar( const char *pName, const char *pDefaultValue, const char *pHelpString, int flags/*, float fMin, float fMax*/ ) :
-		m_Name( pName ),
-		m_DefaultValue( pDefaultValue ),
-		m_HelpString( pHelpString )
-	{
-		m_pBase = new ConVar( m_Name.Get(), m_DefaultValue.Get(), flags, m_HelpString.Get() );
-		m_hCallback = NULL;
-	}
+	CScriptConVar( const char *pName, const char *pDefaultValue, const char *pHelpString, int flags/*, float fMin, float fMax*/ )
+		: CScriptConStrings( pName, pHelpString, pDefaultValue ),
+		BaseClass( CScriptConStrings::m_Name.Get(), CScriptConStrings::m_DefaultValue.Get(), flags, CScriptConStrings::m_HelpString.Get() ),
+		m_hCallback(NULL)
+	{}
 
 	void SetChangeCallback( HSCRIPT fn )
 	{
@@ -1929,19 +1929,19 @@ public:
 		{
 			// NOTE (port): CopyObject as in final Mapbase; our final vscript.lib only lends HSCRIPT parameters for the call.
 			m_hCallback = g_pScriptVM->CopyObject( fn );
-			m_pBase->InstallChangeCallback( (FnChangeCallback_t)ScriptConVarCallback );
+			BaseClass::InstallChangeCallback( (FnChangeCallback_t)ScriptConVarCallback );
 		}
 		else
 		{
 			m_hCallback = NULL;
-			m_pBase->InstallChangeCallback( NULL );
+			BaseClass::InstallChangeCallback( NULL );
 		}
 	}
 
 	inline void Unregister()
 	{
-		if ( g_pCVar && m_pBase->IsRegistered() )
-			g_pCVar->UnregisterConCommand( m_pBase );
+		if ( g_pCVar && BaseClass::IsRegistered() )
+			g_pCVar->UnregisterConCommand( this );
 
 		if ( g_pScriptVM )
 		{
@@ -1950,12 +1950,6 @@ public:
 	}
 
 	HSCRIPT m_hCallback;
-	ConVar *m_pBase;
-
-	// NOTE (port): owned copies, see CScriptConCommand.
-	CUtlString m_Name;
-	CUtlString m_DefaultValue;
-	CUtlString m_HelpString;
 };
 
 static CUtlMap< unsigned int, bool > g_ConVarsBlocked( DefLessFunc(unsigned int) );
@@ -2116,8 +2110,8 @@ void CScriptConvarAccessor::RegisterCommand( const char *name, HSCRIPT fn, const
 	int idx = g_ScriptConCommands.Find(hash);
 	if ( idx == g_ScriptConCommands.InvalidIndex() )
 	{
-		ConCommand *pLinked = NULL;
-		if ( g_pCVar->FindVar(name) || ( ((pLinked = g_pCVar->FindCommand(name)) != NULL) && !IsOverridable(hash) ) )
+		ConCommandBase *pBase = g_pCVar->FindCommandBase(name);
+		if ( pBase && ( !pBase->IsCommand() || !IsOverridable(hash) ) )
 		{
 			DevWarning( 1, "CScriptConvarAccessor::RegisterCommand unable to register blocked ConCommand: %s\n", name );
 			return;
@@ -2126,7 +2120,7 @@ void CScriptConvarAccessor::RegisterCommand( const char *name, HSCRIPT fn, const
 		if ( !fn )
 			return;
 
-		CScriptConCommand *p = new CScriptConCommand( name, fn, helpString, flags, pLinked );
+		CScriptConCommand *p = new CScriptConCommand( name, fn, helpString, flags, static_cast< ConCommand* >(pBase) );
 		g_ScriptConCommands.Insert( hash, p );
 	}
 	else
@@ -2164,7 +2158,7 @@ void CScriptConvarAccessor::RegisterConvar( const char *name, const char *pDefau
 	int idx = g_ScriptConVars.Find(hash);
 	if ( idx == g_ScriptConVars.InvalidIndex() )
 	{
-		if ( g_pCVar->FindVar(name) || g_pCVar->FindCommand(name) )
+		if ( g_pCVar->FindCommandBase(name) )
 		{
 			DevWarning( 1, "CScriptConvarAccessor::RegisterConvar unable to register blocked ConCommand: %s\n", name );
 			return;
@@ -2266,6 +2260,7 @@ bool CScriptConvarAccessor::Init()
 	AddOverridable( "invnext" );
 	AddOverridable( "invprev" );
 	AddOverridable( "phys_swap" );
+	AddOverridable( "slot0" );
 	AddOverridable( "slot1" );
 	AddOverridable( "slot2" );
 	AddOverridable( "slot3" );
