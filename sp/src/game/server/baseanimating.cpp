@@ -274,11 +274,36 @@ BEGIN_ENT_SCRIPTDESC( CBaseAnimating, CBaseEntity, "Animating models" )
 	DEFINE_SCRIPTFUNC_NAMED( ScriptSetPoseParameter, "SetPoseParameter", "Set the specified pose parameter to the specified value" )
 	DEFINE_SCRIPTFUNC( LookupBone, "Get the named bone id" )
 	DEFINE_SCRIPTFUNC_NAMED( ScriptGetBoneTransform, "GetBoneTransform", "Get the transform for the specified bone" )
-	DEFINE_SCRIPTFUNC( Dissolve, "" )
-	DEFINE_SCRIPTFUNC( Scorch, "Makes the entity darker from scorching" )
+	DEFINE_SCRIPTFUNC( GetPhysicsBone, "Get physics bone from bone index" )
+	DEFINE_SCRIPTFUNC( GetNumBones, "Get the number of bones" )
+	DEFINE_SCRIPTFUNC( GetSequence, "Gets the current sequence" )
+	DEFINE_SCRIPTFUNC( SetSequence, "Sets the current sequence" )
+	DEFINE_SCRIPTFUNC( SequenceLoops, "Loops the current sequence" )
+	DEFINE_SCRIPTFUNC( LookupSequence, "Gets the index of the specified sequence name" )
+	DEFINE_SCRIPTFUNC( LookupActivity, "Gets the ID of the specified activity name" )
+	DEFINE_SCRIPTFUNC_NAMED( HasMovement, "SequenceHasMovement", "Checks if the specified sequence has movement" )
+	DEFINE_SCRIPTFUNC( GetSequenceMoveYaw, "Gets the move yaw of the specified sequence" )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptGetSequenceMoveDist, "GetSequenceMoveDist", "Gets the move distance of the specified sequence" )
+	DEFINE_SCRIPTFUNC( GetSequenceName, "Gets the name of the specified sequence index" )
+	DEFINE_SCRIPTFUNC( GetSequenceActivityName, "Gets the activity name of the specified sequence index" )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptGetSequenceActivity, "GetSequenceActivity", "Gets the activity ID of the specified sequence index" )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptSelectWeightedSequence, "SelectWeightedSequence", "Selects a sequence for the specified activity ID" )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptSelectHeaviestSequence, "SelectHeaviestSequence", "Selects the sequence with the heaviest weight for the specified activity ID" )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptGetSequenceKeyValues, "GetSequenceKeyValues", "Get a KeyValue class instance on the specified sequence. WARNING: This uses the same KeyValue pointer as GetModelKeyValues!" )
 #endif
 	DEFINE_SCRIPTFUNC( IsSequenceFinished, "Ask whether the main sequence is done playing" )
 	DEFINE_SCRIPTFUNC( SetBodygroup, "Sets a bodygroup")
+#ifdef MAPBASE_VSCRIPT
+	DEFINE_SCRIPTFUNC( GetBodygroup, "Gets a bodygroup" )
+	DEFINE_SCRIPTFUNC( GetBodygroupName, "Gets a bodygroup name" )
+	DEFINE_SCRIPTFUNC( FindBodygroupByName, "Finds a bodygroup by name" )
+	DEFINE_SCRIPTFUNC( GetBodygroupCount, "Gets the number of models in a bodygroup" )
+	DEFINE_SCRIPTFUNC( GetNumBodyGroups, "Gets the number of bodygroups" )
+
+	DEFINE_SCRIPTFUNC( Dissolve, "" )
+	DEFINE_SCRIPTFUNC( Ignite, "" )
+	DEFINE_SCRIPTFUNC( Scorch, "Makes the entity darker from scorching" )
+#endif
 END_SCRIPTDESC();
 
 
@@ -2092,6 +2117,27 @@ void CBaseAnimating::ScriptGetBoneTransform( int iBone, HSCRIPT hTransform )
 		return;
 
 	GetBoneTransform( iBone, *HScriptToClass<matrix3x4_t>( hTransform ) );
+}
+
+//-----------------------------------------------------------------------------
+// VScript access to sequence's key values
+// for iteration and value access, use:
+//	ScriptFindKey, ScriptGetFirstSubKey, ScriptGetString,
+//	ScriptGetInt, ScriptGetFloat, ScriptGetNextKey
+// NOTE (port): 63323222 wraps the KeyValues in a game-side `new CScriptKeyValues` stored in
+// m_pScriptModelKeyValues. CScriptKeyValues lives inside our prebuilt vscript.lib, so this
+// uses the script manager and a ref-counted handle, the way later Mapbase does it.
+//-----------------------------------------------------------------------------
+HSCRIPT_RC CBaseAnimating::ScriptGetSequenceKeyValues( int iSequence )
+{
+	KeyValues *pSeqKeyValues = GetSequenceKeyValues( iSequence );
+	HSCRIPT hScript = NULL;
+	if ( pSeqKeyValues )
+	{
+		hScript = scriptmanager->CreateScriptKeyValues( g_pScriptVM, pSeqKeyValues );
+	}
+
+	return hScript;
 }
 #endif
 

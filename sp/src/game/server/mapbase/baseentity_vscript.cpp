@@ -129,6 +129,8 @@ BEGIN_ENT_SCRIPTDESC_ROOT_WITH_HELPER( CBaseEntity, "Root class of all server-si
 	DEFINE_SCRIPTFUNC( TakeHealth, "Give this entity health" )
 	DEFINE_SCRIPTFUNC( IsAlive, "Return true if this entity is alive" )
 
+	DEFINE_SCRIPTFUNC( GetWaterLevel, "Get current level of water submergence" )
+
 	DEFINE_SCRIPTFUNC_NAMED( ScriptGetContext, "GetContext", "Get a response context value" )
 	DEFINE_SCRIPTFUNC_NAMED( ScriptAddContext, "AddContext", "Add a response context value" )
 

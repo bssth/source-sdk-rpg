@@ -38,6 +38,10 @@
 #include "tf_weaponbase.h"
 #endif // TF_DLL
 
+#ifdef MAPBASE_VSCRIPT
+#include "mapbase/vscript_funcs_shared.h"
+#endif
+
 #include "rumble_shared.h"
 
 // memdbgon must be the last include file in a .cpp file!!!

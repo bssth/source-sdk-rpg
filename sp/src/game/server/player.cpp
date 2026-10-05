@@ -83,6 +83,10 @@
 #include "prop_keypad.h"
 #endif
 
+#ifdef MAPBASE_VSCRIPT
+#include "mapbase/vscript_funcs_shared.h"
+#endif
+
 ConVar autoaim_max_dist( "autoaim_max_dist", "2160" ); // 2160 = 180 feet
 ConVar autoaim_max_deflect( "autoaim_max_deflect", "0.99" );
 
@@ -342,6 +346,10 @@ BEGIN_ENT_SCRIPTDESC( CBasePlayer, CBaseCombatCharacter, "The player entity." )
 
 	DEFINE_SCRIPTFUNC_NAMED( VScriptGetExpresser, "GetExpresser", "Gets a handle for this player's expresser." )
 
+	DEFINE_SCRIPTFUNC( GetPlayerName, "Gets the player's name." )
+	DEFINE_SCRIPTFUNC_NAMED( GetUserID, "GetPlayerUserId", "Gets the player's user ID." )
+	DEFINE_SCRIPTFUNC( GetNetworkIDString, "Gets the player's network (i.e. Steam) ID." )
+
 	DEFINE_SCRIPTFUNC( FragCount, "Gets the number of frags (kills) this player has in a multiplayer game." )
 	DEFINE_SCRIPTFUNC( DeathCount, "Gets the number of deaths this player has had in a multiplayer game." )
 	DEFINE_SCRIPTFUNC( IsConnected, "Returns true if this player is connected." )
@@ -354,6 +362,18 @@ BEGIN_ENT_SCRIPTDESC( CBasePlayer, CBaseCombatCharacter, "The player entity." )
 	DEFINE_SCRIPTFUNC( FlashlightIsOn, "Returns true if the flashlight is on." )
 	DEFINE_SCRIPTFUNC( FlashlightTurnOn, "Turns on the flashlight." )
 	DEFINE_SCRIPTFUNC( FlashlightTurnOff, "Turns off the flashlight." )
+
+	DEFINE_SCRIPTFUNC( DisableButtons, "Disables the specified button mask." )
+	DEFINE_SCRIPTFUNC( EnableButtons, "Enables the specified button mask if it was disabled before." )
+	DEFINE_SCRIPTFUNC( ForceButtons, "Forces the specified button mask." )
+	DEFINE_SCRIPTFUNC( UnforceButtons, "Unforces the specified button mask if it was forced before." )
+
+	DEFINE_SCRIPTFUNC( GetButtons, "Gets the player's active buttons." )
+	DEFINE_SCRIPTFUNC( GetButtonPressed, "Gets the player's currently pressed buttons." )
+	DEFINE_SCRIPTFUNC( GetButtonReleased, "Gets the player's just-released buttons." )
+	DEFINE_SCRIPTFUNC( GetButtonLast, "Gets the player's previously active buttons." )
+	DEFINE_SCRIPTFUNC( GetButtonDisabled, "Gets the player's currently unusable buttons." )
+	DEFINE_SCRIPTFUNC( GetButtonForced, "Gets the player's currently forced buttons." )
 
 END_SCRIPTDESC();
 #else
@@ -3308,6 +3328,21 @@ void CBasePlayer::PlayerRunCommand(CUserCmd *ucmd, IMoveHelper *moveHelper)
 		}
 	}
 	
+#ifdef MAPBASE_VSCRIPT
+	// Movement hook for VScript
+	if ( m_ScriptScope.IsInitialized() )
+	{
+		CUserCmdAccessor accessor = CUserCmdAccessor( ucmd );
+		HSCRIPT hCmd = g_pScriptVM->RegisterInstance( &accessor );
+
+		g_pScriptVM->SetValue( "command", hCmd );
+		CallScriptFunction( "PlayerRunCommand", NULL );
+		g_pScriptVM->ClearValue( "command" );
+
+		g_pScriptVM->RemoveInstance( hCmd );
+	}
+#endif
+
 	PlayerMove()->RunCommand(this, ucmd, moveHelper);
 }
 
