@@ -16,11 +16,9 @@
 #include "isaverestore.h"
 #include "gamerules.h"
 #include "igamesystem.h"
+#include "vscript_server.nut"
 #ifdef MAPBASE_VSCRIPT
 #include "world.h"
-#endif
-#ifdef _WIN32
-//#include "vscript_server_nut.h"
 #endif
 
 extern ScriptClassDesc_t * GetScriptDesc( CBaseEntity * );
@@ -371,12 +369,12 @@ bool VScriptServerInit()
 				IGameSystem::RegisterVScriptAllSystems();
 
 				RegisterSharedScriptFunctions();
-#else
-				if ( scriptLanguage == SL_SQUIRREL )
-				{
-					//g_pScriptVM->Run( g_Script_vscript_server );
-				}
 #endif
+
+				if (scriptLanguage == SL_SQUIRREL)
+				{
+					g_pScriptVM->Run( g_Script_vscript_server );
+				}
 
 				VScriptRunScript( "mapspawn", false );
 

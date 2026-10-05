@@ -1,3 +1,4 @@
+static char g_Script_vscript_server[] = R"vscript(
 //========== Copyright (c) 2008, Valve Corporation, All rights reserved. ========
 //
 // Purpose:
@@ -64,7 +65,7 @@ function __ReplaceClosures( script, scope )
 
 	local tempParent = { getroottable = function() { return null; } };
 	local temp = { runscript = script };
-	delegate tempParent : temp;
+	temp.set_delegate(tempParent);
 
 	temp.runscript()
 	foreach( key,val in temp )
@@ -150,3 +151,4 @@ function __DumpScope( depth, table )
         print("\n");
 	}
 }
+)vscript";
