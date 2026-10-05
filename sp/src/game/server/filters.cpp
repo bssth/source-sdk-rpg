@@ -34,8 +34,8 @@ END_DATADESC()
 #ifdef MAPBASE_VSCRIPT
 BEGIN_ENT_SCRIPTDESC( CBaseFilter, CBaseEntity, "All entities which could be used as filters." )
 
-	DEFINE_SCRIPTFUNC_NAMED( ScriptPassesFilter, "PassesFilter", "Check if the given caller and entity pass the filter." )
-	DEFINE_SCRIPTFUNC_NAMED( ScriptPassesDamageFilter, "PassesDamageFilter", "Check if the given caller and damage info pass the damage filter." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptPassesFilter, "PassesFilter", "Check if the given caller and entity pass the filter. The caller is the one who requests the filter result; For example, the entity being damaged when using this as a damage filter." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptPassesDamageFilter, "PassesDamageFilter", "Check if the given caller and damage info pass the damage filter, with the second parameter being a CTakeDamageInfo instance. The caller is the one who requests the filter result; For example, the entity being damaged when using this as a damage filter." )
 
 END_SCRIPTDESC();
 #endif
@@ -653,6 +653,9 @@ BEGIN_DATADESC( CFilterEnemy )
 END_DATADESC()
 
 #ifdef MAPBASE_VSCRIPT
+ScriptHook_t	g_Hook_PassesFilter;
+ScriptHook_t	g_Hook_PassesDamageFilter;
+
 // ###################################################################
 //	> CFilterScript
 // ###################################################################
@@ -663,60 +666,56 @@ class CFilterScript : public CBaseFilter
 {
 	DECLARE_CLASS( CFilterScript, CBaseFilter );
 	DECLARE_DATADESC();
+	DECLARE_ENT_SCRIPTDESC();
 
 public:
 	bool PassesFilterImpl( CBaseEntity *pCaller, CBaseEntity *pEntity )
 	{
-		if (m_ScriptScope.IsInitialized())
+		if ( !m_ScriptScope.IsInitialized() )
 		{
-			g_pScriptVM->SetValue( "caller", (pCaller) ? ScriptVariant_t( pCaller->GetScriptInstance() ) : SCRIPT_VARIANT_NULL );
-			g_pScriptVM->SetValue( "activator", (pEntity) ? ScriptVariant_t( pEntity->GetScriptInstance() ) : SCRIPT_VARIANT_NULL );
+			Warning( "%s: No script scope, cannot filter\n", GetDebugName() );
+			return false;
+		}
 
+		if ( g_Hook_PassesFilter.CanRunInScope( m_ScriptScope ) )
+		{
+			// caller, activator
 			ScriptVariant_t functionReturn;
-			if (!CallScriptFunction( "PassesFilter", &functionReturn ))
-			{
-				Warning("%s: No PassesFilter function\n", GetDebugName());
-			}
-
-			g_pScriptVM->ClearValue( "caller" );
-			g_pScriptVM->ClearValue( "activator" );
+			ScriptVariant_t args[] = { ToHScript( pCaller ), ToHScript( pEntity ) };
+			g_Hook_PassesFilter.Call( m_ScriptScope, &functionReturn, args );
 
 			return functionReturn.m_bool;
 		}
 
-		Warning("%s: No script scope, cannot filter\n", GetDebugName());
+		Warning( "%s: No PassesFilter function\n", GetDebugName() );
 		return false;
 	}
 
 	bool PassesDamageFilterImpl( const CTakeDamageInfo &info )
 	{
-		if (m_ScriptScope.IsInitialized())
+		if ( !m_ScriptScope.IsInitialized() )
+		{
+			Warning( "%s: No script scope, cannot filter\n", GetDebugName() );
+			return false;
+		}
+
+		if ( g_Hook_PassesDamageFilter.CanRunInScope( m_ScriptScope ) )
 		{
 			HSCRIPT pInfo = g_pScriptVM->RegisterInstance( const_cast<CTakeDamageInfo*>(&info) );
 
-			g_pScriptVM->SetValue( "info", pInfo );
-			g_pScriptVM->SetValue( "caller", SCRIPT_VARIANT_NULL );
-
+			// caller, info
+			// NOTE (port): this tree has no caller-aware damage filters, so the caller is always null.
 			ScriptVariant_t functionReturn;
-			if (!CallScriptFunction( "PassesDamageFilter", &functionReturn ))
-			{
-				// Fall back to main filter function
-				g_pScriptVM->RemoveInstance( pInfo );
-				g_pScriptVM->ClearValue( "info" );
-				g_pScriptVM->ClearValue( "caller" );
-				return PassesFilterImpl( NULL, info.GetAttacker() );
-			}
+			ScriptVariant_t args[] = { SCRIPT_VARIANT_NULL, pInfo };
+			g_Hook_PassesDamageFilter.Call( m_ScriptScope, &functionReturn, args );
 
 			g_pScriptVM->RemoveInstance( pInfo );
-
-			g_pScriptVM->ClearValue( "info" );
-			g_pScriptVM->ClearValue( "caller" );
 
 			return functionReturn.m_bool;
 		}
 
-		Warning("%s: No script scope, cannot filter\n", GetDebugName());
-		return false;
+		// Fall back to main filter function
+		return PassesFilterImpl( NULL, info.GetAttacker() );
 	}
 };
 
@@ -724,4 +723,24 @@ LINK_ENTITY_TO_CLASS( filter_script, CFilterScript );
 
 BEGIN_DATADESC( CFilterScript )
 END_DATADESC()
+
+BEGIN_ENT_SCRIPTDESC( CFilterScript, CBaseFilter, "The filter_script entity which allows VScript functions to hook onto filter methods." )
+
+	//
+	// Hooks
+	//
+
+	// The CFilterScript class is visible in the help string, so "A hook used by filter_script" is redundant, but these names are also
+	// used for functions in CBaseFilter. In order to reduce confusion, the description emphasizes that these are hooks.
+	BEGIN_SCRIPTHOOK( g_Hook_PassesFilter, "PassesFilter", FIELD_BOOLEAN, "A hook used by filter_script to determine what entities should pass it. Return true if the entity should pass or false if it should not. This hook is required for regular filtering." )
+		DEFINE_SCRIPTHOOK_PARAM( "caller", FIELD_HSCRIPT )
+		DEFINE_SCRIPTHOOK_PARAM( "activator", FIELD_HSCRIPT )
+	END_SCRIPTHOOK()
+
+	BEGIN_SCRIPTHOOK( g_Hook_PassesDamageFilter, "PassesDamageFilter", FIELD_BOOLEAN, "A hook used by filter_script to determine what damage should pass it when it's being used as a damage filter. Return true if the info should pass or false if it should not. If this hook is not defined in a filter_script, damage filter requests will instead check PassesFilter with the attacker as the activator." )
+		DEFINE_SCRIPTHOOK_PARAM( "caller", FIELD_HSCRIPT )
+		DEFINE_SCRIPTHOOK_PARAM( "info", FIELD_HSCRIPT )
+	END_SCRIPTHOOK()
+
+END_SCRIPTDESC()
 #endif

@@ -128,6 +128,14 @@ BEGIN_ENT_SCRIPTDESC( CBaseTrigger, CBaseEntity, "Trigger entity" )
 	DEFINE_SCRIPTFUNC( Disable, "" )
 	DEFINE_SCRIPTFUNC( TouchTest, "" )
 	DEFINE_SCRIPTFUNC_NAMED( ScriptIsTouching, "IsTouching", "Checks whether the passed entity is touching the trigger." )
+
+	DEFINE_SCRIPTFUNC( UsesFilter, "Returns true if this trigger uses a filter." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptPassesTriggerFilters, "PassesTriggerFilters", "Returns whether a target entity satisfies the trigger's spawnflags, filter, etc." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptGetTouchedEntityOfType, "GetTouchedEntityOfType", "Gets the first touching entity which matches the specified class." )
+
+	DEFINE_SCRIPTFUNC( PointIsWithin, "Checks if the given vector is within the trigger's volume." )
+
+	DEFINE_SCRIPTFUNC_NAMED( ScriptGetTouchingEntities, "GetTouchingEntities", "Gets all entities touching this trigger (and satisfying its criteria). This function copies them to a table with a maximum number of elements." )
 END_SCRIPTDESC();
 
 #endif // MAPBASE_VSCRIPT
@@ -597,6 +605,19 @@ void CBaseTrigger::InputToggle( inputdata_t &inputdata )
 
 	PhysicsTouchTriggers();
 }
+
+#ifdef MAPBASE_VSCRIPT
+//-----------------------------------------------------------------------------
+// Purpose: Copies touching entities to a script table
+//-----------------------------------------------------------------------------
+void CBaseTrigger::ScriptGetTouchingEntities( HSCRIPT hTable )
+{
+	for (int i = 0; i < m_hTouchingEntities.Count(); i++)
+	{
+		g_pScriptVM->ArrayAppend( hTable, ToHScript( m_hTouchingEntities[i] ) );
+	}
+}
+#endif
 
 
 //-----------------------------------------------------------------------------
