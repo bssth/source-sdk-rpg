@@ -315,6 +315,19 @@ CBaseEntity *FindEntityForward( CBasePlayer *pMe, bool fHull );
 
 END_DATADESC()
 
+#ifdef MAPBASE_VSCRIPT
+// NOTE (port): Mapbase 7d2c6315 also exposes GetFlashlightBattery, which belongs to Mapbase's
+// logic_playerproxy flashlight-battery feature that this tree doesn't have, so it's omitted.
+BEGIN_ENT_SCRIPTDESC( CHL2_Player, CBasePlayer, "The HL2 player entity." )
+
+	DEFINE_SCRIPTFUNC_NAMED( SuitPower_Drain, "RemoveAuxPower", "Removes from the player's available aux power." )
+	DEFINE_SCRIPTFUNC_NAMED( SuitPower_Charge, "AddAuxPower", "Adds to the player's available aux power." )
+	DEFINE_SCRIPTFUNC_NAMED( SuitPower_SetCharge, "SetAuxPower", "Sets the player's available aux power." )
+	DEFINE_SCRIPTFUNC_NAMED( SuitPower_GetCurrentPercentage, "GetAuxPower", "Gets the player's available aux power." )
+
+END_SCRIPTDESC();
+#endif
+
 CHL2_Player::CHL2_Player()
 {
 	// Here we create and init the player animation state.
