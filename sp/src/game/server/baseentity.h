@@ -2342,14 +2342,13 @@ inline float CBaseEntity::GetMass()
 	else
 	{
 		Warning("Tried to call GetMass() on %s but it has no physics.\n", GetDebugName());
-		return -1;
+		return 0;
 	}
 }
 
 inline void CBaseEntity::SetMass(float mass)
 {
-	mass = MAX(0, mass);
-	Assert(mass > 0);
+	mass = clamp(mass, VPHYSICS_MIN_MASS, VPHYSICS_MAX_MASS);
 
 	IPhysicsObject *vPhys = VPhysicsGetObject();
 	if (vPhys)
