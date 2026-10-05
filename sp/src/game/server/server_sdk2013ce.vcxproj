@@ -1196,6 +1196,7 @@
     <ClCompile Include="..\..\game\shared\mapbase\vscript_funcs_shared.cpp" />
     <ClCompile Include="..\..\game\shared\mapbase\vscript_singletons.cpp" />
     <ClCompile Include="..\..\game\shared\mapbase\vscript_consts_shared.cpp" />
+    <ClCompile Include="..\..\game\shared\mapbase\vscript_consts_weapons.cpp" />
     <ClCompile Include="..\..\game\shared\mapbase\vscript_funcs_hl2.cpp" />
     <ClCompile Include="mapbase\baseentity_vscript.cpp" />
     <ClCompile Include="..\..\public\scratchpad3d.cpp">

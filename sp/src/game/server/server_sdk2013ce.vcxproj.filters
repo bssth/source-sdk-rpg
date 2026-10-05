@@ -1828,6 +1828,9 @@
     <ClCompile Include="..\..\game\shared\mapbase\vscript_consts_shared.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\game\shared\mapbase\vscript_consts_weapons.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\game\shared\mapbase\vscript_funcs_hl2.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
