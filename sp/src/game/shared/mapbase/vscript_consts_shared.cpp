@@ -8,6 +8,7 @@
 #include "cbase.h"
 #include "activitylist.h"
 #include "in_buttons.h"
+#include "rope_shared.h"
 #ifdef CLIENT_DLL
 #include "c_ai_basenpc.h"
 #else
@@ -313,6 +314,25 @@ void RegisterSharedScriptConstants()
 	ScriptRegisterConstant( g_pScriptVM, MOVETYPE_LADDER, "Move type used in GetMoveType(), etc." );
 	ScriptRegisterConstant( g_pScriptVM, MOVETYPE_OBSERVER, "Move type used in GetMoveType(), etc." );
 	ScriptRegisterConstant( g_pScriptVM, MOVETYPE_CUSTOM, "Move type used in GetMoveType(), etc." );
+
+	// 
+	// Ropes
+	// 
+	ScriptRegisterConstant( g_pScriptVM, ROPE_RESIZE, "Try to keep the rope dangling the same amount even as the rope length changes. (for use in rope flags)" );
+	ScriptRegisterConstant( g_pScriptVM, ROPE_BARBED, "Hack option to draw like a barbed wire. (for use in rope flags)" );
+	ScriptRegisterConstant( g_pScriptVM, ROPE_COLLIDE, "Collide with the world. (for use in rope flags)" );
+	ScriptRegisterConstant( g_pScriptVM, ROPE_SIMULATE, "Is the rope valid? (for use in rope flags)" );
+	ScriptRegisterConstant( g_pScriptVM, ROPE_BREAKABLE, "Can the endpoints detach? (for use in rope flags)" );
+	// NOTE (port): this tree has the stock ROPE_NO_WIND flag where Mapbase has ROPE_USE_WIND
+	ScriptRegisterConstant( g_pScriptVM, ROPE_NO_WIND, "No wind simulation on this rope. (for use in rope flags)" );
+	ScriptRegisterConstant( g_pScriptVM, ROPE_INITIAL_HANG, "By default, ropes will simulate for a bit internally when they are created so they sag, but dynamically created ropes for things like harpoons don't want this. (for use in rope flags)" );
+	ScriptRegisterConstant( g_pScriptVM, ROPE_PLAYER_WPN_ATTACH, "If this flag is set, then the second attachment must be a player. The rope will attach to \"buff_attach\" on the player's active weapon. This is a flag because it requires special code on the client to find the weapon. (for use in rope flags)" );
+	ScriptRegisterConstant( g_pScriptVM, ROPE_NO_GRAVITY, "Disable gravity on this rope. (for use in rope flags)" );
+	ScriptRegisterConstant( g_pScriptVM, ROPE_NUMFLAGS, "The number of rope flags recognized by the game." );
+
+	// NOTE (port): static as in final Mapbase; our ivscript.h rejects temporaries
+	static Vector vecRopeGravity( ROPE_GRAVITY );
+	ScriptRegisterConstantNamed( g_pScriptVM, vecRopeGravity, "ROPE_GRAVITY", "Default rope gravity vector." );
 
 #ifdef GAME_DLL
 	// 
