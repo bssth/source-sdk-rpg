@@ -935,6 +935,26 @@ bool ScriptIsClient()
 #endif
 }
 
+bool ScriptIsWindows()
+{
+	return IsWindows();
+}
+
+bool ScriptIsLinux()
+{
+	return IsLinux();
+}
+
+bool ScriptIsOSX()
+{
+	return IsOSX();
+}
+
+bool ScriptIsPosix()
+{
+	return IsPosix();
+}
+
 // Notification printing on the right edge of the screen
 void NPrint( int pos, const char* fmt )
 {
@@ -1073,6 +1093,11 @@ void RegisterSharedScriptFunctions()
 	ScriptRegisterFunction( g_pScriptVM, IntervalPerTick, "Simulation tick interval" );
 	ScriptRegisterFunction( g_pScriptVM, GetFrameCount, "Absolute frame counter" );
 	//ScriptRegisterFunction( g_pScriptVM, GetTickCount, "Simulation ticks" );
+
+	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptIsWindows, "IsWindows", "Returns true if the game is being run on a Windows machine." );
+	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptIsLinux, "IsLinux", "Returns true if the game is being run on a Linux machine." );
+	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptIsOSX, "IsOSX", "Returns true if the game is being run on an OSX machine." );
+	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptIsPosix, "IsPosix", "Returns true if the game is being run on a Posix machine." );
 
 	RegisterScriptSingletons();
 }
