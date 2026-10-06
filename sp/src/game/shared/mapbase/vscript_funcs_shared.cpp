@@ -539,7 +539,7 @@ bool CAnimEventTInstanceHelper::Get( void *p, const char *pszKey, ScriptVariant_
 {
 	DevWarning( "VScript animevent_t.%s: animevent_t metamethod members are deprecated! Use 'script_help animevent_t' to see the correct functions.\n", pszKey );
 
-	animevent_t *ani = ((animevent_t *)p);
+	animevent_t *ani = &((scriptanimevent_t *)p)->event;
 	if (FStrEq( pszKey, "event" ))
 		variant = ani->event;
 	else if (FStrEq( pszKey, "options" ))
@@ -562,21 +562,29 @@ bool CAnimEventTInstanceHelper::Set( void *p, const char *pszKey, ScriptVariant_
 {
 	DevWarning( "VScript animevent_t.%s: animevent_t metamethod members are deprecated! Use 'script_help animevent_t' to see the correct functions.\n", pszKey );
 
-	animevent_t *ani = ((animevent_t *)p);
+	scriptanimevent_t *script_ani = ((scriptanimevent_t *)p);
+	animevent_t *ani = &script_ani->event;
 	if (FStrEq( pszKey, "event" ))
-		ani->event = variant;
+	{
+		return variant.AssignTo( &ani->event );
+	}
 	else if (FStrEq( pszKey, "options" ))
-		// NOTE (port): pooled copy; a script string only lives as long as the VM keeps it, but
-		// HandleAnimEvent() reads options after the hook returns. (Final Mapbase copies it into
-		// scriptanimevent_t, 256cdfb7/7d78384b.)
-		ani->options = STRING( AllocPooledString( variant ) );
+	{
+		// NOTE (port): final Mapbase uses variant.AssignTo( char** ) here, which always fails
+		// in the final ivscript.h ("No free conversion"). Read the string directly instead.
+		if (variant.m_type != FIELD_CSTRING)
+		{
+			return false;
+		}
+		script_ani->SetOptions( variant.m_pszString );
+	}
 	else if (FStrEq( pszKey, "cycle" ))
-		ani->cycle = variant;
+		return variant.AssignTo( &ani->cycle );
 	else if (FStrEq( pszKey, "eventtime" ))
-		ani->eventtime = variant;
+		return variant.AssignTo( &ani->eventtime );
 	else if (FStrEq( pszKey, "type" ))
-		ani->type = variant;
-	else if (FStrEq( pszKey, "source" ))
+		return variant.AssignTo( &ani->type );
+	else if (FStrEq( pszKey, "source" ) && variant.m_type == FIELD_HSCRIPT)
 	{
 		CBaseEntity *pEnt = ToEnt( variant.m_hScript );
 		if (pEnt)
