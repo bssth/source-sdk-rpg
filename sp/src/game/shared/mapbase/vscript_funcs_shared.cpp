@@ -781,6 +781,7 @@ static void AddPhysVelocity( HSCRIPT hPhys, const Vector& vecVelocity, const Vec
 //=============================================================================
 //=============================================================================
 
+#ifdef CLIENT_DLL
 static int ScriptPrecacheModel( const char *modelname )
 {
 	return CBaseEntity::PrecacheModel( modelname );
@@ -790,8 +791,17 @@ static void ScriptPrecacheOther( const char *classname )
 {
 	UTIL_PrecacheOther( classname );
 }
+#else
+static int ScriptPrecacheModel( const char *modelname, bool bPreload )
+{
+	return CBaseEntity::PrecacheModel( modelname, bPreload );
+}
 
-#ifndef CLIENT_DLL
+static void ScriptPrecacheOther( const char *classname, const char *modelName )
+{
+	UTIL_PrecacheOther( classname, modelName );
+}
+
 // TODO: Move this?
 static void ScriptInsertSound( int iType, const Vector &vecOrigin, int iVolume, float flDuration, HSCRIPT hOwner, int soundChannelIndex, HSCRIPT hSoundTarget )
 {
@@ -958,7 +968,7 @@ bool ScriptIsPosix()
 // Notification printing on the right edge of the screen
 void NPrint( int pos, const char* fmt )
 {
-	engine->Con_NPrintf(pos, fmt);
+	engine->Con_NPrintf( pos, "%s", fmt );
 }
 
 void NXPrint( int pos, int r, int g, int b, bool fixed, float ftime, const char* fmt )
@@ -972,7 +982,7 @@ void NXPrint( int pos, int r, int g, int b, bool fixed, float ftime, const char*
 	info.color[2] = b / 255.f;
 	info.fixed_width_font = fixed;
 
-	engine->Con_NXPrintf( &info, fmt );
+	engine->Con_NXPrintf( &info, "%s", fmt );
 }
 
 static float IntervalPerTick()

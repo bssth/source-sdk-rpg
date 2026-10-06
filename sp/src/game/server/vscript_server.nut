@@ -72,6 +72,18 @@ function ImpulseScale( flTargetMass, flDesiredSpeed )
 }
 __Documentation.RegisterHelp( "ImpulseScale", "float ImpulseScale(float, float)", "Returns an impulse scale required to push an object." );
 
+local PrecacheModel = PrecacheModel
+function PrecacheModel( a, b = true )
+{
+    return PrecacheModel( a, b )
+}
+
+local PrecacheOther = PrecacheOther
+function PrecacheOther( a, b = "" )
+{
+    PrecacheOther( a, b )
+}
+
 function __ReplaceClosures( script, scope )
 {
 	if ( !scope )
@@ -81,7 +93,7 @@ function __ReplaceClosures( script, scope )
 
 	local tempParent = { getroottable = function() { return null; } };
 	local temp = { runscript = script };
-	temp.set_delegate(tempParent);
+	temp.setdelegate(tempParent);
 
 	temp.runscript()
 	foreach( key,val in temp )
