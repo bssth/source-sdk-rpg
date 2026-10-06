@@ -392,7 +392,12 @@ CON_COMMAND_F( script_debug, "Connect the vscript VM to the script debugger", FC
 		CGWarning( 0, CON_GROUP_VSCRIPT, "Scripting disabled or no server running\n" );
 		return;
 	}
+
+#ifdef MAPBASE_VSCRIPT
+	g_pScriptVM->ConnectDebugger( vscript_debugger_port );
+#else
 	g_pScriptVM->ConnectDebugger();
+#endif
 }
 
 #ifdef CLIENT_DLL

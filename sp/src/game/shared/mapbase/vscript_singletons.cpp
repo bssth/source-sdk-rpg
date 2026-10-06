@@ -4552,6 +4552,11 @@ bool CScriptConvarAccessor::Init()
 	AddBlockedConVar( "cl_allowdownload" );
 	AddBlockedConVar( "cl_allowupload" );
 	AddBlockedConVar( "cl_downloadfilter" );
+#ifdef GAME_DLL
+	AddBlockedConVar( "script_connect_debugger_on_mapspawn" );
+#else
+	AddBlockedConVar( "script_connect_debugger_on_mapspawn_client" );
+#endif
 
 	return true;
 }
