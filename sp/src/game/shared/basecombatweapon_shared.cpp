@@ -2623,6 +2623,7 @@ BEGIN_ENT_SCRIPTDESC( CBaseCombatWeapon, CBaseAnimating, "The base class for all
 	DEFINE_SCRIPTFUNC( GetViewModel, "Get the weapon's view model." )
 
 	DEFINE_SCRIPTFUNC( GetWeight, "Get the weapon's weight." )
+	DEFINE_SCRIPTFUNC( GetPrintName, "" )
 
 	DEFINE_SCRIPTFUNC( CanBePickedUpByNPCs, "Check if the weapon can be picked up by NPCs." )
 
