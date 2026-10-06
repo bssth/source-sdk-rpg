@@ -473,6 +473,11 @@ bool VScriptServerInit()
 #else
 				Log( "VSCRIPT: Started VScript virtual machine using script language '%s'\n", g_pScriptVM->GetLanguageName() );
 #endif
+
+#ifdef MAPBASE_VSCRIPT
+				GetScriptHookManager().OnInit();
+#endif
+
 #ifdef MAPBASE_VSCRIPT
 				// MULTIPLAYER
 				// ScriptRegisterFunctionNamed( g_pScriptVM, UTIL_PlayerByIndex, "GetPlayerByIndex", "PlayerInstanceFromIndex" );
@@ -704,6 +709,8 @@ public:
 #ifdef MAPBASE_VSCRIPT
 		// NOTE (port): from Mapbase 63a9dce4, so the listener does not outlive the level's VM
 		g_ScriptEntityIterator.DisableEntityListening();
+
+		GetScriptHookManager().OnShutdown();
 #endif
 		VScriptServerTerm();
 	}
@@ -849,6 +856,10 @@ public:
 			}
 		}
 		m_InstanceMap.Purge();
+
+#ifdef MAPBASE_VSCRIPT
+		GetScriptHookManager().OnRestore();
+#endif
 	}
 
 
