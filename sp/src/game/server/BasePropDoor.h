@@ -38,6 +38,9 @@ public:
 
 	DECLARE_CLASS( CBasePropDoor, CDynamicProp );
 	DECLARE_SERVERCLASS();
+#ifdef MAPBASE_VSCRIPT
+	DECLARE_ENT_SCRIPTDESC();
+#endif
 
 	CBasePropDoor( void );
 
@@ -74,6 +77,26 @@ public:
 	virtual void GetNPCOpenData(CAI_BaseNPC *pNPC, opendata_t &opendata) = 0;
 	virtual float GetOpenInterval(void) = 0;
 	// }
+
+#ifdef MAPBASE_VSCRIPT
+	bool ScriptIsDoorOpen() { return IsDoorOpen(); }
+	bool ScriptIsDoorAjar() { return IsDoorAjar(); }
+	bool ScriptIsDoorOpening() { return IsDoorOpening(); }
+	bool ScriptIsDoorClosed() { return IsDoorClosed(); }
+	bool ScriptIsDoorClosing() { return IsDoorClosing(); }
+	bool ScriptIsDoorLocked() { return IsDoorLocked(); }
+	bool ScriptIsDoorBlocked() const { return IsDoorBlocked(); }
+	HSCRIPT ScriptGetActivator() { return ToHScript( m_hActivator.Get() ); }
+
+	HSCRIPT ScriptGetDoorList( int i ) { return m_hDoorList.IsValidIndex(i) ? ToHScript( m_hDoorList[i] ) : NULL; }
+	int GetDoorListCount() { return m_hDoorList.Count(); }
+
+	const char *ScriptGetFullyOpenSound() { return STRING( m_SoundOpen ); }
+	const char *ScriptGetFullyClosedSound() { return STRING( m_SoundClose ); }
+	const char *ScriptGetMovingSound() { return STRING( m_SoundMoving ); }
+	const char *ScriptGetLockedSound() { return STRING( m_ls.sLockedSound ); }
+	const char *ScriptGetUnlockedSound() { return STRING( m_ls.sUnlockedSound ); }
+#endif
 
 protected:
 

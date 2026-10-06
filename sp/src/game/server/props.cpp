@@ -3596,6 +3596,34 @@ END_DATADESC()
 IMPLEMENT_SERVERCLASS_ST(CBasePropDoor, DT_BasePropDoor)
 END_SEND_TABLE()
 
+#ifdef MAPBASE_VSCRIPT
+BEGIN_ENT_SCRIPTDESC( CBasePropDoor, CBaseAnimating, "The base class used by prop doors, such as prop_door_rotating." )
+
+	DEFINE_SCRIPTFUNC_NAMED( ScriptIsDoorOpen, "IsDoorOpen", "" )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptIsDoorAjar, "IsDoorAjar", "" )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptIsDoorOpening, "IsDoorOpening", "" )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptIsDoorClosed, "IsDoorClosed", "" )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptIsDoorClosing, "IsDoorClosing", "" )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptIsDoorLocked, "IsDoorLocked", "" )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptIsDoorBlocked, "IsDoorBlocked", "" )
+
+	DEFINE_SCRIPTFUNC_NAMED( ScriptGetActivator, "GetActivator", "" )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptGetDoorList, "GetDoorList", "Get connected door entity by index." )
+	DEFINE_SCRIPTFUNC( GetDoorListCount, "Get number of connected doors." )
+
+	DEFINE_SCRIPTFUNC_NAMED( ScriptGetFullyOpenSound, "GetFullyOpenSound", "" )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptGetFullyClosedSound, "GetFullyClosedSound", "" )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptGetMovingSound, "GetMovingSound", "" )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptGetLockedSound, "GetLockedSound", "" )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptGetUnlockedSound, "GetUnlockedSound", "" )
+
+	DEFINE_SCRIPTFUNC( DoorCanClose, "Return true if the door has room to close. Boolean is for whether or not this is an automatic close and not manually triggered by someone." )
+	DEFINE_SCRIPTFUNC( DoorCanOpen, "Return true if there are other doors connected to this one." )
+	DEFINE_SCRIPTFUNC( HasSlaves, "" )
+
+END_SCRIPTDESC();
+#endif
+
 CBasePropDoor::CBasePropDoor( void )
 {
 	m_hMaster = NULL;
