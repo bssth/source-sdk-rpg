@@ -85,6 +85,11 @@ typedef enum
 
 	AE_WPN_PLAYWPNSOUND,	// Play a weapon sound from the weapon script file
 
+#ifdef MAPBASE_VSCRIPT
+	AE_VSCRIPT_RUN,			// Run vscript code (server + client)
+	AE_VSCRIPT_RUN_FILE,	// Run vscript file (server + client)
+#endif
+
 	LAST_SHARED_ANIMEVENT,
 } Animevent;
 
