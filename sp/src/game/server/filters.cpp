@@ -69,7 +69,7 @@ bool CBaseFilter::PassesDamageFilterImpl( const CTakeDamageInfo &info )
 
 #ifdef MAPBASE_VSCRIPT
 bool CBaseFilter::ScriptPassesFilter( HSCRIPT pCaller, HSCRIPT pEntity ) { return PassesFilter( ToEnt(pCaller), ToEnt(pEntity) ); }
-bool CBaseFilter::ScriptPassesDamageFilter( HSCRIPT pCaller, HSCRIPT pInfo ) { return (pInfo) ? PassesDamageFilter( *const_cast<const CTakeDamageInfo*>(HScriptToClass<CTakeDamageInfo>( pInfo )) ) : NULL; }
+bool CBaseFilter::ScriptPassesDamageFilter( HSCRIPT pCaller, HSCRIPT pInfo ) { return (pInfo) ? PassesDamageFilter( *const_cast<const CTakeDamageInfo*>(HScriptToClass<CTakeDamageInfo>( pInfo )) ) : false; }
 #endif
 
 //-----------------------------------------------------------------------------
