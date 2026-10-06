@@ -379,6 +379,8 @@ public:
 	const Vector&			ScriptGetEyeRight() { static Vector vecRight; EyeVectors( NULL, &vecRight, NULL ); return vecRight; }
 	const Vector&			ScriptGetEyeUp() { static Vector vecUp; EyeVectors( NULL, NULL, &vecUp ); return vecUp; }
 
+	HSCRIPT					ScriptGetViewModel( int viewmodelindex );
+
 	virtual const Vector	GetPlayerMins( void ) const; // uses local player
 	virtual const Vector	GetPlayerMaxs( void ) const; // uses local player
 
