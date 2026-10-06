@@ -294,6 +294,7 @@ ScriptHook_t	CAI_BaseNPC::g_Hook_QuerySeeEntity;
 ScriptHook_t	CAI_BaseNPC::g_Hook_TranslateActivity;
 ScriptHook_t	CAI_BaseNPC::g_Hook_TranslateSchedule;
 ScriptHook_t	CAI_BaseNPC::g_Hook_GetActualShootPosition;
+ScriptHook_t	CAI_BaseNPC::g_Hook_OverrideMove;
 #endif
 
 //
@@ -9619,6 +9620,7 @@ Vector CAI_BaseNPC::GetActualShootPosition( const Vector &shootOrigin )
 #ifdef MAPBASE_VSCRIPT
 	if (m_ScriptScope.IsInitialized() && g_Hook_GetActualShootPosition.CanRunInScope(m_ScriptScope))
 	{
+		// shootOrigin, target
 		ScriptVariant_t functionReturn;
 		ScriptVariant_t args[] = { shootOrigin, ToHScript( GetEnemy() ) };
 		if (g_Hook_GetActualShootPosition.Call( m_ScriptScope, &functionReturn, args ))
@@ -10859,6 +10861,9 @@ BEGIN_ENT_SCRIPTDESC( CAI_BaseNPC, CBaseCombatCharacter, "The base class all NPC
 	DEFINE_SCRIPTFUNC_NAMED( ScriptSetActivityID, "SetActivityID", "Set the NPC's current activity ID." )
 	DEFINE_SCRIPTFUNC( ResetActivity, "Reset the NPC's current activity." )
 
+	DEFINE_SCRIPTFUNC_NAMED( ScriptTranslateActivity, "TranslateActivity", "Translates the specified activity string and returns the translated activity ID." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptTranslateActivityID, "TranslateActivityID", "Translates the specified activity ID and returns the translated activity ID." )
+
 	DEFINE_SCRIPTFUNC_NAMED( VScriptGetSchedule, "GetSchedule", "Get the NPC's current schedule." )
 	DEFINE_SCRIPTFUNC_NAMED( VScriptGetScheduleID, "GetScheduleID", "Get the NPC's current schedule ID." )
 	DEFINE_SCRIPTFUNC_NAMED( VScriptSetSchedule, "SetSchedule", "Set the NPC's current schedule." )
@@ -10905,9 +10910,12 @@ BEGIN_ENT_SCRIPTDESC( CAI_BaseNPC, CBaseCombatCharacter, "The base class all NPC
 		DEFINE_SCRIPTHOOK_PARAM( "schedule", FIELD_CSTRING )
 		DEFINE_SCRIPTHOOK_PARAM( "schedule_id", FIELD_INTEGER )
 	END_SCRIPTHOOK()
-	BEGIN_SCRIPTHOOK( CAI_BaseNPC::g_Hook_GetActualShootPosition, "GetActualShootPosition", FIELD_VOID, "Called when the NPC is getting their actual shoot position, using the default shoot position as the parameter. (NOTE: NPCs which override this themselves might not always use this hook!)" )
+	BEGIN_SCRIPTHOOK( CAI_BaseNPC::g_Hook_GetActualShootPosition, "GetActualShootPosition", FIELD_VECTOR, "Called when the NPC is getting their actual shoot position, using the default shoot position as the parameter. (NOTE: NPCs which override this themselves might not always use this hook!)" )
 		DEFINE_SCRIPTHOOK_PARAM( "shootOrigin", FIELD_VECTOR )
 		DEFINE_SCRIPTHOOK_PARAM( "target", FIELD_HSCRIPT )
+	END_SCRIPTHOOK()
+	BEGIN_SCRIPTHOOK( CAI_BaseNPC::g_Hook_OverrideMove, "OverrideMove", FIELD_VOID, "Called when the NPC runs movement code, allowing the NPC's movement to be overridden by some other method. (NOTE: NPCs which override this themselves might not always use this hook!)" )
+		DEFINE_SCRIPTHOOK_PARAM( "interval", FIELD_FLOAT )
 	END_SCRIPTHOOK()
 
 END_SCRIPTDESC();
@@ -12239,6 +12247,20 @@ bool CAI_BaseNPC::OverrideMoveFacing( const AILocalMoveGoal_t &move, float flInt
 
 bool CAI_BaseNPC::OverrideMove( float flInterval )
 {
+#ifdef MAPBASE_VSCRIPT
+	if (m_ScriptScope.IsInitialized() && g_Hook_OverrideMove.CanRunInScope(m_ScriptScope))
+	{
+		// interval
+		ScriptVariant_t functionReturn;
+		ScriptVariant_t args[] = { flInterval };
+		if (g_Hook_OverrideMove.Call( m_ScriptScope, &functionReturn, args ))
+		{
+			if (functionReturn.m_type == FIELD_BOOLEAN)
+				return functionReturn.m_bool;
+		}
+	}
+#endif
+
 	return false;
 }
 
