@@ -97,6 +97,10 @@ bool CBaseEntity::s_bAbsQueriesValid = true;
 
 ConVar sv_netvisdist( "sv_netvisdist", "10000", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY, "Test networking visibility distance" );
 
+#ifdef MAPBASE_VSCRIPT
+ConVar ent_text_allow_script( "ent_text_allow_script", "1" );
+#endif
+
 // This table encodes edict data.
 void SendProxy_AnimTime( const SendProp *pProp, const void *pStruct, const void *pVarData, DVariant *pOut, int iElement, int objectID )
 {
@@ -1052,6 +1056,28 @@ int CBaseEntity::DrawDebugTextOverlays(void)
 			EntityText( offset,tempstr,0 );
 			offset++;
 		}
+
+#ifdef MAPBASE_VSCRIPT
+		// 'OnEntText' hook inspired by later source games
+		if (m_ScriptScope.IsInitialized() && g_Hook_OnEntText.CanRunInScope( m_ScriptScope ))
+		{
+			if (ent_text_allow_script.GetBool())
+			{
+				ScriptVariant_t functionReturn;
+				if ( g_Hook_OnEntText.Call( m_ScriptScope, &functionReturn, NULL ) && functionReturn.m_type == FIELD_CSTRING )
+				{
+					CUtlStringList outStrings;
+					V_SplitString( functionReturn.m_pszString, "\n", outStrings );
+
+					FOR_EACH_VEC( outStrings, i )
+					{
+						EntityText( offset, outStrings[i], 0, 224, 240, 255 );
+						offset++;
+					}
+				}
+			}
+		}
+#endif
 	}
 
 	if (m_debugOverlays & OVERLAY_VIEWOFFSET)

@@ -135,4 +135,55 @@ class CAnimEventTInstanceHelper : public IScriptInstanceHelper
 	bool Set( void *p, const char *pszKey, ScriptVariant_t &variant );
 };
 
+//-----------------------------------------------------------------------------
+// Exposes EmitSound_t to VScript
+// (no members may be added: ModifyEmitSoundParams reinterpret_casts an EmitSound_t to this)
+//-----------------------------------------------------------------------------
+struct ScriptEmitSound_t : public EmitSound_t
+{
+	int GetChannel() { return m_nChannel; }
+	void SetChannel( int nChannel ) { m_nChannel = nChannel; }
+
+	const char *GetSoundName() { return m_pSoundName; }
+	// NOTE (port): pooled copy; the sound is emitted after the script call returns, when a
+	// script string may already be freed. (Final Mapbase still stores the script's pointer.)
+	void SetSoundName( const char *pSoundName ) { m_pSoundName = STRING( AllocPooledString( pSoundName ) ); }
+
+	float GetVolume() { return m_flVolume; }
+	void SetVolume( float flVolume ) { m_flVolume = flVolume; }
+
+	int GetSoundLevel() { return m_SoundLevel; }
+	void SetSoundLevel( int iSoundLevel ) { m_SoundLevel = (soundlevel_t)iSoundLevel; }
+
+	int GetFlags() { return m_nFlags; }
+	void SetFlags( int nFlags ) { m_nFlags = nFlags; }
+
+	int GetSpecialDSP() { return m_nSpecialDSP; }
+	void SetSpecialDSP( int nSpecialDSP ) { m_nSpecialDSP = nSpecialDSP; }
+
+	bool HasOrigin() { return m_pOrigin ? true : false; }
+	const Vector &GetOrigin() { return m_pOrigin ? *m_pOrigin : vec3_origin; }
+	// NOTE (port): final Mapbase form; 5896fb73 stored the address of the by-value parameter.
+	void SetOrigin( const Vector &origin ) { static Vector tempOrigin; tempOrigin = origin; m_pOrigin = &tempOrigin; }
+	void ClearOrigin() { m_pOrigin = NULL; }
+
+	float GetSoundTime() { return m_flSoundTime; }
+	void SetSoundTime( float flSoundTime ) { m_flSoundTime = flSoundTime; }
+
+	float GetEmitCloseCaption() { return m_bEmitCloseCaption; }
+	void SetEmitCloseCaption( bool bEmitCloseCaption ) { m_bEmitCloseCaption = bEmitCloseCaption; }
+
+	float GetWarnOnMissingCloseCaption() { return m_bWarnOnMissingCloseCaption; }
+	void SetWarnOnMissingCloseCaption( bool bWarnOnMissingCloseCaption ) { m_bWarnOnMissingCloseCaption = bWarnOnMissingCloseCaption; }
+
+	float GetWarnOnDirectWaveReference() { return m_bWarnOnDirectWaveReference; }
+	void SetWarnOnDirectWaveReference( bool bWarnOnDirectWaveReference ) { m_bWarnOnDirectWaveReference = bWarnOnDirectWaveReference; }
+
+	int GetSpeakerEntity() { return m_nSpeakerEntity; }
+	void SetSpeakerEntity( int nSpeakerEntity ) { m_nSpeakerEntity = nSpeakerEntity; }
+
+	int GetSoundScriptHandle() { return m_hSoundScriptHandle; }
+	void SetSoundScriptHandle( int hSoundScriptHandle ) { m_hSoundScriptHandle = hSoundScriptHandle; }
+};
+
 #endif

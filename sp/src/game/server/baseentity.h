@@ -2049,10 +2049,13 @@ public:
 	void ScriptSetTakeDamage( int val ) { m_takedamage = val; }
 
 	static ScriptHook_t	g_Hook_UpdateOnRemove;
+	static ScriptHook_t	g_Hook_OnEntText;
+
 	static ScriptHook_t	g_Hook_VPhysicsCollision;
 	static ScriptHook_t	g_Hook_FireBullets;
 	static ScriptHook_t	g_Hook_OnDeath;
 	static ScriptHook_t	g_Hook_OnKilledOther;
+	static ScriptHook_t	g_Hook_ModifyEmitSoundParams;
 #endif
 
 	string_t		m_iszVScripts;

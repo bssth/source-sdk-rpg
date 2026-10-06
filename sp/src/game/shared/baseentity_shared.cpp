@@ -2226,6 +2226,20 @@ void CBaseEntity::ModifyEmitSoundParams( EmitSound_t &params )
 		params.m_pSoundName = GameRules()->TranslateEffectForVisionFilter( "sounds", params.m_pSoundName );
 	}
 #endif
+
+#if defined( MAPBASE_VSCRIPT ) && !defined( CLIENT_DLL ) // NOTE (port): server-only until client VScript is ported
+	if (m_ScriptScope.IsInitialized() && g_Hook_ModifyEmitSoundParams.CanRunInScope( m_ScriptScope ))
+	{
+		HSCRIPT hParams = g_pScriptVM->RegisterInstance( reinterpret_cast<ScriptEmitSound_t*>(&params) );
+
+		// params
+		ScriptVariant_t functionReturn;
+		ScriptVariant_t args[] = { ScriptVariant_t( hParams ) };
+		g_Hook_ModifyEmitSoundParams.Call( m_ScriptScope, &functionReturn, args );
+
+		g_pScriptVM->RemoveInstance( hParams );
+	}
+#endif
 }
 
 //-----------------------------------------------------------------------------
