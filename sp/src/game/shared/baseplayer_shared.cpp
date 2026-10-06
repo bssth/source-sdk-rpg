@@ -1038,6 +1038,10 @@ float IntervalDistance( float x, float x0, float x1 )
 	return 0;
 }
 
+#if !defined(CLIENT_DLL) && defined(MAPBASE_VSCRIPT)
+extern ScriptHook_t g_Hook_FindUseEntity;
+#endif
+
 CBaseEntity *CBasePlayer::FindUseEntity()
 {
 	Vector forward, up;
@@ -1125,7 +1129,24 @@ CBaseEntity *CBasePlayer::FindUseEntity()
 				
 				// if this is directly under the cursor just return it now
 				if ( i == 0 )
+				{
+#if !defined(CLIENT_DLL) && defined(MAPBASE_VSCRIPT)
+					if (m_ScriptScope.IsInitialized() && g_Hook_FindUseEntity.CanRunInScope( m_ScriptScope ))
+					{
+						// entity, is_radius
+						ScriptVariant_t functionReturn;
+						ScriptVariant_t args[] = { ToHScript( pNearest ), false };
+						if (g_Hook_FindUseEntity.Call( m_ScriptScope, &functionReturn, args ))
+						{
+							pObject = ToEnt( functionReturn.m_hScript );
+							pNearest = pObject;
+						}
+					}
+
+					if (pObject)
+#endif
 					return pObject;
+				}
 			}
 		}
 	}
@@ -1210,6 +1231,21 @@ CBaseEntity *CBasePlayer::FindUseEntity()
 	{
 		pNearest = DoubleCheckUseNPC( pNearest, searchCenter, forward );
 	}
+
+	// NOTE (port): canon guards this one with MAPBASE_VSCRIPT only; the client has no
+	// g_Hook_FindUseEntity here, so it is guarded like the hook above.
+#if !defined(CLIENT_DLL) && defined(MAPBASE_VSCRIPT)
+	if (m_ScriptScope.IsInitialized() && g_Hook_FindUseEntity.CanRunInScope(m_ScriptScope))
+	{
+		// entity, is_radius
+		ScriptVariant_t functionReturn;
+		ScriptVariant_t args[] = { ToHScript( pNearest ), true };
+		if (g_Hook_FindUseEntity.Call( m_ScriptScope, &functionReturn, args ))
+		{
+			pNearest = ToEnt( functionReturn.m_hScript );
+		}
+	}
+#endif
 
 	if ( sv_debug_player_use.GetBool() )
 	{
