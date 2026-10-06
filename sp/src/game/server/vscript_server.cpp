@@ -123,6 +123,11 @@ public:
 		return ToHScript( gEntList.FindEntityClassNearestFacing( origin, facing, threshold, const_cast<char*>(classname) ) );
 	}
 
+	HSCRIPT FindByClassnameNearest2D( const char *szName, const Vector &vecSrc, float flRadius )
+	{
+		return ToHScript( gEntList.FindEntityByClassnameNearest2D( szName, vecSrc, flRadius ) );
+	}
+
 	void EnableEntityListening()
 	{
 		// Start getting entity updates!
@@ -191,6 +196,7 @@ BEGIN_SCRIPTDESC_ROOT_NAMED( CScriptEntityIterator, "CEntities", SCRIPT_SINGLETO
 #ifdef MAPBASE_VSCRIPT
 	DEFINE_SCRIPTFUNC( FindByClassnameWithinBox, "Find entities by class name within an AABB. Pass 'null' to start an iteration, or reference to a previously found entity to continue a search"  )
 	DEFINE_SCRIPTFUNC( FindByClassNearestFacing, "Find the nearest entity along the facing direction from the given origin within the angular threshold with the given classname."  )
+	DEFINE_SCRIPTFUNC( FindByClassnameNearest2D, "Find entities by class name nearest to a point in 2D space." )
 
 	DEFINE_SCRIPTFUNC( EnableEntityListening, "Enables the 'OnEntity' hooks. This function must be called before using them." )
 	DEFINE_SCRIPTFUNC( DisableEntityListening, "Disables the 'OnEntity' hooks." )

@@ -833,6 +833,41 @@ CBaseEntity *CGlobalEntityList::FindEntityByClassnameNearest( const char *szName
 	return pEntity;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: Find the nearest entity along 2D (XY) space.
+// (From Alien Swarm SDK, via Mapbase 4fdc0624)
+//-----------------------------------------------------------------------------
+CBaseEntity *CGlobalEntityList::FindEntityByClassnameNearest2D( const char *szName, const Vector &vecSrc, float flRadius )
+{
+	CBaseEntity *pEntity = NULL;
+
+	//
+	// Check for matching class names within the search radius.
+	//
+	float flMaxDist2 = flRadius * flRadius;
+	if (flMaxDist2 == 0)
+	{
+		flMaxDist2 = MAX_TRACE_LENGTH * MAX_TRACE_LENGTH;
+	}
+
+	CBaseEntity *pSearch = NULL;
+	while ((pSearch = gEntList.FindEntityByClassname( pSearch, szName )) != NULL)
+	{
+		if ( !pSearch->edict() )
+			continue;
+
+		float flDist2 = (pSearch->GetAbsOrigin().AsVector2D() - vecSrc.AsVector2D()).LengthSqr();
+
+		if (flMaxDist2 > flDist2)
+		{
+			pEntity = pSearch;
+			flMaxDist2 = flDist2;
+		}
+	}
+
+	return pEntity;
+}
+
 
 
 //-----------------------------------------------------------------------------
