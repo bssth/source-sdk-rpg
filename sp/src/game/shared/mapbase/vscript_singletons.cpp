@@ -981,6 +981,7 @@ class CScriptReadWriteFile : public CAutoGameSystem
 public:
 	static bool FileWrite( const char *szFile, const char *szInput );
 	static const char *FileRead( const char *szFile );
+	static bool FileExists( const char *szFile );
 
 	// NOTE: These two functions are new with Mapbase and have no Valve equivalent
 	static bool KeyValuesWrite( const char *szFile, HSCRIPT hInput );
@@ -1084,6 +1085,23 @@ const char *CScriptReadWriteFile::FileRead( const char *szFile )
 	{
 		return NULL;
 	}
+}
+
+//-----------------------------------------------------------------------------
+//
+//-----------------------------------------------------------------------------
+bool CScriptReadWriteFile::FileExists( const char *szFile )
+{
+	char pszFullName[MAX_PATH];
+	V_snprintf( pszFullName, sizeof(pszFullName), SCRIPT_RW_FULL_PATH_FMT, szFile );
+
+	if ( !V_RemoveDotSlashes( pszFullName, CORRECT_PATH_SEPARATOR, true ) )
+	{
+		DevWarning( 2, "Invalid file location : %s\n", szFile );
+		return NULL;
+	}
+
+	return g_pFullFileSystem->FileExists( pszFullName, SCRIPT_RW_PATH_ID );
 }
 
 //-----------------------------------------------------------------------------
@@ -2628,6 +2646,7 @@ void RegisterScriptSingletons()
 	ScriptRegisterSimpleHook( g_pScriptVM, g_Hook_OnRestore, "OnRestore", FIELD_VOID, "Called when the game is restored." );
 	ScriptRegisterFunctionNamed( g_pScriptVM, CScriptReadWriteFile::FileWrite, "StringToFile", "Stores the string into the file" );
 	ScriptRegisterFunctionNamed( g_pScriptVM, CScriptReadWriteFile::FileRead, "FileToString", "Returns the string from the file, null if no file or file is too big." );
+	ScriptRegisterFunctionNamed( g_pScriptVM, CScriptReadWriteFile::FileExists, "FileExists", "Returns true if the file exists." );
 	ScriptRegisterFunctionNamed( g_pScriptVM, CScriptReadWriteFile::KeyValuesWrite, "KeyValuesToFile", "Stores the CScriptKeyValues into the file" );
 	ScriptRegisterFunctionNamed( g_pScriptVM, CScriptReadWriteFile::KeyValuesRead, "FileToKeyValues", "Returns the CScriptKeyValues from the file, null if no file or file is too big." );
 
