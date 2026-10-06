@@ -242,6 +242,11 @@ public:
 	virtual void	OnChangeRunningBehavior( CAI_BehaviorBase *pOldBehavior,  CAI_BehaviorBase *pNewBehavior );
 	char* GetReadableName(void) { return "Citizen"; }
 
+#ifdef MAPBASE_VSCRIPT // NOTE (port): MAPBASE in upstream; only the script desc uses them here
+	int				GetCitizenType() { return (int)m_Type; }
+	void			SetCitizenType( int iType ) { m_Type = (CitizenType_t)iType; }
+#endif
+
 private:
 	//-----------------------------------------------------
 	// Conditions, Schedules, Tasks
@@ -323,6 +328,10 @@ private:
 	
 	//-----------------------------------------------------
 	
+#ifdef MAPBASE_VSCRIPT
+	static ScriptHook_t		g_Hook_SelectModel;
+	DECLARE_ENT_SCRIPTDESC();
+#endif
 	DECLARE_DATADESC();
 #ifdef _XBOX
 protected:
