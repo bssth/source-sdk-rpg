@@ -742,7 +742,7 @@ bool IsEntityCreationAllowedInScripts( void )
 	return g_VScriptGameSystem.m_bAllowEntityCreationInScripts;
 }
 
-static short VSCRIPT_SERVER_SAVE_RESTORE_VERSION = 2;
+static short VSCRIPT_SERVER_SAVE_RESTORE_VERSION = 3;
 
 
 //-----------------------------------------------------------------------------
