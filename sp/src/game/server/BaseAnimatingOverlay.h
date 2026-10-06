@@ -195,9 +195,26 @@ public:
 private:
 	int		AllocateLayer( int iPriority = 0 ); // lower priorities are processed first
 
+#ifdef MAPBASE_VSCRIPT
+	int	ScriptAddGesture( const char *pszActivity, bool autokill );
+	int	ScriptAddGestureID( int iActivity, bool autokill );
+	int	ScriptAddGestureSequence( const char *pszSequence, bool autokill ) { return AddGestureSequence( LookupSequence( pszSequence ), autokill ); }
+	int	ScriptAddGestureSequenceID( int iSequence, bool autokill ) { return AddGestureSequence( iSequence, autokill ); }
+
+	int ScriptFindGestureLayer( const char *pszActivity );
+	int	ScriptFindGestureLayerByID( int iActivity );
+	const char *ScriptGetLayerActivity( int iLayer );
+	int	ScriptGetLayerActivityID( int iLayer );
+
+	void ScriptSetLayerCycle( int iLayer, float flCycle ) { SetLayerCycle( iLayer, flCycle ); }
+#endif
+
 	DECLARE_SERVERCLASS();
 	DECLARE_DATADESC();
 	DECLARE_PREDICTABLE();
+#ifdef MAPBASE_VSCRIPT
+	DECLARE_ENT_SCRIPTDESC();
+#endif
 };
 
 EXTERN_SEND_TABLE(DT_BaseAnimatingOverlay);
