@@ -11,13 +11,41 @@
 #pragma once
 #endif
 
+#include "npcevent.h"
+#ifdef GAME_DLL
+#include "ai_memory.h"
+#endif
+
+//-----------------------------------------------------------------------------
+// Exposes surfacedata_t to VScript
+//-----------------------------------------------------------------------------
+struct scriptsurfacedata_t : public surfacedata_t
+{
+	float			GetFriction() { return physics.friction; }
+	float			GetThickness() { return physics.thickness; }
+
+	float			GetJumpFactor() { return game.jumpFactor; }
+	char			GetMaterialChar() { return game.material; }
+
+	const char*		GetSoundStepLeft();
+	const char*		GetSoundStepRight();
+	const char*		GetSoundImpactSoft();
+	const char*		GetSoundImpactHard();
+	const char*		GetSoundScrapeSmooth();
+	const char*		GetSoundScrapeRough();
+	const char*		GetSoundBulletImpact();
+	const char*		GetSoundRolling();
+	const char*		GetSoundBreak();
+	const char*		GetSoundStrain();
+};
+
 //-----------------------------------------------------------------------------
 // Exposes csurface_t to VScript
 //-----------------------------------------------------------------------------
 class CSurfaceScriptAccessor
 {
 public:
-	CSurfaceScriptAccessor( csurface_t &surf ) { m_surf = &surf; m_surfaceData = g_pScriptVM->RegisterInstance( physprops->GetSurfaceData( m_surf->surfaceProps ) ); }
+	CSurfaceScriptAccessor( csurface_t &surf ) { m_surf = &surf; m_surfaceData = g_pScriptVM->RegisterInstance( reinterpret_cast<scriptsurfacedata_t*>(physprops->GetSurfaceData( m_surf->surfaceProps )) ); }
 	~CSurfaceScriptAccessor() { delete m_surfaceData; }
 
 	// cplane_t stuff
@@ -129,6 +157,35 @@ private:
 //-----------------------------------------------------------------------------
 // Exposes animevent_t to VScript
 //-----------------------------------------------------------------------------
+struct scriptanimevent_t : public animevent_t
+{
+	int GetEvent() { return event; }
+	void SetEvent( int nEvent ) { event = nEvent; }
+
+	const char *GetOptions() { return options; }
+	// NOTE (port): pooled copy; HandleAnimEvent() reads options after the hook returns.
+	// (Final Mapbase gives scriptanimevent_t its own buffer instead, 7d78384b.)
+	void SetOptions( const char *pOptions ) { options = STRING( AllocPooledString( pOptions ) ); }
+
+	float GetCycle() { return cycle; }
+	void SetCycle( float flCycle ) { cycle = flCycle; }
+
+	float GetEventTime() { return eventtime; }
+	void SetEventTime( float flEventTime ) { eventtime = flEventTime; }
+
+	int GetType() { return type; }
+	// NOTE (port): 256cdfb7 assigned eventtime here; fixed as in final Mapbase.
+	void SetType( int nType ) { type = nType; }
+
+	HSCRIPT GetSource() { return ToHScript( pSource ); }
+	void SetSource( HSCRIPT hSource )
+	{
+		CBaseEntity *pEnt = ToEnt( hSource );
+		if (pEnt)
+			pSource = pEnt->GetBaseAnimating();
+	}
+};
+
 class CAnimEventTInstanceHelper : public IScriptInstanceHelper
 {
 	bool Get( void *p, const char *pszKey, ScriptVariant_t &variant );
@@ -185,5 +242,71 @@ struct ScriptEmitSound_t : public EmitSound_t
 	int GetSoundScriptHandle() { return m_hSoundScriptHandle; }
 	void SetSoundScriptHandle( int hSoundScriptHandle ) { m_hSoundScriptHandle = hSoundScriptHandle; }
 };
+
+//-----------------------------------------------------------------------------
+// Exposes CUserCmd to VScript
+//-----------------------------------------------------------------------------
+class CScriptUserCmd : public CUserCmd
+{
+public:
+	int GetCommandNumber() { return command_number; }
+
+	int ScriptGetTickCount() { return tick_count; }
+
+	const QAngle& GetViewAngles() { return viewangles; }
+	void SetViewAngles( const QAngle& val ) { viewangles = val; }
+
+	float GetForwardMove() { return forwardmove; }
+	void SetForwardMove( float val ) { forwardmove = val; }
+	float GetSideMove() { return sidemove; }
+	void SetSideMove( float val ) { sidemove = val; }
+	float GetUpMove() { return upmove; }
+	void SetUpMove( float val ) { upmove = val; }
+
+	int GetButtons() { return buttons; }
+	void SetButtons( int val ) { buttons = val; }
+	int GetImpulse() { return impulse; }
+	void SetImpulse( int val ) { impulse = val; }
+
+	int GetWeaponSelect() { return weaponselect; }
+	void SetWeaponSelect( int val ) { weaponselect = val; }
+	int GetWeaponSubtype() { return weaponsubtype; }
+	void SetWeaponSubtype( int val ) { weaponsubtype = val; }
+
+	int GetRandomSeed() { return random_seed; }
+
+	int GetMouseX() { return mousedx; }
+	void SetMouseX( int val ) { mousedx = val; }
+	int GetMouseY() { return mousedy; }
+	void SetMouseY( int val ) { mousedy = val; }
+};
+
+#ifdef GAME_DLL
+//-----------------------------------------------------------------------------
+// Exposes AI_EnemyInfo_t to VScript
+//-----------------------------------------------------------------------------
+struct Script_AI_EnemyInfo_t : public AI_EnemyInfo_t
+{
+	#define ENEMY_INFO_SCRIPT_FUNCS(type, name, var) \
+	type			Get##name() { return var; } \
+	void			Set##name( type v ) { var = v; }
+
+	HSCRIPT			Enemy() { return ToHScript(hEnemy); }
+	void			SetEnemy( HSCRIPT ent ) { hEnemy = ToEnt(ent); }
+
+	ENEMY_INFO_SCRIPT_FUNCS( Vector, LastKnownLocation, vLastKnownLocation );
+	ENEMY_INFO_SCRIPT_FUNCS( Vector, LastSeenLocation, vLastSeenLocation );
+	ENEMY_INFO_SCRIPT_FUNCS( float, TimeLastSeen, timeLastSeen );
+	ENEMY_INFO_SCRIPT_FUNCS( float, TimeFirstSeen, timeFirstSeen );
+	ENEMY_INFO_SCRIPT_FUNCS( float, TimeLastReacquired, timeLastReacquired );
+	ENEMY_INFO_SCRIPT_FUNCS( float, TimeValidEnemy, timeValidEnemy );
+	ENEMY_INFO_SCRIPT_FUNCS( float, TimeLastReceivedDamageFrom, timeLastReceivedDamageFrom );
+	ENEMY_INFO_SCRIPT_FUNCS( float, TimeAtFirstHand, timeAtFirstHand );
+	ENEMY_INFO_SCRIPT_FUNCS( bool, DangerMemory, bDangerMemory );
+	ENEMY_INFO_SCRIPT_FUNCS( bool, EludedMe, bEludedMe );
+	ENEMY_INFO_SCRIPT_FUNCS( bool, Unforgettable, bUnforgettable );
+	ENEMY_INFO_SCRIPT_FUNCS( bool, MobbedMe, bMobbedMe );
+};
+#endif
 
 #endif

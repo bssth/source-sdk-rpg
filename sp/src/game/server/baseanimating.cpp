@@ -28,6 +28,10 @@
 #include "smoke_trail.h"
 #include "props.h"
 
+#ifdef MAPBASE_VSCRIPT
+#include "mapbase/vscript_funcs_shared.h"
+#endif
+
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -1214,7 +1218,7 @@ bool CBaseAnimating::ScriptHookHandleAnimEvent( animevent_t *pEvent )
 {
 	if (m_ScriptScope.IsInitialized() && g_Hook_HandleAnimEvent.CanRunInScope(m_ScriptScope))
 	{
-		HSCRIPT hEvent = g_pScriptVM->RegisterInstance( pEvent );
+		HSCRIPT hEvent = g_pScriptVM->RegisterInstance( reinterpret_cast<scriptanimevent_t*>(pEvent) );
 
 		// event
 		ScriptVariant_t args[] = { hEvent };
