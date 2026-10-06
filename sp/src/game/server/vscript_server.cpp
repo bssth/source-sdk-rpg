@@ -38,10 +38,16 @@ extern ScriptClassDesc_t * GetScriptDesc( CBaseEntity * );
 #endif // VMPROFILE
 
 
+#ifdef MAPBASE_VSCRIPT
+static ScriptHook_t g_Hook_OnEntityCreated;
+static ScriptHook_t g_Hook_OnEntitySpawned;
+static ScriptHook_t g_Hook_OnEntityDeleted;
+#endif
+
 //-----------------------------------------------------------------------------
 //
 //-----------------------------------------------------------------------------
-class CScriptEntityIterator
+class CScriptEntityIterator : public IEntityListener
 {
 public:
 #ifdef MAPBASE_VSCRIPT
@@ -116,6 +122,51 @@ public:
 	{
 		return ToHScript( gEntList.FindEntityClassNearestFacing( origin, facing, threshold, const_cast<char*>(classname) ) );
 	}
+
+	void EnableEntityListening()
+	{
+		// Start getting entity updates!
+		gEntList.AddListenerEntity( this );
+	}
+
+	void DisableEntityListening()
+	{
+		// Stop getting entity updates!
+		gEntList.RemoveListenerEntity( this );
+	}
+
+	void OnEntityCreated( CBaseEntity *pEntity )
+	{
+		// NOTE (port): IsEventHooked guard as in final Mapbase
+		if ( g_pScriptVM && GetScriptHookManager().IsEventHooked( "OnEntityCreated" ) )
+		{
+			// entity
+			ScriptVariant_t args[] = { ScriptVariant_t( pEntity->GetScriptInstance() ) };
+			g_Hook_OnEntityCreated.Call( NULL, NULL, args );
+		}
+	};
+
+	void OnEntitySpawned( CBaseEntity *pEntity )
+	{
+		// NOTE (port): IsEventHooked guard as in final Mapbase
+		if ( g_pScriptVM && GetScriptHookManager().IsEventHooked( "OnEntitySpawned" ) )
+		{
+			// entity
+			ScriptVariant_t args[] = { ScriptVariant_t( pEntity->GetScriptInstance() ) };
+			g_Hook_OnEntitySpawned.Call( NULL, NULL, args );
+		}
+	};
+
+	void OnEntityDeleted( CBaseEntity *pEntity )
+	{
+		// NOTE (port): IsEventHooked guard as in final Mapbase
+		if ( g_pScriptVM && GetScriptHookManager().IsEventHooked( "OnEntityDeleted" ) )
+		{
+			// entity
+			ScriptVariant_t args[] = { ScriptVariant_t( pEntity->GetScriptInstance() ) };
+			g_Hook_OnEntityDeleted.Call( NULL, NULL, args );
+		}
+	};
 #endif
 
 private:
@@ -140,6 +191,21 @@ BEGIN_SCRIPTDESC_ROOT_NAMED( CScriptEntityIterator, "CEntities", SCRIPT_SINGLETO
 #ifdef MAPBASE_VSCRIPT
 	DEFINE_SCRIPTFUNC( FindByClassnameWithinBox, "Find entities by class name within an AABB. Pass 'null' to start an iteration, or reference to a previously found entity to continue a search"  )
 	DEFINE_SCRIPTFUNC( FindByClassNearestFacing, "Find the nearest entity along the facing direction from the given origin within the angular threshold with the given classname."  )
+
+	DEFINE_SCRIPTFUNC( EnableEntityListening, "Enables the 'OnEntity' hooks. This function must be called before using them." )
+	DEFINE_SCRIPTFUNC( DisableEntityListening, "Disables the 'OnEntity' hooks." )
+
+	BEGIN_SCRIPTHOOK( g_Hook_OnEntityCreated, "OnEntityCreated", FIELD_VOID, "Called when an entity is created. Requires EnableEntityListening() to be fired beforehand." )
+		DEFINE_SCRIPTHOOK_PARAM( "entity", FIELD_HSCRIPT )
+	END_SCRIPTHOOK()
+
+	BEGIN_SCRIPTHOOK( g_Hook_OnEntitySpawned, "OnEntitySpawned", FIELD_VOID, "Called when an entity spawns. Requires EnableEntityListening() to be fired beforehand." )
+		DEFINE_SCRIPTHOOK_PARAM( "entity", FIELD_HSCRIPT )
+	END_SCRIPTHOOK()
+
+	BEGIN_SCRIPTHOOK( g_Hook_OnEntityDeleted, "OnEntityDeleted", FIELD_VOID, "Called when an entity is deleted. Requires EnableEntityListening() to be fired beforehand." )
+		DEFINE_SCRIPTHOOK_PARAM( "entity", FIELD_HSCRIPT )
+	END_SCRIPTHOOK()
 #endif
 END_SCRIPTDESC();
 
@@ -629,6 +695,10 @@ public:
 
 	virtual void LevelShutdownPostEntity( void )
 	{
+#ifdef MAPBASE_VSCRIPT
+		// NOTE (port): from Mapbase 63a9dce4, so the listener does not outlive the level's VM
+		g_ScriptEntityIterator.DisableEntityListening();
+#endif
 		VScriptServerTerm();
 	}
 
