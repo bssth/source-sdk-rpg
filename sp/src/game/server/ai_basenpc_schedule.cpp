@@ -276,6 +276,14 @@ void CAI_BaseNPC::NextScheduledTask ( void )
 void CAI_BaseNPC::BuildScheduleTestBits( void )
 {
 	//NOTENOTE: Always defined in the leaf classes
+	
+#ifdef MAPBASE_VSCRIPT
+	if (m_ScriptScope.IsInitialized() && g_Hook_BuildScheduleTestBits.CanRunInScope( m_ScriptScope ))
+	{
+		ScriptVariant_t functionReturn;
+		g_Hook_BuildScheduleTestBits.Call( m_ScriptScope, &functionReturn, NULL );
+	}
+#endif
 }
 
 
@@ -730,6 +738,23 @@ void CAI_BaseNPC::MaintainSchedule ( void )
 			AI_PROFILE_SCOPE_BEGIN_( pszTaskName );
 			AI_PROFILE_SCOPE_BEGIN(CAI_BaseNPC_StartTask);
 
+#ifdef MAPBASE_VSCRIPT
+			if (m_ScriptScope.IsInitialized() && g_Hook_StartTask.CanRunInScope( m_ScriptScope ))
+			{
+				// task, task_id, task_data
+				ScriptVariant_t functionReturn;
+				ScriptVariant_t args[] = { (bDebugTaskNames) ? pszTaskName : TaskName( pTask->iTask ), pTask->iTask, pTask->flTaskData };
+				if (g_Hook_StartTask.Call( m_ScriptScope, &functionReturn, args ))
+				{
+					// Returning false overrides original functionality
+					if (functionReturn.m_bool != false)
+						StartTask( pTask );
+				}
+				else
+					StartTask( pTask );
+			}
+			else
+#endif
 			StartTask( pTask );
 
 			AI_PROFILE_SCOPE_END();
@@ -766,6 +791,23 @@ void CAI_BaseNPC::MaintainSchedule ( void )
 				int j;
 				for (j = 0; j < 8; j++)
 				{
+#ifdef MAPBASE_VSCRIPT
+					if (m_ScriptScope.IsInitialized() && g_Hook_RunTask.CanRunInScope( m_ScriptScope ))
+					{
+						// task, task_id, task_data
+						ScriptVariant_t functionReturn;
+						ScriptVariant_t args[] = { (bDebugTaskNames) ? pszTaskName : TaskName( pTask->iTask ), pTask->iTask, pTask->flTaskData };
+						if (g_Hook_RunTask.Call( m_ScriptScope, &functionReturn, args ))
+						{
+							// Returning false overrides original functionality
+							if (functionReturn.m_bool != false)
+								RunTask( pTask );
+						}
+						else
+							RunTask( pTask );
+					}
+					else
+#endif
 					RunTask( pTask );
 
 					if ( GetTaskInterrupt() == 0 || TaskIsComplete() || HasCondition(COND_TASK_FAILED) )

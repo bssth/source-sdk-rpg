@@ -1549,8 +1549,51 @@ void CBaseEntity::TakeDamage( const CTakeDamageInfo &inputInfo )
 
 		//Msg("%s took %.2f Damage, at %.2f\n", GetClassname(), info.GetDamage(), gpGlobals->curtime );
 
+#ifdef MAPBASE_VSCRIPT
+		if (m_ScriptScope.IsInitialized() && g_Hook_OnTakeDamage.CanRunInScope( m_ScriptScope ))
+		{
+			HSCRIPT hInfo = g_pScriptVM->RegisterInstance( &info );
+
+			// info
+			ScriptVariant_t functionReturn;
+			ScriptVariant_t args[] = { ScriptVariant_t( hInfo ) };
+			if ( g_Hook_OnTakeDamage.Call( m_ScriptScope, &functionReturn, args ) )
+			{
+				if (functionReturn.m_type == FIELD_BOOLEAN && functionReturn.m_bool == false)
+				{
+					g_pScriptVM->RemoveInstance( hInfo );
+					return;
+				}
+			}
+
+			g_pScriptVM->RemoveInstance( hInfo );
+		}
+#endif
+
 		OnTakeDamage( info );
 	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Allows entities to be 'invisible' to NPC senses.
+//-----------------------------------------------------------------------------
+bool CBaseEntity::CanBeSeenBy( CAI_BaseNPC *pNPC )
+{
+#ifdef MAPBASE_VSCRIPT
+	if (m_ScriptScope.IsInitialized() && g_Hook_CanBeSeenBy.CanRunInScope(m_ScriptScope))
+	{
+		// npc
+		ScriptVariant_t functionReturn;
+		ScriptVariant_t args[] = { ToHScript( pNPC ) };
+		if (g_Hook_CanBeSeenBy.Call( m_ScriptScope, &functionReturn, args ))
+		{
+			if (functionReturn.m_bool == false)
+				return false;
+		}
+	}
+#endif
+
+	return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -6583,6 +6626,61 @@ void CBaseEntity::ModifyOrAppendCriteria( AI_CriteriaSet& set )
 	{
 		world->AppendContextToCriteria( set, "world" );
 	}
+
+#ifdef MAPBASE_VSCRIPT
+	if (m_ScriptScope.IsInitialized() && g_Hook_ModifyOrAppendCriteria.CanRunInScope(m_ScriptScope))
+	{
+		ScriptVariant_t functionReturn;
+		if (g_Hook_ModifyOrAppendCriteria.Call( m_ScriptScope, &functionReturn, NULL ))
+		{
+			if (functionReturn.m_hScript != NULL)
+			{
+				int nIterator = -1;
+				ScriptVariant_t varKey, varValue;
+				while ((nIterator = g_pScriptVM->GetKeyValue( functionReturn.m_hScript, nIterator, &varKey, &varValue )) != -1)
+				{
+					float flWeight = 1.0f;
+					char szValue[128];
+					switch (varValue.m_type)
+					{
+						case FIELD_CSTRING:
+							{
+								char *colon = V_strstr( varValue.m_pszString, ":" );
+								if (colon)
+								{
+									// Use as weight
+									flWeight = atof(colon+1);
+									*colon = NULL;
+								}
+								V_strncpy( szValue, varValue.m_pszString, sizeof( szValue ) );
+							}
+							break;
+						case FIELD_BOOLEAN:
+							V_snprintf( szValue, sizeof( szValue ), "%d", varValue.m_bool );
+							break;
+						case FIELD_INTEGER:
+							V_snprintf( szValue, sizeof( szValue ), "%i", varValue.m_int );
+							break;
+						case FIELD_FLOAT:
+							V_snprintf( szValue, sizeof( szValue ), "%f", varValue.m_float );
+							break;
+						case FIELD_VECTOR:
+							V_snprintf( szValue, sizeof( szValue ), "%f %f %f", varValue.m_pVector->x, varValue.m_pVector->y, varValue.m_pVector->z );
+							break;
+						default:
+							Warning( "ModifyOrAppendCriteria doesn't know how to handle field %i for %s\n", varValue.m_type, varKey.m_pszString );
+							break;
+					}
+
+					set.AppendCriteria( varKey.m_pszString, szValue, flWeight );
+
+					g_pScriptVM->ReleaseValue( varKey );
+					g_pScriptVM->ReleaseValue( varValue );
+				}
+			}
+		}
+	}
+#endif
 }
 
 //-----------------------------------------------------------------------------

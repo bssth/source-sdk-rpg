@@ -79,6 +79,9 @@ public:
 
 	CBaseEntity *	GetFirstSeenEntity( AISightIter_t *pIter, seentype_t iSeenType = SEEN_ALL ) const;
 	CBaseEntity *	GetNextSeenEntity( AISightIter_t *pIter ) const;
+#ifdef MAPBASE_VSCRIPT
+	bool			GetSeenEntityIndex( AISightIter_t *pIter, CBaseEntity *pSightEnt, seentype_t iSeenType ) const;
+#endif
 
 	CSound *		GetFirstHeardSound( AISoundIter_t *pIter );
 	CSound *		GetNextHeardSound( AISoundIter_t *pIter );
@@ -146,6 +149,12 @@ public:
 	CBaseEntity *	GetNext( int *pIter );
 
 	virtual void 	AddEntity( CBaseEntity *pEntity );
+#ifdef MAPBASE_VSCRIPT
+	virtual void 	RemoveEntity( CBaseEntity *pEntity );
+
+	void	ScriptAddEntity( HSCRIPT hEnt ) { AddEntity( ToEnt( hEnt ) ); }
+	void	ScriptRemoveEntity( HSCRIPT hEnt ) { RemoveEntity( ToEnt( hEnt ) ); }
+#endif
 
 private:
 	virtual void 	OnEntitySpawned( CBaseEntity *pEntity );

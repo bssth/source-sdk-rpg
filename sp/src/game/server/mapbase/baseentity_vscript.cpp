@@ -11,6 +11,7 @@
 #include "vscript_server.h"
 #include "eventqueue.h"
 #include "tier1/fmtstr.h"
+#include "AI_Criteria.h"
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -48,8 +49,11 @@ ScriptHook_t	CBaseEntity::g_Hook_OnEntText;
 ScriptHook_t	CBaseEntity::g_Hook_VPhysicsCollision;
 ScriptHook_t	CBaseEntity::g_Hook_FireBullets;
 ScriptHook_t	CBaseEntity::g_Hook_OnDeath;
+ScriptHook_t	CBaseEntity::g_Hook_OnTakeDamage;
 ScriptHook_t	CBaseEntity::g_Hook_OnKilledOther;
 ScriptHook_t	CBaseEntity::g_Hook_ModifyEmitSoundParams;
+ScriptHook_t	CBaseEntity::g_Hook_ModifyOrAppendCriteria;
+ScriptHook_t	CBaseEntity::g_Hook_CanBeSeenBy;
 #endif
 
 BEGIN_ENT_SCRIPTDESC_ROOT_WITH_HELPER( CBaseEntity, "Root class of all server-side entities", &g_BaseEntityScriptInstanceHelper )
@@ -171,6 +175,7 @@ BEGIN_ENT_SCRIPTDESC_ROOT_WITH_HELPER( CBaseEntity, "Root class of all server-si
 
 	DEFINE_SCRIPTFUNC_NAMED( ScriptGetContext, "GetContext", "Get a response context value" )
 	DEFINE_SCRIPTFUNC_NAMED( ScriptAddContext, "AddContext", "Add a response context value" )
+	DEFINE_SCRIPTFUNC( RemoveContext, "Remove a response context" )
 	DEFINE_SCRIPTFUNC( GetContextExpireTime, "Get a response context's expiration time" )
 	DEFINE_SCRIPTFUNC( GetContextCount, "Get the number of response contexts" )
 	DEFINE_SCRIPTFUNC_NAMED( ScriptGetContextIndex, "GetContextIndex", "Get a response context at a specific index in the form of a table" )
@@ -311,7 +316,11 @@ BEGIN_ENT_SCRIPTDESC_ROOT_WITH_HELPER( CBaseEntity, "Root class of all server-si
 		DEFINE_SCRIPTHOOK_PARAM( "info", FIELD_HSCRIPT )
 	END_SCRIPTHOOK()
 
-	BEGIN_SCRIPTHOOK( CBaseEntity::g_Hook_OnDeath, "OnDeath", FIELD_BOOLEAN, "Called when the entity dies (Event_Killed). Returning false makes the entity cancel death, although this could have unforeseen consequences. For hooking any damage instead of just death, see filter_script and PassesFinalDamageFilter." )
+	BEGIN_SCRIPTHOOK( CBaseEntity::g_Hook_OnDeath, "OnDeath", FIELD_BOOLEAN, "Called when the entity dies (Event_Killed). Returning false makes the entity cancel death, although this could have unforeseen consequences. For hooking any damage instead of just death, use OnTakeDamage." )
+		DEFINE_SCRIPTHOOK_PARAM( "info", FIELD_HSCRIPT )
+	END_SCRIPTHOOK()
+
+	BEGIN_SCRIPTHOOK( CBaseEntity::g_Hook_OnTakeDamage, "OnTakeDamage", FIELD_BOOLEAN, "Called when the entity takes damage (OnTakeDamage). Returning false makes the entity cancel the damage, similar to a damage filter. This is called after any damage filter operations." )
 		DEFINE_SCRIPTHOOK_PARAM( "info", FIELD_HSCRIPT )
 	END_SCRIPTHOOK()
 
@@ -322,6 +331,12 @@ BEGIN_ENT_SCRIPTDESC_ROOT_WITH_HELPER( CBaseEntity, "Root class of all server-si
 
 	BEGIN_SCRIPTHOOK( CBaseEntity::g_Hook_ModifyEmitSoundParams, "ModifyEmitSoundParams", FIELD_VOID, "Called every time a sound is emitted on this entity, allowing for its parameters to be modified." )
 		DEFINE_SCRIPTHOOK_PARAM( "params", FIELD_HSCRIPT )
+	END_SCRIPTHOOK()
+
+	DEFINE_SIMPLE_SCRIPTHOOK( CBaseEntity::g_Hook_ModifyOrAppendCriteria, "ModifyOrAppendCriteria", FIELD_HSCRIPT, "Called when the criteria set is collected for a response. Return a table of keyvalues to add to the criteria set." )
+
+	BEGIN_SCRIPTHOOK( CBaseEntity::g_Hook_CanBeSeenBy, "CanBeSeenBy", FIELD_BOOLEAN, "Whether or not this entity can be seen by the specified NPC." )
+		DEFINE_SCRIPTHOOK_PARAM( "npc", FIELD_HSCRIPT )
 	END_SCRIPTHOOK()
 #endif
 END_SCRIPTDESC();
@@ -1339,6 +1354,33 @@ float CBaseEntity::GetContextExpireTime( const char *name )
 		return 0.0f;
 
 	return m_ResponseContexts[ idx ].m_fExpirationTime;
+}
+
+//-----------------------------------------------------------------------------
+// NOTE (port): MAPBASE-only in Mapbase, like GetContextExpireTime above.
+//-----------------------------------------------------------------------------
+void CBaseEntity::RemoveContext( const char *contextName )
+{
+	char key[ 128 ];
+	char value[ 128 ];
+	float duration;
+
+	const char *p = contextName;
+	while ( p )
+	{
+		duration = 0.0f;
+		p = SplitContext( p, key, sizeof( key ), value, sizeof( value ), &duration );
+		if ( duration )
+		{
+			duration += gpGlobals->curtime;
+		}
+
+		int iIndex = FindContextByName( key );
+		if ( iIndex != -1 )
+		{
+			m_ResponseContexts.Remove( iIndex );
+		}
+	}
 }
 
 //-----------------------------------------------------------------------------

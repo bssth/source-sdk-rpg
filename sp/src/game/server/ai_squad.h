@@ -186,8 +186,8 @@ private:
 
 	bool					ScriptIsSilentMember( HSCRIPT hNPC );
 
-	void					ScriptSetSquadData( int iSlot, const char *data );
-	const char				*ScriptGetSquadData( int iSlot );
+	void					ScriptSetSquadData( int iSlot, int data );
+	int						ScriptGetSquadData( int iSlot );
 #endif
 
 private:

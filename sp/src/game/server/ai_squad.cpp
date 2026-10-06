@@ -882,14 +882,14 @@ void		CAI_Squad::ScriptRemoveFromSquad( HSCRIPT hNPC ) { RemoveFromSquad( HScrip
 
 bool		CAI_Squad::ScriptIsSilentMember( HSCRIPT hNPC ) { return IsSilentMember( HScriptToClass<CAI_BaseNPC>( hNPC ) ); }
 
-void CAI_Squad::ScriptSetSquadData( int iSlot, const char *data )
+void CAI_Squad::ScriptSetSquadData( int iSlot, int data )
 {
 	SetSquadData( iSlot, data );
 }
 
-const char *CAI_Squad::ScriptGetSquadData( int iSlot )
+int CAI_Squad::ScriptGetSquadData( int iSlot )
 {
-	const char *data;
+	int data;
 	GetSquadData( iSlot, &data );
 	return data;
 }
