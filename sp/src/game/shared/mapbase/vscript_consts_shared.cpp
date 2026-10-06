@@ -293,6 +293,17 @@ void RegisterSharedScriptConstants()
 	ScriptRegisterConstant( g_pScriptVM, EF_ITEM_BLINK, "Effect flag used in GetEffects(), etc." );
 	ScriptRegisterConstant( g_pScriptVM, EF_PARENT_ANIMATES, "Effect flag used in GetEffects(), etc." );
 
+	//
+	// Solid Types
+	//
+	ScriptRegisterConstant( g_pScriptVM, SOLID_NONE, "Solid type used by VPhysics" );
+	ScriptRegisterConstant( g_pScriptVM, SOLID_BSP, "Solid type used by VPhysics" );
+	ScriptRegisterConstant( g_pScriptVM, SOLID_BBOX, "Solid type used by VPhysics" );
+	ScriptRegisterConstant( g_pScriptVM, SOLID_OBB, "Solid type used by VPhysics" );
+	ScriptRegisterConstant( g_pScriptVM, SOLID_OBB_YAW, "Solid type used by VPhysics" );
+	ScriptRegisterConstant( g_pScriptVM, SOLID_CUSTOM, "Solid type used by VPhysics" );
+	ScriptRegisterConstant( g_pScriptVM, SOLID_VPHYSICS, "Solid type used by VPhysics" );
+
 	// 
 	// Solid Flags
 	// 
