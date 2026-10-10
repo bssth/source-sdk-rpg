@@ -1447,6 +1447,24 @@ bool CBBRules::ShouldBurningPropsEmitLight()
 	return true;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: Fire OnSkillChanged on every logic_skill (Mapbase behavior)
+//-----------------------------------------------------------------------------
+void CBBRules::OnSkillLevelChanged( int iNewLevel )
+{
+	BaseClass::OnSkillLevelChanged( iNewLevel );
+
+	variant_t varNewLevel;
+	varNewLevel.SetInt( iNewLevel );
+
+	CBaseEntity *pEntity = gEntList.FindEntityByClassname( NULL, "logic_skill" );
+	while ( pEntity )
+	{
+		pEntity->AcceptInput( "SkillLevelChanged", UTIL_GetLocalPlayer(), NULL, varNewLevel, 0 );
+		pEntity = gEntList.FindEntityByClassname( pEntity, "logic_skill" );
+	}
+}
+
 
 #endif//CLIENT_DLL
 

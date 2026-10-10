@@ -75,6 +75,9 @@ public:
 	virtual float			GetAmmoDamage( CBaseEntity *pAttacker, CBaseEntity *pVictim, int nAmmoType );
 
 	virtual bool			ShouldBurningPropsEmitLight();
+
+	// Tells logic_skill entities that the difficulty changed
+	virtual void			OnSkillLevelChanged( int iNewLevel );
 public:
 	bool AllowDamage( CBaseEntity *pVictim, const CTakeDamageInfo &info );
 

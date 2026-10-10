@@ -201,6 +201,51 @@ ConVar	ai_spread_pattern_focus_time( "ai_spread_pattern_focus_time","0.8" );
 ConVar	ai_reaction_delay_idle( "ai_reaction_delay_idle","0.3" );
 ConVar	ai_reaction_delay_alert( "ai_reaction_delay_alert", "0.1" );
 
+//-----------------------------------------------------------------------------
+// Half-Life: BB - difficulty affects how NPCs fight the *player* (not each other):
+//   proficiency offset - weapon proficiency steps added when shooting at the player
+//   reaction scale     - multiplier on ai_reaction_delay_* before a seen player counts as an enemy
+//   focus scale        - multiplier on ai_spread_*_focus_time (how long until shots tighten up)
+// Suffix _1/_2/_3 = easy/normal/hard, matching skill.cfg.
+//-----------------------------------------------------------------------------
+ConVar	sk_ai_proficiency_offset_1( "sk_ai_proficiency_offset_1", "-1" );
+ConVar	sk_ai_proficiency_offset_2( "sk_ai_proficiency_offset_2", "0" );
+ConVar	sk_ai_proficiency_offset_3( "sk_ai_proficiency_offset_3", "1" );
+ConVar	sk_ai_reaction_scale_1( "sk_ai_reaction_scale_1", "2.0" );
+ConVar	sk_ai_reaction_scale_2( "sk_ai_reaction_scale_2", "1.0" );
+ConVar	sk_ai_reaction_scale_3( "sk_ai_reaction_scale_3", "0.6" );
+ConVar	sk_ai_focus_scale_1( "sk_ai_focus_scale_1", "1.5" );
+ConVar	sk_ai_focus_scale_2( "sk_ai_focus_scale_2", "1.0" );
+ConVar	sk_ai_focus_scale_3( "sk_ai_focus_scale_3", "0.75" );
+
+static float AI_SkillValue( const ConVar &easy, const ConVar &normal, const ConVar &hard )
+{
+	switch ( g_pGameRules ? g_pGameRules->GetSkillLevel() : SKILL_MEDIUM )
+	{
+	case SKILL_EASY:	return easy.GetFloat();
+	case SKILL_HARD:	return hard.GetFloat();
+	default:			return normal.GetFloat();
+	}
+}
+
+static bool AI_SkillAppliesTo( CBaseEntity *pTarget )
+{
+	return pTarget && pTarget->IsPlayer();
+}
+
+static WeaponProficiency_t AI_SkillAdjustedProficiency( WeaponProficiency_t proficiency )
+{
+	int iAdjusted = (int)proficiency + RoundFloatToInt( AI_SkillValue( sk_ai_proficiency_offset_1, sk_ai_proficiency_offset_2, sk_ai_proficiency_offset_3 ) );
+	return (WeaponProficiency_t)clamp( iAdjusted, (int)WEAPON_PROFICIENCY_POOR, (int)WEAPON_PROFICIENCY_PERFECT );
+}
+
+static float AI_SkillFocusTime( const ConVar &focusTime, CBaseEntity *pTarget )
+{
+	if ( !AI_SkillAppliesTo( pTarget ) )
+		return focusTime.GetFloat();
+	return focusTime.GetFloat() * AI_SkillValue( sk_ai_focus_scale_1, sk_ai_focus_scale_2, sk_ai_focus_scale_3 );
+}
+
 ConVar ai_strong_optimizations( "ai_strong_optimizations", ( IsX360() ) ? "1" : "0" );
 bool AIStrongOpt( void )
 {
@@ -5725,9 +5770,14 @@ float CAI_BaseNPC::EnemyDistance( CBaseEntity *pEnemy )
 
 float CAI_BaseNPC::GetReactionDelay( CBaseEntity *pEnemy )
 {
-	return ( m_NPCState == NPC_STATE_ALERT || m_NPCState == NPC_STATE_COMBAT ) ? 
-				ai_reaction_delay_alert.GetFloat() : 
+	float flDelay = ( m_NPCState == NPC_STATE_ALERT || m_NPCState == NPC_STATE_COMBAT ) ?
+				ai_reaction_delay_alert.GetFloat() :
 				ai_reaction_delay_idle.GetFloat();
+
+	if ( AI_SkillAppliesTo( pEnemy ) )
+		flDelay *= AI_SkillValue( sk_ai_reaction_scale_1, sk_ai_reaction_scale_2, sk_ai_reaction_scale_3 );
+
+	return flDelay;
 }
 
 //-----------------------------------------------------------------------------
@@ -9885,13 +9935,17 @@ Vector CAI_BaseNPC::GetActualShootPosition( const Vector &shootOrigin )
 //-----------------------------------------------------------------------------
 float CAI_BaseNPC::GetSpreadBias( CBaseCombatWeapon *pWeapon, CBaseEntity *pTarget )
 {
-	float bias = BaseClass::GetSpreadBias( pWeapon, pTarget );
+	float bias;
+	if ( pWeapon && AI_SkillAppliesTo( pTarget ) )
+		bias = pWeapon->GetSpreadBias( AI_SkillAdjustedProficiency( GetCurrentWeaponProficiency() ) );
+	else
+		bias = BaseClass::GetSpreadBias( pWeapon, pTarget );
 	AI_EnemyInfo_t *pEnemyInfo = m_pEnemies->Find( pTarget );
 	if ( ai_shot_bias.GetFloat() != 1.0 )
 		bias = ai_shot_bias.GetFloat();
 	if ( pEnemyInfo )
 	{
-		float timeToFocus = ai_spread_pattern_focus_time.GetFloat();
+		float timeToFocus = AI_SkillFocusTime( ai_spread_pattern_focus_time, pTarget );
 		if ( timeToFocus > 0.0 )
 		{
 			float timeSinceValidEnemy = gpGlobals->curtime - pEnemyInfo->timeValidEnemy;
@@ -9921,12 +9975,16 @@ float CAI_BaseNPC::GetSpreadBias( CBaseCombatWeapon *pWeapon, CBaseEntity *pTarg
 //-----------------------------------------------------------------------------
 Vector CAI_BaseNPC::GetAttackSpread( CBaseCombatWeapon *pWeapon, CBaseEntity *pTarget )
 {
-	Vector baseResult = BaseClass::GetAttackSpread( pWeapon, pTarget );
+	Vector baseResult;
+	if ( pWeapon && AI_SkillAppliesTo( pTarget ) )
+		baseResult = pWeapon->GetBulletSpread( AI_SkillAdjustedProficiency( GetCurrentWeaponProficiency() ) );
+	else
+		baseResult = BaseClass::GetAttackSpread( pWeapon, pTarget );
 
 	AI_EnemyInfo_t *pEnemyInfo = m_pEnemies->Find( pTarget );
 	if ( pEnemyInfo )
 	{
-		float timeToFocus = ai_spread_cone_focus_time.GetFloat();
+		float timeToFocus = AI_SkillFocusTime( ai_spread_cone_focus_time, pTarget );
 		if ( timeToFocus > 0.0 )
 		{
 			float timeSinceValidEnemy = gpGlobals->curtime - pEnemyInfo->timeValidEnemy;

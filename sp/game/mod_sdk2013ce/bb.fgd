@@ -216,3 +216,90 @@
 	input ShowHint(string)           : "Show this hint to the player. Optional string parameter sets the hint name (used by replace_key)."
 	input EndHint(void)               : "Dismiss this hint."
 ]
+
+//-------------------------------------------------------------------------
+// Ported Mapbase AI / logic entities
+//-------------------------------------------------------------------------
+
+@PointClass base(Targetname, EnableDisable) iconsprite("editor/ai_relationship.vmt") = ai_weaponmodifier :
+	"Overrides the burst/rest timing (shot regulator) of the target NPCs' weapons while enabled. " +
+	"Ranges are written as 'min:max' in seconds. Up to 16 NPCs at once."
+[
+	target(target_destination) : "Target NPC(s)" : "" : "NPCs to modify when enabled. Wildcards allowed."
+	BurstInterval(string) : "Burst interval" : "" : "Time between shots inside a burst, 'min:max'."
+	RestInterval(string) : "Rest interval" : "" : "Pause between bursts, 'min:max'."
+	BurstShotCountRange(string) : "Burst shot count" : "" : "Shots per burst, 'min:max'."
+	BurstShotsRemaining(integer) : "Burst shots remaining" : 0 : "Shots left in the current burst."
+
+	input EnableOnNPC(target_destination) : "Apply the modifier to this NPC."
+	input DisableOnNPC(target_destination) : "Restore this NPC's original regulator."
+	input SetBurstInterval(string) : "Set the burst interval, 'min:max'."
+	input SetRestInterval(string) : "Set the rest interval, 'min:max'."
+	input SetBurstShotCountRange(string) : "Set the shots per burst, 'min:max'."
+	input SetBurstShotsRemaining(integer) : "Set shots left in the current burst."
+	input EnableShooting(void) : "Allow the modified NPCs to shoot."
+	input DisableShooting(void) : "Stop the modified NPCs from shooting."
+	input FireNoEarlierThan(float) : "Don't shoot for this many seconds."
+	input Reset(bool) : "Reset the regulator. 1 = start with a rest."
+]
+
+@PointClass base(Targetname, EnableDisable) iconsprite("editor/ai_relationship.vmt") = ai_monitor :
+	"Watches NPCs for conditions, schedules or hint usage and fires outputs. " +
+	"Lists are colon-separated, e.g. 'COND_SEE_ENEMY:COND_LIGHT_DAMAGE'."
+[
+	target(target_destination) : "Target NPC(s)" : "" : "NPCs to watch. Wildcards allowed."
+	MaxEnts(integer) : "Max NPCs" : 0 : "How many matching NPCs to watch. 0 = no limit."
+	SetMonitorInterval(float) : "Monitor interval" : "0" : "Seconds between checks. 0 = every tick."
+	SetCooldownTime(float) : "Cooldown" : "0" : "Extra wait after a successful check. -1 = same as the monitor interval."
+	CooldownAt(choices) : "Stop at first success" : 0 : "Stop evaluating the remaining NPCs once one passes." =
+	[
+		0 : "No, check every NPC"
+		1 : "Yes"
+	]
+	Conditions(string) : "Conditions" : "" : "Condition names (or IDs) to watch."
+	Schedules(string) : "Schedules" : "" : "Schedule names (or IDs) to watch."
+	TranslateSchedules(boolean) : "Translate schedules" : 0 : "Translate each schedule through the NPC's own schedule overrides before comparing."
+	Hints(string) : "Hint types" : "" : "Hint type numbers to watch."
+	HintDistance(float) : "Hint distance" : "0" : "Only count a hint as used when the NPC is within this distance of it. 0 = any distance."
+
+	input UpdateActors(void) : "Re-find the target NPCs."
+	input Test(void) : "Evaluate all watched NPCs now."
+	input TestNPC(target_destination) : "Evaluate this NPC now."
+	input GetConditionName(integer) : "Fire OutConditionName with the name of this condition ID."
+	input GetScheduleName(integer) : "Fire OutScheduleName with the name of this schedule ID."
+	input SetCondition(string) : "Start watching a condition."
+	input ClearCondition(string) : "Stop watching a condition."
+	input ClearAllConditions(void) : "Stop watching all conditions."
+	input SetSchedule(string) : "Start watching a schedule."
+	input ClearSchedule(string) : "Stop watching a schedule."
+	input ClearAllSchedules(void) : "Stop watching all schedules."
+	input SetHint(integer) : "Start watching a hint type."
+	input ClearHint(integer) : "Stop watching a hint type."
+	input ClearAllHints(void) : "Stop watching all hint types."
+	input SetMonitorInterval(float) : "Set seconds between checks."
+	input SetCooldownTime(float) : "Set the cooldown."
+
+	output OutConditionName(string) : "Name of an evaluated or requested condition."
+	output OutScheduleName(string) : "Name of an evaluated or requested schedule."
+	output OnNPCHasCondition(integer) : "An NPC has a watched condition (passes its ID). Activator is the NPC."
+	output OnNPCLacksCondition(integer) : "An NPC lacks a watched condition (passes its ID)."
+	output OnNPCRunningSchedule(integer) : "An NPC runs a watched schedule (passes its ID)."
+	output OnNPCNotRunningSchedule(integer) : "An NPC doesn't run a watched schedule (passes its ID)."
+	output OnNPCUsingHint(integer) : "An NPC uses a hint of a watched type (passes the type)."
+	output OnNPCNotUsingHint(integer) : "An NPC doesn't use a hint of a watched type (passes the type)."
+]
+
+@PointClass base(Targetname) iconsprite("editor/logic_auto.vmt") = logic_skill :
+	"Fires outputs for the current difficulty."
+[
+	ListenForSkillChange(boolean) : "Listen for skill changes" : 1 : "Fire OnSkillChanged when the difficulty changes mid-game."
+
+	input Test(void) : "Fire OnEasy, OnNormal or OnHard for the current difficulty."
+	input StartListening(void) : "Start firing OnSkillChanged."
+	input StopListening(void) : "Stop firing OnSkillChanged."
+
+	output OnSkillChanged(integer) : "Difficulty changed (1 easy, 2 normal, 3 hard)."
+	output OnEasy(void) : "Test: the difficulty is easy."
+	output OnNormal(void) : "Test: the difficulty is normal."
+	output OnHard(void) : "Test: the difficulty is hard."
+]
