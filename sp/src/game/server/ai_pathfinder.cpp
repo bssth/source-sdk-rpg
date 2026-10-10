@@ -1804,7 +1804,11 @@ AI_Waypoint_t *CAI_Pathfinder::BuildNodeRoute(const Vector &vStart, const Vector
 
 	// If nodes are not connected by network graph, no route is possible
 	if (!GetNetwork()->IsConnected(srcID, destID))
+	{
+		DeleteAll(srcRoute);
+		DeleteAll(destRoute);
 		return NULL;
+	}
 
 	AI_Waypoint_t *path = FindBestPath(srcID, destID);
 

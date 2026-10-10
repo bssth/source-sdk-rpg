@@ -322,8 +322,9 @@ void CAI_Monitor::InputTest( inputdata_t &inputdata )
 
 void CAI_Monitor::InputTestNPC( inputdata_t &inputdata )
 {
-	CAI_BaseNPC *pNPC = inputdata.value.Entity()->MyNPCPointer();
-	if (!inputdata.value.Entity() || !pNPC)
+	CBaseEntity *pEntity = inputdata.value.Entity();
+	CAI_BaseNPC *pNPC = pEntity ? pEntity->MyNPCPointer() : NULL;
+	if (!pNPC)
 		return;
 
 	NPCDoEval(pNPC);
@@ -720,7 +721,7 @@ bool CAI_Monitor::KeyValue( const char *szKeyName, const char *szValue )
 	else if (FStrEq(szKeyName, "SchedulesSimple"))
 	{
 		// Hammer SmartEdit helper that shouldn't be overridden.
-		SetCondition(atoi(szValue));
+		SetSchedule(atoi(szValue));
 	}
 	else if (FStrEq(szKeyName, "Schedules"))
 	{

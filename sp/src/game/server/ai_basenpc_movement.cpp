@@ -295,14 +295,16 @@ bool CAI_BaseNPC::CanStandOn( CBaseEntity *pSurface ) const
 //-----------------------------------------------------------------------------
 
 bool CAI_BaseNPC::IsJumpLegal( const Vector &startPos, const Vector &apex, const Vector &endPos, 
-							   float maxUp, float maxDown, float maxDist ) const
+							   float maxUp, float maxDown, float maxDist, float maxApex ) const
 {
-	if ((endPos.z - startPos.z) > maxUp + 0.1) 
+	if ((endPos.z - startPos.z) > maxUp + 0.1)
 		return false;
-	if ((startPos.z - endPos.z) > maxDown + 0.1) 
+	if ((startPos.z - endPos.z) > maxDown + 0.1)
 		return false;
 
-	if ((apex.z - startPos.z) > maxUp * 1.25 ) 
+	if ( maxApex < 0.0f )
+		maxApex = maxUp * 1.25f;
+	if ((apex.z - startPos.z) > maxApex )
 		return false;
 
 	float dist = (startPos - endPos).Length();
@@ -322,12 +324,15 @@ bool CAI_BaseNPC::IsJumpLegal( const Vector &startPos, const Vector &apex, const
 	// regular node connection becomes jumpable without needing info_node_hint jump nodes:
 	//   * jump DOWN  up to two of its heights
 	//   * jump UP    only if the rise is less than half its height
+	//   * the arc itself may peak up to one height: crossing a flat gap needs hang time, and with
+	//     1.8x jump gravity a 250-unit gap peaks ~69 units, which 1.25 * rise (45) used to reject.
 	const float flHeight			= GetHullHeight();
 	const float MAX_JUMP_RISE		= flHeight * 0.5f;
 	const float MAX_JUMP_DROP		= flHeight * 2.0f;
 	const float MAX_JUMP_DISTANCE	= 250.0f;
+	const float MAX_JUMP_APEX		= flHeight;
 
-	return IsJumpLegal( startPos, apex, endPos, MAX_JUMP_RISE, MAX_JUMP_DROP, MAX_JUMP_DISTANCE );
+	return IsJumpLegal( startPos, apex, endPos, MAX_JUMP_RISE, MAX_JUMP_DROP, MAX_JUMP_DISTANCE, MAX_JUMP_APEX );
 }
 
 //-----------------------------------------------------------------------------

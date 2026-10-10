@@ -1375,7 +1375,7 @@ public:
 	virtual bool		CanStandOn( CBaseEntity *pSurface ) const;
 
 	virtual bool		IsJumpLegal( const Vector &startPos, const Vector &apex, const Vector &endPos ) const; // Override for specific creature types
-	bool				IsJumpLegal( const Vector &startPos, const Vector &apex, const Vector &endPos, float maxUp, float maxDown, float maxDist ) const;
+	bool				IsJumpLegal( const Vector &startPos, const Vector &apex, const Vector &endPos, float maxUp, float maxDown, float maxDist, float maxApex = -1.0f ) const; // maxApex < 0 means 1.25 * maxUp
 	bool 				ShouldMoveWait();
 	virtual float		StepHeight() const			{ return 18.0f; }
 	float				GetStepDownMultiplier() const;

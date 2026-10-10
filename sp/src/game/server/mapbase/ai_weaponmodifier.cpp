@@ -166,21 +166,32 @@ bool CAI_WeaponModifier::KeyValue( const char *szKeyName, const char *szValue )
 //-----------------------------------------------------------------------------
 void CAI_WeaponModifier::EnableOnNPC( CAI_BaseNPC *pNPC )
 {
+	// Half-Life: BB - look for the NPC before taking a slot, and take only one slot. The old loop
+	// kept going after the first free slot, filling all of them with the first NPC (storing its
+	// already-modded regulator as the "original"), so later NPCs were never modified.
+	int iFreeSlot = -1;
 	for (int i = 0; i < WEAPONMODIFIER_MAX_NPCS; i++)
 	{
-		if (m_hNPCs[i] == NULL)
-		{
-			m_hNPCs[i] = pNPC;
-			m_StoredRegulators[i] = *pNPC->GetShotRegulator();
-
-			pNPC->SetShotRegulator(m_ModdedRegulator);
-		}
-		else if (m_hNPCs[i] == pNPC)
+		if (m_hNPCs[i] == pNPC)
 		{
 			// We're already in it
 			return;
 		}
+
+		if (m_hNPCs[i] == NULL && iFreeSlot == -1)
+			iFreeSlot = i;
 	}
+
+	if (iFreeSlot == -1)
+	{
+		Warning( "%s: can't modify more than %d NPCs, ignoring %s\n", GetDebugName(), WEAPONMODIFIER_MAX_NPCS, pNPC->GetDebugName() );
+		return;
+	}
+
+	m_hNPCs[iFreeSlot] = pNPC;
+	m_StoredRegulators[iFreeSlot] = *pNPC->GetShotRegulator();
+
+	pNPC->SetShotRegulator(m_ModdedRegulator);
 }
 
 //-----------------------------------------------------------------------------
@@ -222,7 +233,9 @@ void CAI_WeaponModifier::InputDisable( inputdata_t &inputdata )
 {
 	for (int i = 0; i < WEAPONMODIFIER_MAX_NPCS; i++)
 	{
-		m_hNPCs[i]->SetShotRegulator(m_StoredRegulators[i]);
+		// Half-Life: BB - empty slots used to be dereferenced here
+		if (m_hNPCs[i])
+			m_hNPCs[i]->SetShotRegulator(m_StoredRegulators[i]);
 		m_hNPCs[i] = NULL;
 
 		// Just reset it to our modded one

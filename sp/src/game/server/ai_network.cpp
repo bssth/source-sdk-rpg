@@ -652,7 +652,7 @@ CAI_Link *CAI_Network::CreateLink( int srcID, int destID, CAI_DynamicLink *pDyna
 
 bool CAI_Network::IsConnected(int srcID, int destID)
 {
-	if (srcID > m_iNumNodes || destID > m_iNumNodes)
+	if (srcID < 0 || destID < 0 || srcID >= m_iNumNodes || destID >= m_iNumNodes)
 	{
 		DevMsg("IsConnected called with invalid node IDs!\n");
 		return false;

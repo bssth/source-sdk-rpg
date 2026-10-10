@@ -633,7 +633,7 @@ void CAI_RadialLinkController::PollMotionThink()
 
 	CBaseEntity *pParent = GetParent();
 
-	if( pParent )
+	if( pParent && pParent->VPhysicsGetObject() )
 	{
 		if( pParent->VPhysicsGetObject()->IsAsleep() )
 		{
@@ -701,7 +701,7 @@ void CAI_RadialLinkController::ModifyNodeLinks( bool bMakeStale )
 				{
 					bool bQualify = true;
 
-					if( ( (pLink->m_iAcceptedMoveTypes[HULL_HUMAN]||pLink->m_iAcceptedMoveTypes[HULL_WIDE_HUMAN]) & bits_CAP_MOVE_GROUND) == 0 )
+					if( ( (pLink->m_iAcceptedMoveTypes[HULL_HUMAN]|pLink->m_iAcceptedMoveTypes[HULL_WIDE_HUMAN]) & bits_CAP_MOVE_GROUND) == 0 )
 					{
 						// Micro-optimization: Ignore any connection that's not a walking connection for humans.(sjb)
 						bQualify = false;
