@@ -2053,6 +2053,9 @@
     <ClCompile Include="ai_networkmanager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ai_nodegen.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="ai_node.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

@@ -881,6 +881,7 @@
     <ClCompile Include="ai_navigator.cpp" />
     <ClCompile Include="ai_network.cpp" />
     <ClCompile Include="ai_networkmanager.cpp" />
+    <ClCompile Include="ai_nodegen.cpp" />
     <ClCompile Include="ai_node.cpp" />
     <ClCompile Include="ai_pathfinder.cpp" />
     <ClCompile Include="ai_planesolver.cpp" />
