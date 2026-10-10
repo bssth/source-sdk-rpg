@@ -14,13 +14,13 @@
 #include "ai_senses.h"
 #include "ai_navigator.h"
 #include "ai_route.h"
+#include "ai_suspicion.h"
 #include "entitylist.h"
 #include "soundenvelope.h"
 #include "gamerules.h"
 #include "ndebugoverlay.h"
 #include "soundflags.h"
 #include "trains.h"
-#include "globalstate.h"
 #include "vehicle_base.h"
 #include "npc_vehicledriver.h"
 
@@ -541,9 +541,10 @@ void CNPC_VehicleDriver::GatherEnemyConditions( CBaseEntity *pEnemy )
 Disposition_t CNPC_VehicleDriver::IRelationType(CBaseEntity *pTarget)
 {
 	// If it's the player and they are a criminal, we hate them.
+	// Half-Life: BB - "criminal" means a cop or soldier within radio range has turned hostile (ai_suspicion.h)
 	if ( pTarget && pTarget->Classify() == CLASS_PLAYER)
 	{
-		if (GlobalEntity_GetState("gordon_precriminal") == GLOBAL_ON)
+		if ( CAI_Suspicion::IsSystemActive() && !CAI_Suspicion::IsPlayerWantedNear( GetAbsOrigin() ) )
 		{
 			return(D_NU);
 		}

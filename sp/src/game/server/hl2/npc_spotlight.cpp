@@ -14,13 +14,13 @@
 #include "AI_Hint.h"
 #include "ai_squad.h"
 #include "beam_shared.h"
-#include "globalstate.h"
 #include "soundent.h"
 #include "ndebugoverlay.h"
 #include "entitylist.h"
 #include "npc_citizen17.h"
 #include "scriptedtarget.h"
 #include "ai_interactions.h"
+#include "ai_suspicion.h"
 #include "spotlightend.h"
 #include "beam_flags.h"
 
@@ -921,9 +921,10 @@ Disposition_t CNPC_Spotlight::IRelationType(CBaseEntity *pTarget)
 	//
 	// If it's the player and they are a criminal, we hate them.
 	//
+	// Half-Life: BB - "criminal" means a cop or soldier within radio range has turned hostile (ai_suspicion.h)
 	if (pTarget->Classify() == CLASS_PLAYER)
 	{
-		if (GlobalEntity_GetState("gordon_precriminal") == GLOBAL_ON)
+		if ( CAI_Suspicion::IsSystemActive() && !CAI_Suspicion::IsPlayerWantedNear( GetAbsOrigin() ) )
 		{
 			return(D_NU);
 		}

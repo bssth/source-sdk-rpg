@@ -5,7 +5,6 @@
 //=============================================================================//
 
 #include "cbase.h"
-#include "globalstate.h"
 #include "ai_hull.h"
 #include "ai_senses.h"
 #include "ai_navigator.h"
@@ -1889,12 +1888,11 @@ Disposition_t CNPC_Combine::IRelationType(CBaseEntity* pTarget)
 	if (pTarget == NULL)
 		return disp;
 
-	// If the player's not a criminal, then we don't necessarily hate him. Same rule as the metrocops:
-	// only override an actual "hate" (so ai_relationship still works), and only until this soldier
-	// has seen enough to turn hostile (see ai_suspicion.h).
+	// We only hate the player once this soldier has seen enough to turn hostile (ai_suspicion.h).
+	// Only an actual "hate" is overridden, so ai_relationship still works.
 	if ( pTarget->Classify() == CLASS_PLAYER && disp == D_HT )
 	{
-		if ( GlobalEntity_GetState( "gordon_precriminal" ) == GLOBAL_ON && !m_Suspicion.IsPlayerCriminal() )
+		if ( CAI_Suspicion::IsSystemActive() && !m_Suspicion.IsPlayerCriminal() )
 		{
 			return D_NU;
 		}

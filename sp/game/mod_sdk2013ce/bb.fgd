@@ -305,20 +305,21 @@
 ]
 
 //-------------------------------------------------------------------------
-// Half-Life: BB - suspicion of the pre-criminal player (ai_suspicion.h)
-// Active while the "gordon_precriminal" global is on. Metrocops and Combine
-// soldiers grow suspicious while they see the player armed or in a
-// trigger_restricted_area, and turn hostile at 1.0 (or when hurt by him).
+// Half-Life: BB - suspicion of the player (ai_suspicion.h). Replaces the
+// "gordon_precriminal" global: metrocops and Combine soldiers ignore the player
+// until they see him armed or in a trigger_restricted_area long enough (or he
+// hurts them). Scanners, spotlights and vehicle drivers turn hostile while a
+// hostile cop or soldier is within radio range.
 //-------------------------------------------------------------------------
 
 @PointClass base(Targetname) iconsprite("editor/ai_relationship.vmt") = ai_suspicion_manager :
 	"Optional. Switches the suspicion system for this map and reports the overall alert level. " +
 	"Use at most one per map. Tuning lives in the ai_suspicion_* console variables."
 [
-	StartDisabled(boolean) : "Start Disabled" : 0 : "Disabled: soldiers and cops simply ignore the pre-criminal player, as before."
+	StartDisabled(boolean) : "Start Disabled" : 0 : "Disabled: the Combine treat the player as an enemy, as in HL2."
 
 	input Enable(void) : "Turn the suspicion system on."
-	input Disable(void) : "Turn it off. Hostile NPCs drop the player as an enemy."
+	input Disable(void) : "Turn it off: the Combine treat the player as an enemy, as in HL2."
 	input MakePlayerHostile(void) : "Every participating NPC turns hostile and learns where the player is."
 	input CalmAll(void) : "Every participating NPC forgets its suspicion."
 

@@ -10,13 +10,12 @@
 #include "ai_senses.h"
 #include "ai_memory.h"
 #include "ai_squad.h"
-#include "globalstate.h"
 #include "ndebugoverlay.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-ConVar ai_suspicion( "ai_suspicion", "1", FCVAR_NONE, "Combine judge the pre-criminal player (gordon_precriminal) by what they see instead of ignoring him." );
+ConVar ai_suspicion( "ai_suspicion", "1", FCVAR_NONE, "Combine judge the player by what they see. 0 = they always treat him as an enemy (classic HL2)." );
 ConVar ai_suspicion_debug( "ai_suspicion_debug", "0", FCVAR_NONE, "Show each NPC's suspicion of the player above its head." );
 ConVar ai_suspicion_threshold( "ai_suspicion_threshold", "0.35", FCVAR_NONE, "Level (0..1) at which an NPC becomes suspicious. 1 is hostile." );
 ConVar ai_suspicion_rate_weapon( "ai_suspicion_rate_weapon", "0.4", FCVAR_NONE, "Suspicion per second while an NPC sees the player holding a weapon up close." );
@@ -116,11 +115,26 @@ bool CAI_Suspicion::IsSystemActive()
 	if ( !ai_suspicion.GetBool() )
 		return false;
 
-	if ( GlobalEntity_GetState( "gordon_precriminal" ) != GLOBAL_ON )
-		return false;
-
 	CAI_SuspicionManager *pManager = CAI_SuspicionManager::GetManager();
 	return !pManager || pManager->IsEnabled();
+}
+
+bool CAI_Suspicion::IsPlayerWantedNear( const Vector &vecPos )
+{
+	const float flRadiusSqr = Square( ai_suspicion_radio_radius.GetFloat() );
+	CAI_BaseNPC **ppAIs = g_AI_Manager.AccessAIs();
+	for ( int i = 0; i < g_AI_Manager.NumAIs(); i++ )
+	{
+		CAI_BaseNPC *pNPC = ppAIs[i];
+		CAI_Suspicion *pSuspicion = pNPC->GetSuspicion();
+		if ( pSuspicion && pSuspicion->IsPlayerCriminal() && pNPC->IsAlive() &&
+			 ( pNPC->GetAbsOrigin() - vecPos ).LengthSqr() <= flRadiusSqr )
+		{
+			return true;
+		}
+	}
+
+	return false;
 }
 
 //-----------------------------------------------------------------------------
@@ -137,18 +151,10 @@ void CAI_Suspicion::Update()
 
 	if ( !IsSystemActive() )
 	{
-		if ( m_iState == SUSPICION_HOSTILE && GlobalEntity_GetState( "gordon_precriminal" ) == GLOBAL_ON )
-		{
-			// Switched off while we were hunting: the player goes back to neutral, so drop him as an enemy
-			Calm();
-		}
-		else
-		{
-			// Without the global everyone hates the player anyway, just forget quietly
-			m_flLevel = 0.0f;
-			m_iState = SUSPICION_CALM;
-			m_flPendingHostileTime = 0.0f;
-		}
+		// Switched off: everyone hates the player anyway, just forget quietly
+		m_flLevel = 0.0f;
+		m_iState = SUSPICION_CALM;
+		m_flPendingHostileTime = 0.0f;
 		return;
 	}
 
@@ -672,4 +678,34 @@ void CTriggerRestrictedArea::OnSpotted( CAI_BaseNPC *pNPC )
 
 	m_flNextSpottedOutputTime = gpGlobals->curtime + 3.0f;
 	m_OnPlayerSpotted.FireOutput( pNPC, this );
+}
+
+//-----------------------------------------------------------------------------
+CON_COMMAND( ai_suspicion_dump, "Print every NPC's suspicion of the player." )
+{
+	if ( !UTIL_IsCommandIssuedByServerAdmin() )
+		return;
+
+	static const char *s_pszStates[] = { "calm", "suspicious", "HOSTILE" };
+
+	CBasePlayer *pPlayer = AI_GetSinglePlayer();
+	Msg( "ai_suspicion_dump at %.1f: system %s\n", gpGlobals->curtime, CAI_Suspicion::IsSystemActive() ? "active" : "inactive" );
+
+	int nCount = 0;
+	CAI_BaseNPC **ppAIs = g_AI_Manager.AccessAIs();
+	for ( int i = 0; i < g_AI_Manager.NumAIs(); i++ )
+	{
+		CAI_BaseNPC *pNPC = ppAIs[i];
+		CAI_Suspicion *pSuspicion = pNPC->GetSuspicion();
+		if ( !pSuspicion )
+			continue;
+
+		nCount++;
+		Msg( "  %-28s %-10s %.2f  dist %5.0f  %s%s\n", pNPC->GetDebugName(), s_pszStates[pSuspicion->GetState()], pSuspicion->GetLevel(),
+			pPlayer ? ( pNPC->GetAbsOrigin() - pPlayer->GetAbsOrigin() ).Length() : 0.0f,
+			( pPlayer && pNPC->GetSenses() && pNPC->GetSenses()->DidSeeEntity( pPlayer ) ) ? "sees player" : "",
+			pNPC->IsAlive() ? "" : " (dead)" );
+	}
+
+	Msg( "  %d participating NPCs\n", nCount );
 }

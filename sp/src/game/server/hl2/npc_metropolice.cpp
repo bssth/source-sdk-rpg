@@ -7,7 +7,6 @@
 #include "cbase.h"
 #include "soundent.h"
 #include "npcevent.h"
-#include "globalstate.h"
 #include "ai_squad.h"
 #include "ai_senses.h"
 #include "ai_tacticalservices.h"
@@ -2745,14 +2744,12 @@ bool CNPC_MetroPolice::PlayerIsCriminal( void )
 	if ( m_PolicingBehavior.IsEnabled() && m_PolicingBehavior.TargetIsHostile() )
 		return true;
 
-	// Half-Life: BB - this cop has seen enough
-	if ( m_Suspicion.IsPlayerCriminal() )
+	// Half-Life: BB - each cop decides for himself (ai_suspicion.h); the gordon_precriminal global
+	// no longer matters. With the system off the player is a criminal, as in HL2.
+	if ( !CAI_Suspicion::IsSystemActive() )
 		return true;
 
-	if ( GlobalEntity_GetState( "gordon_precriminal" ) == GLOBAL_ON )
-		return false;
-
-	return true;
+	return m_Suspicion.IsPlayerCriminal();
 }
 
 //-----------------------------------------------------------------------------
@@ -4054,9 +4051,9 @@ int CNPC_MetroPolice::SelectSchedule( void )
 			m_nNumWarnings = METROPOLICE_MAX_WARNINGS;
 			AdministerJustice();
 		}
-		else if ( GlobalEntity_GetState( "gordon_precriminal" ) == GLOBAL_ON )
+		else if ( CAI_Suspicion::IsSystemActive() && !m_Suspicion.IsPlayerCriminal() )
 		{
-			// We're not allowed to respond, but warn them
+			// Hostile only through policing: we're not allowed to respond, but warn them
 			m_Sentences.Speak( "METROPOLICE_IDLE_HARASS_PLAYER", SENTENCE_PRIORITY_INVALID, SENTENCE_CRITERIA_ALWAYS );
 		}
 	}

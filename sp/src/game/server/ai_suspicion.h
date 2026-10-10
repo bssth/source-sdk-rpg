@@ -1,10 +1,11 @@
 //========= Half-Life: BB ============//
 //
-// Purpose: Local suspicion of the pre-criminal player.
+// Purpose: Local suspicion of the player. Decides whether Combine treat the
+//			player as an enemy (replaces the old "gordon_precriminal" switch).
 //
-// While the "gordon_precriminal" global is on, Combine NPCs that carry a
-// CAI_Suspicion don't treat the player as an enemy until they've personally
-// grown suspicious enough. Each NPC has its own level (0..1):
+// Combine NPCs that carry a CAI_Suspicion don't treat the player as an enemy
+// until they've personally grown suspicious enough. Each NPC has its own level
+// (0..1):
 //
 //   calm (< ai_suspicion_threshold) -> suspicious -> hostile (1.0)
 //
@@ -15,7 +16,11 @@
 // hostile NPC that hasn't seen the player for ai_suspicion_forget_time (and
 // hasn't heard about him on the radio) cools down, so the player can escape.
 //
-// The global turned off means the classic behavior: everyone hates the player.
+// Combine without their own suspicion (scanners, spotlights, vehicle drivers)
+// are hostile while a hostile participant is within radio range.
+//
+// With the system off (ai_suspicion 0, or an ai_suspicion_manager disabled) it's
+// the classic HL2 behavior: the Combine hate the player.
 //
 //=============================================================================//
 
@@ -51,8 +56,11 @@ public:
 
 	void				Init( CAI_BaseNPC *pOuter )		{ m_pOuter = pOuter; }
 
-	// True while the system runs: precriminal global on, ai_suspicion on, not disabled by a manager
+	// True while the system runs: ai_suspicion on and not disabled by a manager
 	static bool			IsSystemActive();
+
+	// For Combine that don't judge the player themselves: is a hostile participant within radio range?
+	static bool			IsPlayerWantedNear( const Vector &vecPos );
 
 	void				Update();
 	void				OnDamaged( const CTakeDamageInfo &info );
@@ -60,8 +68,8 @@ public:
 	SuspicionState_t	GetState() const				{ return (SuspicionState_t)m_iState; }
 	float				GetLevel() const				{ return m_flLevel; }
 
-	// The player counts as an enemy for this NPC. Always false while the system is inactive,
-	// callers keep their own pre-criminal handling for that case.
+	// The player counts as an enemy for this NPC. Always false while the system is inactive;
+	// callers fall back to plain hostility then.
 	bool				IsPlayerCriminal() const		{ return m_iState == SUSPICION_HOSTILE; }
 
 	void				AddSuspicion( float flAmount );

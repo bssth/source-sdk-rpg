@@ -11,7 +11,6 @@
 #include "ai_moveprobe.h"
 #include "ai_squad.h"
 #include "beam_shared.h"
-#include "globalstate.h"
 #include "soundent.h"
 #include "npc_citizen17.h"
 #include "gib.h"
@@ -19,6 +18,7 @@
 #include "IEffects.h"
 #include "items.h"
 #include "ai_route.h"
+#include "ai_suspicion.h"
 #include "player_pickup.h"
 #include "weapon_physcannon.h"
 #include "hl2_player.h"
@@ -1274,10 +1274,11 @@ void CNPC_CScanner::PrescheduleThink(void)
 //-----------------------------------------------------------------------------
 Disposition_t CNPC_CScanner::IRelationType(CBaseEntity *pTarget)
 {
-	// If it's the player and they are a criminal, we hates them
+	// If it's the player and they are a criminal, we hates them. Half-Life: BB - "criminal" means
+	// a cop or soldier within radio range has turned hostile (ai_suspicion.h)
 	if ( pTarget && pTarget->Classify() == CLASS_PLAYER )
 	{
-		if ( GlobalEntity_GetState("gordon_precriminal") == GLOBAL_ON )
+		if ( CAI_Suspicion::IsSystemActive() && !CAI_Suspicion::IsPlayerWantedNear( GetAbsOrigin() ) )
 			return D_NU;
 	}
 
