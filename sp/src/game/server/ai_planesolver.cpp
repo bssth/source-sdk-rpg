@@ -321,6 +321,98 @@ void CAI_PlaneSolver::CalcYawsFromOffset( float yawScanCenter, float spanPerProb
 }
 
 //-----------------------------------------------------------------------------
+// Half-Life: BB - anticipate moving NPCs. The solver only saw other NPCs where they
+// stand right now, so two NPCs walking into each other both kept going until they
+// touched. If our paths bring us within touching distance in the next moment, also
+// block the spot where the other one will be when that happens.
+//-----------------------------------------------------------------------------
+
+ConVar ai_avoid_predict( "ai_avoid_predict", "1", FCVAR_NONE, "NPCs also steer around where other moving NPCs are about to be." );
+ConVar ai_avoid_predict_time( "ai_avoid_predict_time", "1.0", FCVAR_NONE, "How far ahead (seconds) NPCs look for collisions with other moving NPCs." );
+
+bool CAI_PlaneSolver::PredictNpcCollision( const AILocalMoveGoal_t &goal, CAI_BaseNPC *pOther, float radiusOther, float radiusSelf, Vector *pvecPredicted )
+{
+	const Vector2D velOther = pOther->GetSmoothedVelocity().AsVector2D();
+
+	// Standing NPCs are already covered by their current position
+	if ( velOther.LengthSqr() < Square( 10.0f ) )
+		return false;
+
+	const Vector2D relPos = pOther->GetAbsOrigin().AsVector2D() - m_pNpc->GetAbsOrigin().AsVector2D();
+	const Vector2D relVel = velOther - goal.dir.AsVector2D() * goal.speed;
+
+	const float relSpeedSqr = relVel.LengthSqr();
+	if ( relSpeedSqr < 1.0f )
+		return false;
+
+	// Time of closest approach, only soon-ish and not right now (that's the regular obstacle)
+	const float t = -DotProduct2D( relPos, relVel ) / relSpeedSqr;
+	if ( t < 0.1f || t > ai_avoid_predict_time.GetFloat() )
+		return false;
+
+	const Vector2D closest = relPos + relVel * t;
+	if ( closest.LengthSqr() > Square( radiusOther + radiusSelf ) )
+		return false;
+
+	if ( pvecPredicted )
+	{
+		*pvecPredicted = pOther->WorldSpaceCenter();
+		pvecPredicted->x += velOther.x * t;
+		pvecPredicted->y += velOther.y * t;
+	}
+	return true;
+}
+
+void CAI_PlaneSolver::GeneratePredictedNpcObstacle( const AILocalMoveGoal_t &goal, CAI_BaseNPC *pOther, float radiusOther, float radiusSelf )
+{
+	if ( !ai_avoid_predict.GetBool() )
+		return;
+
+	Vector vecPredicted;
+	if ( PredictNpcCollision( goal, pOther, radiusOther, radiusSelf, &vecPredicted ) )
+		AddObstacle( vecPredicted, radiusOther, pOther, AIMST_AVOID_NPC );
+}
+
+//-----------------------------------------------------------------------------
+// Cheap test (no traces) for the local navigator: steering normally only starts once
+// the direct probe is blocked, which is too late for an NPC crossing our path.
+//-----------------------------------------------------------------------------
+bool CAI_PlaneSolver::HavePredictedNpcCollision( const AILocalMoveGoal_t &goal )
+{
+	if ( !ai_avoid_predict.GetBool() || goal.speed <= 0 )
+		return false;
+
+	Vector minsSelf, maxsSelf;
+	m_pNpc->CollisionProp()->WorldSpaceSurroundingBounds( &minsSelf, &maxsSelf );
+	const float radiusSelf = (minsSelf.AsVector2D() - maxsSelf.AsVector2D()).Length() * 0.5;
+
+	// Nobody farther than we could both cover in the lookahead matters
+	const float flMaxDist = ( goal.speed + 400.0f ) * ai_avoid_predict_time.GetFloat() + radiusSelf * 4.0f;
+
+	CAI_BaseNPC **ppAIs = g_AI_Manager.AccessAIs();
+	for ( int i = 0; i < g_AI_Manager.NumAIs(); i++ )
+	{
+		CAI_BaseNPC *pAI = ppAIs[i];
+		if ( pAI == m_pNpc || !pAI->IsAlive() || ( goal.pPath && pAI == goal.pPath->GetTarget() ) )
+			continue;
+
+		if ( ( pAI->GetAbsOrigin().AsVector2D() - m_pNpc->GetAbsOrigin().AsVector2D() ).LengthSqr() > Square( flMaxDist ) )
+			continue;
+
+		Vector mins, maxs;
+		pAI->CollisionProp()->WorldSpaceSurroundingBounds( &mins, &maxs );
+		if ( mins.z >= maxsSelf.z + 12.0 || maxs.z <= minsSelf.z - 12.0 )
+			continue;
+
+		const float radius = (mins.AsVector2D() - maxs.AsVector2D()).Length() * 0.5;
+		if ( PredictNpcCollision( goal, pAI, radius, radiusSelf, NULL ) )
+			return true;
+	}
+
+	return false;
+}
+
+//-----------------------------------------------------------------------------
 
 void CAI_PlaneSolver::GenerateObstacleNpcs( const AILocalMoveGoal_t &goal, float probeDist )
 {
@@ -347,6 +439,8 @@ void CAI_PlaneSolver::GenerateObstacleNpcs( const AILocalMoveGoal_t &goal, float
 					{
 						AddObstacle( pAI->WorldSpaceCenter(), radius, pAI, AIMST_AVOID_NPC );
 					}
+
+					GeneratePredictedNpcObstacle( goal, pAI, radius, radiusSelf );
 				}
 			}
 		}

@@ -276,10 +276,30 @@ int CAI_Pathfinder::NearestNodeToPoint( const Vector &vecOrigin )
 // Purpose: Build a path between two nodes
 //-----------------------------------------------------------------------------
 
-AI_Waypoint_t *CAI_Pathfinder::FindBestPath(int startID, int endID) 
+// Half-Life: BB - the open list is a binary heap now. It used to be a bit vector scanned in full for the
+// cheapest node on every pop (FindBSSmallest), i.e. O(nodes^2) per search, which is what kept MAX_NODES low.
+// Superseded heap entries aren't removed; they're skipped when popped (lazy deletion).
+struct AI_OpenNode_t
+{
+	float	f;
+	int		id;
+};
+
+static bool OpenNodeIsLowerPriority( const AI_OpenNode_t &lhs, const AI_OpenNode_t &rhs )
+{
+	return lhs.f > rhs.f;
+}
+
+// Scratch space reused by every search (the server is single threaded)
+static CUtlVector<float>	s_PathNodeG;
+static CUtlVector<float>	s_PathNodeF;
+static CUtlVector<int>		s_PathNodeP;
+static CUtlPriorityQueue<AI_OpenNode_t> s_PathOpenHeap( 0, 0, OpenNodeIsLowerPriority );
+
+AI_Waypoint_t *CAI_Pathfinder::FindBestPath(int startID, int endID)
 {
 	AI_PROFILE_SCOPE( CAI_Pathfinder_FindBestPath );
-	
+
 	if ( !GetNetwork()->NumNodes() )
 		return NULL;
 
@@ -294,10 +314,14 @@ AI_Waypoint_t *CAI_Pathfinder::FindBestPath(int startID, int endID)
 	CVarBitVec	closeBS(nNodes);
 
 	// ------------- INITIALIZE ------------------------
-	float* nodeG = (float *)stackalloc( nNodes * sizeof(float) );
-	float* nodeH = (float *)stackalloc( nNodes * sizeof(float) );
-	float* nodeF = (float *)stackalloc( nNodes * sizeof(float) );
-	int*   nodeP = (int *)stackalloc( nNodes * sizeof(int) );		// Node parent 
+	s_PathNodeG.SetCount( nNodes );
+	s_PathNodeF.SetCount( nNodes );
+	s_PathNodeP.SetCount( nNodes );
+	s_PathOpenHeap.RemoveAll();
+
+	float* nodeG = s_PathNodeG.Base();
+	float* nodeF = s_PathNodeF.Base();
+	int*   nodeP = s_PathNodeP.Base();		// Node parent
 
 	for (int node=0;node<nNodes;node++)
 	{
@@ -305,19 +329,29 @@ AI_Waypoint_t *CAI_Pathfinder::FindBestPath(int startID, int endID)
 		nodeP[node] = -1;
 	}
 
-	nodeG[startID] = 0;
+	const Vector &vecEndPos = pAInode[endID]->GetPosition(GetHullType());
 
-	nodeH[startID] = 0.1*(pAInode[startID]->GetPosition(GetHullType())-pAInode[endID]->GetPosition(GetHullType())).Length(); // Don't want to over estimate
-	nodeF[startID] = nodeG[startID] + nodeH[startID];
+	nodeG[startID] = 0;
+	nodeF[startID] = nodeG[startID] + 0.1*(pAInode[startID]->GetPosition(GetHullType())-vecEndPos).Length(); // Don't want to over estimate
 
 	openBS.Set(startID);
 	closeBS.Set( startID );
 
+	AI_OpenNode_t startEntry = { nodeF[startID], startID };
+	s_PathOpenHeap.Insert( startEntry );
+
 	// --------------- FIND BEST PATH ------------------
-	while (!openBS.IsAllClear()) 
+	while ( s_PathOpenHeap.Count() )
 	{
-		int smallestID = CAI_Network::FindBSSmallest(&openBS,nodeF,nNodes);
-	
+		AI_OpenNode_t entry = s_PathOpenHeap.ElementAtHead();
+		s_PathOpenHeap.RemoveAtHead();
+
+		int smallestID = entry.id;
+
+		// Already expanded, or a cheaper entry for this node was pushed since
+		if ( !openBS.IsBitSet( smallestID ) || entry.f != nodeF[smallestID] )
+			continue;
+
 		openBS.Clear(smallestID);
 
 		CAI_Node *pSmallestNode = pAInode[smallestID];
@@ -357,11 +391,13 @@ AI_Waypoint_t *CAI_Pathfinder::FindBestPath(int startID, int endID)
 			{
 				nodeP[testID] = smallestID;
 				nodeG[testID] = new_g;
-				nodeH[testID] = (pAInode[testID]->GetPosition(GetHullType())-pAInode[endID]->GetPosition(GetHullType())).Length();
-				nodeF[testID] = nodeG[testID] + nodeH[testID];
+				nodeF[testID] = nodeG[testID] + (pAInode[testID]->GetPosition(GetHullType())-vecEndPos).Length();
 
 				closeBS.Set( testID );
 				openBS.Set( testID );
+
+				AI_OpenNode_t newEntry = { nodeF[testID], testID };
+				s_PathOpenHeap.Insert( newEntry );
 			}
 		}
 	}

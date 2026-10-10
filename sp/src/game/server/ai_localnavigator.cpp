@@ -338,6 +338,14 @@ AIMoveResult_t CAI_LocalNavigator::MoveCalcRaw( AILocalMoveGoal_t *pMoveGoal, bo
 
 	bool bShouldSteer = ( !(pMoveGoal->flags & AILMG_NO_STEER) && ( !bDirectClear || HaveObstacles() ) );
 
+	// Half-Life: BB - start steering early when a moving NPC is about to cross our path
+	bool bSteerForPrediction = false;
+	if ( bDirectClear && !bShouldSteer && !(pMoveGoal->flags & AILMG_NO_STEER) && !GetOuter()->IsFlaggedEfficient() &&
+		 m_pPlaneSolver->HavePredictedNpcCollision( *pMoveGoal ) )
+	{
+		bShouldSteer = bSteerForPrediction = true;
+	}
+
 	if ( bDirectClear && !bShouldSteer )
 	{
 		SetSolveCookie();
@@ -360,8 +368,15 @@ AIMoveResult_t CAI_LocalNavigator::MoveCalcRaw( AILocalMoveGoal_t *pMoveGoal, bo
 		if ( MoveCalcSteer( pMoveGoal, distClear, &result ) )
 		{
 			SetSolveCookie();
-			return DbgResult( result );			
+			return DbgResult( result );
 		}
+	}
+
+	// Steering was only a precaution and the way ahead is clear: carry on as before
+	if ( bSteerForPrediction )
+	{
+		SetSolveCookie();
+		return DbgResult( result );
 	}
 
 	if ( OnFailedSteer( pMoveGoal, distClear, &result ) )

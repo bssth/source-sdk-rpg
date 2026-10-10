@@ -1088,7 +1088,6 @@ private:
 	float				m_flAcceptableTimeSeenEnemy;
 
 	CSimpleSimTimer		m_UpdateEnemyPosTimer;
-	static CSimpleSimTimer m_AnyUpdateEnemyPosTimer;
 
 public:
 	//-----------------------------------------------------

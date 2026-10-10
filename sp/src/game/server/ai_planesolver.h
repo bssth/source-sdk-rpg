@@ -57,6 +57,9 @@ public:
 	void AddObstacle( const Vector &pos, float radius, CBaseEntity *pEntity = NULL, AI_MoveSuggType_t type = AIMST_AVOID_OBJECT );
 	bool HaveObstacles()	{ return ( m_Obstacles.Count() != 0 ); }
 
+	// Is a moving NPC about to walk into us? (cheap, no traces)
+	bool HavePredictedNpcCollision( const AILocalMoveGoal_t &goal );
+
 private:
 
 	enum 
@@ -94,6 +97,8 @@ private:
 	// --------------------------------
 	
 	void				 GenerateObstacleNpcs( const AILocalMoveGoal_t &goal, float probeDist );
+	void				 GeneratePredictedNpcObstacle( const AILocalMoveGoal_t &goal, CAI_BaseNPC *pOther, float radiusOther, float radiusSelf );
+	bool				 PredictNpcCollision( const AILocalMoveGoal_t &goal, CAI_BaseNPC *pOther, float radiusOther, float radiusSelf, Vector *pvecPredicted );
 	AI_SuggestorResult_t GenerateObstacleSuggestions( const AILocalMoveGoal_t &goal, const AIMoveTrace_t &directTrace, float distClear, float probeDist, float degreesToProbe, int nProbes );
 	AI_SuggestorResult_t GenerateObstacleSuggestion( const AILocalMoveGoal_t &goal, float yawScanCenter, float probeDist, float spanPerProbe, int probeOffset );
 	void				 GenerateSuggestionFromTrace( const AILocalMoveGoal_t &goal,

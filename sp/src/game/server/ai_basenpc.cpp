@@ -330,7 +330,6 @@ int		CAI_BaseNPC::gm_iNextThinkRebalanceTick;
 float	CAI_BaseNPC::gm_flTimeLastSpawn;
 int		CAI_BaseNPC::gm_nSpawnedThisFrame;
 
-CSimpleSimTimer CAI_BaseNPC::m_AnyUpdateEnemyPosTimer;
 
 #ifdef MAPBASE_VSCRIPT
 // TODO: Better placement?
@@ -6085,6 +6084,12 @@ float CAI_BaseNPC::GetGoalRepathTolerance( CBaseEntity *pGoalEnt, GoalType_t typ
 	return result;
 }
 
+ConVar ai_enemy_repath_per_frame( "ai_enemy_repath_per_frame", "2", FCVAR_NONE, "How many NPCs may re-route to a moving enemy in one frame." );
+ConVar ai_enemy_repath_interval( "ai_enemy_repath_interval", "0.3", FCVAR_NONE, "Minimum time between one NPC's re-routes to a moving enemy." );
+
+static int s_iEnemyRepathFrame = -1;
+static int s_nEnemyRepathsThisFrame = 0;
+
 //-----------------------------------------------------------------------------
 // In the case of goaltype enemy, update the goal position
 //-----------------------------------------------------------------------------
@@ -6094,11 +6099,8 @@ void CAI_BaseNPC::UpdateEnemyPos()
 	if ( !GetNavigator()->IsInterruptable() )
 		return;
 
-	if ( m_AnyUpdateEnemyPosTimer.Expired() && m_UpdateEnemyPosTimer.Expired() )
+	if ( m_UpdateEnemyPosTimer.Expired() )
 	{
-		// FIXME: does GetGoalRepathTolerance() limit re-routing enough to remove this?
-		// m_UpdateEnemyPosTimer.Set( 0.5, 1.0 );
-		
 		// If my enemy has moved significantly, or if the enemy has changed update my path
 		if ( GetNavigator()->GetGoalType() == GOALTYPE_ENEMY )
 		{
@@ -6113,8 +6115,20 @@ void CAI_BaseNPC::UpdateEnemyPos()
 				float tolerance = GetGoalRepathTolerance( GetEnemy(), GOALTYPE_ENEMY, GetNavigator()->GetGoalPos(), vEnemyLKP);
 				if ( (GetNavigator()->GetGoalPos() - vEnemyLKP).Length() > tolerance )
 				{
-					// FIXME: when fleeing crowds, won't this severely limit the effectiveness of each individual?  Shouldn't this be a mutex that's held for some period so that at least one attacker is effective?
-					m_AnyUpdateEnemyPosTimer.Set( 0.1 ); // FIXME: what's a reasonable interval?
+					// Half-Life: BB - a per-frame budget plus a per-NPC interval instead of one global 0.1s
+					// timer, which let only ~10 NPCs a second re-route: a squad chasing someone waited in line.
+					if ( gpGlobals->framecount != s_iEnemyRepathFrame )
+					{
+						s_iEnemyRepathFrame = gpGlobals->framecount;
+						s_nEnemyRepathsThisFrame = 0;
+					}
+
+					if ( s_nEnemyRepathsThisFrame >= ai_enemy_repath_per_frame.GetInt() )
+						return; // try again next think
+
+					s_nEnemyRepathsThisFrame++;
+					m_UpdateEnemyPosTimer.Set( ai_enemy_repath_interval.GetFloat() );
+
 					if ( !GetNavigator()->RefindPathToGoal( false ) )
 					{	
 						TaskFail( FAIL_NO_ROUTE );
@@ -10946,7 +10960,6 @@ BEGIN_DATADESC( CAI_BaseNPC )
 	DEFINE_FIELD( m_EnemiesSerialNumber,		FIELD_INTEGER ),
 	DEFINE_FIELD( m_flAcceptableTimeSeenEnemy,	FIELD_TIME ),
 	DEFINE_EMBEDDED( m_UpdateEnemyPosTimer ),
-	//		m_flTimeAnyUpdateEnemyPos (static)
 	DEFINE_FIELD( m_vecCommandGoal,				FIELD_VECTOR ),
 	DEFINE_EMBEDDED( m_CommandMoveMonitor ),
 	DEFINE_FIELD( m_flSoundWaitTime,			FIELD_TIME ),
@@ -11873,7 +11886,6 @@ CAI_BaseNPC::CAI_BaseNPC(void)
 	
 	if ( g_AI_Manager.NumAIs() == 1 )
 	{
-		m_AnyUpdateEnemyPosTimer.Force();
 		gm_flTimeLastSpawn = -1;
 		gm_nSpawnedThisFrame = 0;
 		gm_iNextThinkRebalanceTick = 0;

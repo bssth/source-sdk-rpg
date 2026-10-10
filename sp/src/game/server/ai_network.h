@@ -33,7 +33,9 @@ class CAI_NetworkManager;
 //-----------------------------------------------------------------------------
 
 #define	AI_MAX_NODE_LINKS 30
-#define MAX_NODES 1500
+// Half-Life: BB - was 1500 (korolev alone uses ~850). The pathfinder's heap open list keeps big graphs
+// cheap; node ids are stored as shorts, the .ain format is unchanged.
+#define MAX_NODES 4096
 
 //-----------------------------------------------------------------------------
 // 
