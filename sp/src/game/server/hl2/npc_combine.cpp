@@ -108,6 +108,7 @@ enum SquadSlot_T
 	SQUAD_SLOT_GRENADE2,
 	SQUAD_SLOT_ATTACK_OCCLUDER,
 	SQUAD_SLOT_OVERWATCH,
+	SQUAD_SLOT_COMBINE_FLANK,		// Half-Life: BB - one soldier per enemy works round the side
 };
 
 enum TacticalVariant_T
@@ -142,6 +143,7 @@ DEFINE_FIELD( m_bFirstEncounter, FIELD_BOOLEAN ),
 DEFINE_FIELD( m_flNextPainSoundTime, FIELD_TIME ),
 DEFINE_FIELD( m_flNextAlertSoundTime, FIELD_TIME ),
 DEFINE_FIELD( m_flNextGrenadeCheck, FIELD_TIME ),
+DEFINE_FIELD( m_flNextFlankTime, FIELD_TIME ),
 DEFINE_FIELD( m_flNextLostSoundTime, FIELD_TIME ),
 DEFINE_FIELD( m_flAlertPatrolTime, FIELD_TIME ),
 DEFINE_FIELD( m_flNextAltFireTime, FIELD_TIME ),
@@ -1486,6 +1488,166 @@ void CNPC_Combine::AnnounceEnemyKill( CBaseEntity *pEnemy )
 //-----------------------------------------------------------------------------
 // Select the combat schedule
 //-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+// Half-Life: BB - pick between cover, line of fire, pressing in, flanking,
+// a grenade or waiting by weighing the soldier's situation, where the stock
+// code used fixed odds (60/40) or whichever squad slot happened to be free.
+// Options are tried best first; one that needs a squad slot is skipped if
+// the slot is taken.
+//-----------------------------------------------------------------------------
+ConVar ai_combine_utility( "ai_combine_utility", "1", FCVAR_NONE, "Soldiers choose cover / line of fire / flank / grenade / press by weighing their situation instead of fixed odds." );
+ConVar ai_combine_utility_debug( "ai_combine_utility_debug", "0", FCVAR_NONE, "1: show the scores behind each soldier's last tactical choice above him. 2: also print them to the console." );
+ConVar ai_combine_flank_cooldown( "ai_combine_flank_cooldown", "8", FCVAR_NONE, "Seconds before a soldier considers flanking again." );
+
+struct CombineTacticalOption_t
+{
+	const char	*pszName;
+	int			iSchedule;
+	int			iSlotFirst;		// -1: no squad slot needed
+	int			iSlotLast;
+	float		flScore;
+};
+
+static int CombineOptionSortFunc( const CombineTacticalOption_t *pLeft, const CombineTacticalOption_t *pRight )
+{
+	if ( pLeft->flScore > pRight->flScore )
+		return -1;
+	if ( pLeft->flScore < pRight->flScore )
+		return 1;
+	return 0;
+}
+
+int CNPC_Combine::SelectTacticalSchedule( bool bAllowCover )
+{
+	CBaseEntity *pEnemy = GetEnemy();
+	if ( !pEnemy )
+		return SCHED_NONE;
+
+	const float flHealth = ( GetMaxHealth() > 0 ) ? clamp( (float)GetHealth() / (float)GetMaxHealth(), 0.0f, 1.0f ) : 1.0f;
+	const bool bHurtRecently = ( gpGlobals->curtime - GetLastDamageTime() ) < 3.0f;
+	const bool bSeeEnemy = HasCondition( COND_SEE_ENEMY );
+	const bool bOccluded = HasCondition( COND_ENEMY_OCCLUDED );
+	const bool bTooFar = HasCondition( COND_TOO_FAR_TO_ATTACK );
+	const bool bLowAmmo = HasCondition( COND_LOW_PRIMARY_AMMO );
+	const float flEnemyDist = ( pEnemy->GetAbsOrigin() - GetAbsOrigin() ).Length();
+
+	// Hiding in one place for a while: a grenade or a flank will get him out
+	const bool bEnemyDugIn = bOccluded && ( gpGlobals->curtime - GetEnemyLastTimeSeen() ) > 2.0f &&
+		pEnemy->GetSmoothedVelocity().Length2DSqr() < Square( 40.0f );
+
+	// Is a squadmate keeping the enemy busy?
+	CAI_BaseNPC *pSuppressor = NULL;
+	if ( m_pSquad )
+	{
+		AISquadIter_t iter;
+		for ( CAI_BaseNPC *pMember = m_pSquad->GetFirstMember( &iter ); pMember; pMember = m_pSquad->GetNextMember( &iter ) )
+		{
+			if ( pMember != this && pMember->GetEnemy() == pEnemy &&
+				 ( pMember->HasStrategySlotRange( SQUAD_SLOT_ATTACK1, SQUAD_SLOT_ATTACK2 ) || pMember->HasStrategySlot( SQUAD_SLOT_OVERWATCH ) ) )
+			{
+				pSuppressor = pMember;
+				break;
+			}
+		}
+	}
+
+	float flAggression = IsUsingTacticalVariant( TACTICAL_VARIANT_PRESSURE_ENEMY ) ? 0.4f : 0.0f;
+	if ( g_pGameRules->IsSkillLevel( SKILL_HARD ) )
+		flAggression += 0.15f;
+	else if ( g_pGameRules->IsSkillLevel( SKILL_EASY ) )
+		flAggression -= 0.15f;
+
+	CombineTacticalOption_t options[] =
+	{
+		{ "cover",		SCHED_TAKE_COVER_FROM_ENEMY,	-1,							-1,							-1.0f },
+		{ "lof",		SCHED_ESTABLISH_LINE_OF_FIRE,	SQUAD_SLOT_ATTACK1,			SQUAD_SLOT_ATTACK2,			-1.0f },
+		{ "press",		SCHED_COMBINE_PRESS_ATTACK,		SQUAD_SLOT_ATTACK1,			SQUAD_SLOT_ATTACK2,			-1.0f },
+		{ "flank",		SCHED_COMBINE_FLANK,			SQUAD_SLOT_COMBINE_FLANK,	SQUAD_SLOT_COMBINE_FLANK,	-1.0f },
+		{ "grenade",	SCHED_RANGE_ATTACK2,			SQUAD_SLOT_GRENADE1,		SQUAD_SLOT_GRENADE2,		-1.0f },
+		{ "wait",		SCHED_COMBINE_WAIT_IN_COVER,	-1,							-1,							-1.0f },
+	};
+
+	// cover: hurt, low on ammo or out in the open
+	if ( bAllowCover )
+		options[0].flScore = 0.15f + 0.6f * ( 1.0f - flHealth ) + ( bHurtRecently ? 0.35f : 0.0f ) + ( bSeeEnemy ? 0.15f : 0.0f ) + ( bLowAmmo ? 0.3f : 0.0f ) - ( bOccluded ? 0.3f : 0.0f );
+
+	// line of fire: the enemy is out of sight
+	options[1].flScore = 0.3f + 0.3f * flHealth + ( bOccluded ? 0.35f : 0.0f ) - ( bHurtRecently ? 0.25f : 0.0f ) + 0.5f * flAggression;
+
+	// press in: healthy, far away, or someone covers us
+	options[2].flScore = 0.15f + 0.35f * flHealth + ( bTooFar ? 0.35f : 0.0f ) + ( pSuppressor ? 0.15f : 0.0f ) - ( bHurtRecently ? 0.35f : 0.0f ) - ( bLowAmmo ? 0.3f : 0.0f ) + flAggression;
+
+	// flank: only with covering fire, and not again right away
+	if ( pSuppressor && gpGlobals->curtime >= m_flNextFlankTime && flEnemyDist < 2500.0f )
+		options[3].flScore = 0.25f + 0.4f * flHealth + ( bEnemyDugIn ? 0.45f : 0.0f ) + ( bOccluded ? 0.15f : 0.0f ) - ( bHurtRecently ? 0.3f : 0.0f ) + flAggression;
+
+	// grenade: flush him out
+	if ( CanGrenadeEnemy() )
+		options[4].flScore = 0.3f + ( bEnemyDugIn ? 0.5f : 0.0f ) + ( bOccluded ? 0.2f : 0.0f );
+
+	options[5].flScore = 0.3f + ( bOccluded ? 0.1f : 0.0f );
+
+	// A little noise so a squad doesn't move as one
+	for ( int i = 0; i < ARRAYSIZE( options ); i++ )
+	{
+		if ( options[i].flScore > 0.0f )
+			options[i].flScore += random->RandomFloat( 0.0f, 0.08f );
+	}
+
+	CUtlVector<CombineTacticalOption_t> sorted;
+	sorted.AddMultipleToTail( ARRAYSIZE( options ), options );
+	sorted.Sort( CombineOptionSortFunc );
+
+	int iChosen = -1;
+	for ( int i = 0; i < sorted.Count() && iChosen == -1; i++ )
+	{
+		const CombineTacticalOption_t &option = sorted[i];
+		if ( option.flScore <= 0.0f )
+			break;
+
+		if ( option.iSlotFirst == -1 || OccupyStrategySlotRange( option.iSlotFirst, option.iSlotLast ) )
+			iChosen = i;
+	}
+
+	if ( ai_combine_utility_debug.GetBool() )
+	{
+		int nLine = 0;
+		NDebugOverlay::EntityText( entindex(), nLine++, CFmtStr( "hp %.2f%s%s%s%s", flHealth, bHurtRecently ? " hurt" : "", bOccluded ? " occluded" : "",
+			bEnemyDugIn ? " dug-in" : "", pSuppressor ? " covered" : "" ), 2.0f, 255, 255, 255, 255 );
+		for ( int i = 0; i < sorted.Count(); i++ )
+		{
+			if ( sorted[i].flScore <= 0.0f )
+				continue;
+			NDebugOverlay::EntityText( entindex(), nLine++, CFmtStr( "%s%s %.2f", ( i == iChosen ) ? "> " : "  ", sorted[i].pszName, sorted[i].flScore ),
+				2.0f, ( i == iChosen ) ? 0 : 200, 255, ( i == iChosen ) ? 0 : 200, 255 );
+		}
+	}
+
+	if ( ai_combine_utility_debug.GetInt() >= 2 )
+	{
+		CFmtStrN<256> msg( "%.1f %s: %s |", gpGlobals->curtime, GetDebugName(), ( iChosen != -1 ) ? sorted[iChosen].pszName : "wait (no slot)" );
+		for ( int i = 0; i < sorted.Count(); i++ )
+		{
+			if ( sorted[i].flScore > 0.0f )
+				msg.AppendFormat( " %s %.2f", sorted[i].pszName, sorted[i].flScore );
+		}
+		Msg( "ai_combine_utility: %s\n", msg.Access() );
+	}
+
+	if ( iChosen == -1 )
+		return SCHED_COMBINE_WAIT_IN_COVER;
+
+	const int iSchedule = sorted[iChosen].iSchedule;
+	if ( iSchedule == SCHED_COMBINE_FLANK )
+	{
+		// Flank relative to whoever is shooting at him
+		m_vSavePosition = pSuppressor ? pSuppressor->GetAbsOrigin() : GetAbsOrigin();
+		m_flNextFlankTime = gpGlobals->curtime + ai_combine_flank_cooldown.GetFloat();
+	}
+
+	return iSchedule;
+}
+
 int CNPC_Combine::SelectCombatSchedule()
 {
 	// -----------
@@ -1555,6 +1717,11 @@ int CNPC_Combine::SelectCombatSchedule()
 					{
 						return SCHED_RANGE_ATTACK2;
 					}
+				}
+
+				if ( !bFirstContact && ai_combine_utility.GetBool() )
+				{
+					return SelectTacticalSchedule( true );
 				}
 
 				if( !bFirstContact && OccupyStrategySlotRange( SQUAD_SLOT_ATTACK1, SQUAD_SLOT_ATTACK2 ) )
@@ -1650,6 +1817,15 @@ int CNPC_Combine::SelectCombatSchedule()
 		// stand up, just in case
 		Stand();
 		DesireStand();
+
+		if ( ai_combine_utility.GetBool() && GetEnemy() && !(GetEnemy()->GetFlags() & FL_NOTARGET) &&
+			 GetEnemy()->WorldSpaceCenter().DistToSqr( WorldSpaceCenter() ) <= Square(3000) )
+		{
+			int nSched = SelectTacticalSchedule( false );
+			if ( nSched == SCHED_COMBINE_WAIT_IN_COVER )
+				Remember( bits_MEMORY_INCOVER );
+			return nSched;
+		}
 
 		if( GetEnemy() && !(GetEnemy()->GetFlags() & FL_NOTARGET) && OccupyStrategySlotRange( SQUAD_SLOT_ATTACK1, SQUAD_SLOT_ATTACK2 ) )
 		{
@@ -1937,6 +2113,9 @@ void CNPC_Combine::OnSuspicionStateChanged( int iOldState, int iNewState )
 //-----------------------------------------------------------------------------
 int CNPC_Combine::SelectFailSchedule( int failedSchedule, int failedTask, AI_TaskFailureCode_t taskFailCode )
 {
+	if ( failedSchedule == SCHED_COMBINE_FLANK && ai_combine_utility_debug.GetInt() >= 2 )
+		Msg( "ai_combine_utility: %.1f %s: flank failed (%s)\n", gpGlobals->curtime, GetDebugName(), TaskFailureToString( taskFailCode ) );
+
 	if( failedSchedule == SCHED_COMBINE_TAKE_COVER1 )
 	{
 		if( IsInSquad() && IsStrategySlotRangeOccupied(SQUAD_SLOT_ATTACK1, SQUAD_SLOT_ATTACK2) && HasCondition(COND_SEE_ENEMY) )
@@ -3255,6 +3434,7 @@ const char* CNPC_Combine::GetSquadSlotDebugName( int iSquadSlot )
 	case SQUAD_SLOT_ATTACK_OCCLUDER:	return "SQUAD_SLOT_ATTACK_OCCLUDER";	
 		break;
 	case SQUAD_SLOT_OVERWATCH:			return "SQUAD_SLOT_OVERWATCH";
+	case SQUAD_SLOT_COMBINE_FLANK:		return "SQUAD_SLOT_COMBINE_FLANK";
 		break;
 	}
 
@@ -3330,6 +3510,7 @@ DECLARE_ANIMEVENT( COMBINE_AE_ALTFIRE )
 
 DECLARE_SQUADSLOT( SQUAD_SLOT_GRENADE1 )
 DECLARE_SQUADSLOT( SQUAD_SLOT_GRENADE2 )
+DECLARE_SQUADSLOT( SQUAD_SLOT_COMBINE_FLANK )
 
 DECLARE_CONDITION( COND_COMBINE_NO_FIRE )
 DECLARE_CONDITION( COND_COMBINE_DEAD_FRIEND )
@@ -3469,6 +3650,38 @@ DEFINE_SCHEDULE
  "		COND_ENEMY_DEAD"
  //"		COND_CAN_RANGE_ATTACK1"
  //"		COND_CAN_RANGE_ATTACK2"
+ "		COND_CAN_MELEE_ATTACK1"
+ "		COND_CAN_MELEE_ATTACK2"
+ "		COND_HEAR_DANGER"
+ "		COND_HEAR_MOVE_AWAY"
+ "		COND_HEAVY_DAMAGE"
+ )
+
+ //=========================================================
+ // SCHED_COMBINE_FLANK
+ //
+ // Half-Life: BB - work round the side while a squadmate keeps the
+ // enemy busy: find a line of fire at least 60 degrees round the
+ // enemy from m_vSavePosition (set to the suppressor's position).
+ //=========================================================
+ DEFINE_SCHEDULE
+ (
+ SCHED_COMBINE_FLANK,
+
+ "	Tasks "
+ "		TASK_SET_FAIL_SCHEDULE					SCHEDULE:SCHED_COMBINE_ESTABLISH_LINE_OF_FIRE"
+ "		TASK_SET_TOLERANCE_DISTANCE				48"
+ "		TASK_GET_FLANK_ARC_PATH_TO_ENEMY_LOS	60"
+ "		TASK_COMBINE_SET_STANDING				1"
+ "		TASK_SPEAK_SENTENCE						1"
+ "		TASK_RUN_PATH							0"
+ "		TASK_WAIT_FOR_MOVEMENT					0"
+ "		TASK_COMBINE_IGNORE_ATTACKS				0.0"
+ "		TASK_SET_SCHEDULE						SCHEDULE:SCHED_COMBAT_FACE"
+ "	"
+ "	Interrupts "
+ "		COND_NEW_ENEMY"
+ "		COND_ENEMY_DEAD"
  "		COND_CAN_MELEE_ATTACK1"
  "		COND_CAN_MELEE_ATTACK2"
  "		COND_HEAR_DANGER"

@@ -20,6 +20,8 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
+extern ConVar ai_tactical_query;
+
 ConVar ai_find_lateral_cover( "ai_find_lateral_cover", "1" );
 ConVar ai_find_lateral_los( "ai_find_lateral_los", "1" );
 
@@ -343,6 +345,14 @@ int CAI_TacticalServices::FindCoverNode(const Vector &vNearPos, const Vector &vT
 	if ( !CAI_NetworkManager::NetworksLoaded() )
 		return NO_NODE;
 
+	// Half-Life: BB - try the scored search first (ai_tacticalquery.cpp)
+	if ( ai_tactical_query.GetBool() )
+	{
+		int iNode = FindCoverNodeScored( vNearPos, vThreatPos, vThreatEyePos, flMinDist, flMaxDist );
+		if ( iNode != NO_NODE )
+			return iNode;
+	}
+
 	AI_PROFILE_SCOPE( CAI_TacticalServices_FindCoverNode );
 
 	MARK_TASK_EXPENSIVE();
@@ -504,6 +514,14 @@ int CAI_TacticalServices::FindLosNode(const Vector &vThreatPos, const Vector &vT
 {
 	if ( !CAI_NetworkManager::NetworksLoaded() )
 		return NO_NODE;
+
+	// Half-Life: BB - try the scored search first (ai_tacticalquery.cpp)
+	if ( ai_tactical_query.GetBool() )
+	{
+		int iNode = FindLosNodeScored( vThreatPos, vThreatEyePos, flMinThreatDist, flMaxThreatDist, flBlockTime, eFlankType, vecFlankRefPos, flFlankParam );
+		if ( iNode != NO_NODE )
+			return iNode;
+	}
 
 	AI_PROFILE_SCOPE( CAI_TacticalServices_FindLosNode );
 

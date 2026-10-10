@@ -914,6 +914,9 @@
     <ClInclude Include="ai_tacticalservices.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="ai_threatmap.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
     <ClInclude Include="ai_task.h">
       <Filter>Source Files</Filter>
     </ClInclude>
@@ -2102,6 +2105,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ai_tacticalservices.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ai_threatmap.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ai_tacticalquery.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ai_task.cpp">

@@ -104,6 +104,7 @@ public:
 	virtual int		SelectSchedule( void );
 	virtual int		SelectFailSchedule( int failedSchedule, int failedTask, AI_TaskFailureCode_t taskFailCode );
 	int				SelectScheduleAttack();
+	int				SelectTacticalSchedule( bool bAllowCover );
 
 	bool			CreateBehaviors();
 
@@ -199,6 +200,7 @@ private:
 		SCHED_COMBINE_MOVE_TO_FORCED_GREN_LOS,
 		SCHED_COMBINE_FACE_IDEAL_YAW,
 		SCHED_COMBINE_MOVE_TO_MELEE,
+		SCHED_COMBINE_FLANK,
 		NEXT_SCHEDULE,
 	};
 
@@ -273,6 +275,7 @@ private:
 	float			m_flNextPainSoundTime;
 	float			m_flNextAlertSoundTime;
 	float			m_flNextGrenadeCheck;	
+	float			m_flNextFlankTime;		// Half-Life: BB - don't try to flank again before this
 	float			m_flNextLostSoundTime;
 	float			m_flAlertPatrolTime;		// When to stop doing alert patrol
 	float			m_flNextAltFireTime;		// Elites only. Next time to begin considering alt-fire attack.

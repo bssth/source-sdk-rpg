@@ -13,6 +13,7 @@
 
 class CAI_Network;
 class CAI_Pathfinder;
+struct AI_TacticalCandidate_t;
 
 
 enum FlankType_t
@@ -58,6 +59,14 @@ private:
 	int				FindCoverNode( const Vector &vThreatPos, const Vector &vThreatEyePos, float flMinDist, float flMaxDist );
 	int				FindCoverNode( const Vector &vNearPos, const Vector &vThreatPos, const Vector &vThreatEyePos, float flMinDist, float flMaxDist );
 	int				FindLosNode( const Vector &vThreatPos, const Vector &vThreatEyePos, float flMinThreatDist, float flMaxThreatDist, float flBlockTime, FlankType_t eFlankType, const Vector &vThreatFacing, float flFlankParam );
+
+	// Half-Life: BB - scored versions of the two searches above (ai_tacticalquery.cpp).
+	// NO_NODE means "fall back to the stock search".
+	int				FindCoverNodeScored( const Vector &vNearPos, const Vector &vThreatPos, const Vector &vThreatEyePos, float flMinDist, float flMaxDist );
+	int				FindLosNodeScored( const Vector &vThreatPos, const Vector &vThreatEyePos, float flMinThreatDist, float flMaxThreatDist, float flBlockTime, FlankType_t eFlankType, const Vector &vecFlankRefPos, float flFlankParam );
+	void			GatherCandidateNodes( int iStartNode, const Vector &vNearPos, float flMaxPathDist, const Vector *pvecThreatPos, CUtlVector<AI_TacticalCandidate_t> &candidates );
+	float			ScoreSquadSpacing( const Vector &vecPos );
+	float			ScoreOtherEnemies( int iNode, const Vector &vThreatPos, int nMaxTraces );
 	
 	Vector			GetNodePos( int );
 

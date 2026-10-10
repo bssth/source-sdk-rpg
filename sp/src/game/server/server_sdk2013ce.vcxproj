@@ -508,6 +508,7 @@
     <ClInclude Include="ai_suspicion.h" />
     <ClInclude Include="ai_squadslot.h" />
     <ClInclude Include="ai_tacticalservices.h" />
+    <ClInclude Include="ai_threatmap.h" />
     <ClInclude Include="ai_task.h" />
     <ClInclude Include="ai_trackpather.h" />
     <ClInclude Include="ai_utils.h" />
@@ -898,6 +899,8 @@
     <ClCompile Include="ai_suspicion.cpp" />
     <ClCompile Include="ai_squadslot.cpp" />
     <ClCompile Include="ai_tacticalservices.cpp" />
+    <ClCompile Include="ai_threatmap.cpp" />
+    <ClCompile Include="ai_tacticalquery.cpp" />
     <ClCompile Include="ai_task.cpp" />
     <ClCompile Include="ai_trackpather.cpp" />
     <ClCompile Include="ai_utils.cpp" />

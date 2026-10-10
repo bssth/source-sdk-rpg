@@ -24,6 +24,7 @@
 
 //@todo: bad dependency!
 #include "ai_navigator.h"
+#include "ai_threatmap.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -290,6 +291,8 @@ static bool OpenNodeIsLowerPriority( const AI_OpenNode_t &lhs, const AI_OpenNode
 	return lhs.f > rhs.f;
 }
 
+ConVar ai_path_danger_scale( "ai_path_danger_scale", "0.75", FCVAR_NONE, "Armed NPCs fighting the player pay this much extra (fraction of the length) for path links into nodes he can see. 0 disables." );
+
 // Scratch space reused by every search (the server is single threaded)
 static CUtlVector<float>	s_PathNodeG;
 static CUtlVector<float>	s_PathNodeF;
@@ -340,6 +343,20 @@ AI_Waypoint_t *CAI_Pathfinder::FindBestPath(int startID, int endID)
 	AI_OpenNode_t startEntry = { nodeF[startID], startID };
 	s_PathOpenHeap.Insert( startEntry );
 
+	// Half-Life: BB - armed NPCs fighting the player prefer routes he can't see (ai_threatmap.h).
+	// Costs only ever grow, so the distance heuristic stays admissible.
+	CBaseEntity *pDangerThreat = NULL;
+	const float flDangerScale = ai_path_danger_scale.GetFloat();
+	if ( flDangerScale > 0.0f && GetNetwork() == g_pBigAINet )
+	{
+		CBaseEntity *pEnemy = GetOuter()->GetEnemy();
+		if ( pEnemy && pEnemy->IsPlayer() && GetOuter()->GetState() == NPC_STATE_COMBAT &&
+			 ( CapabilitiesGet() & bits_CAP_USE_WEAPONS ) )
+		{
+			pDangerThreat = pEnemy;
+		}
+	}
+
 	// --------------- FIND BEST PATH ------------------
 	while ( s_PathOpenHeap.Count() )
 	{
@@ -384,6 +401,9 @@ AI_Waypoint_t *CAI_Pathfinder::FindBestPath(int startID, int endID)
 
 			if ( dist == FLT_MAX )
 				continue;
+
+			if ( pDangerThreat && g_AI_ThreatMap.GetCachedExposure( testID, pDangerThreat ) == AI_EXPOSURE_VISIBLE )
+				dist *= 1.0f + flDangerScale;
 
 			float new_g  = nodeG[smallestID] + dist;
 
