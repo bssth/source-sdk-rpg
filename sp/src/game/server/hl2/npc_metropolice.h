@@ -24,6 +24,7 @@
 #include "ai_behavior_police.h"
 #include "ai_behavior_follow.h"
 #include "ai_sentence.h"
+#include "ai_suspicion.h"
 #include "props.h"
 
 class CNPC_MetroPolice;
@@ -118,6 +119,10 @@ protected:
 
 private:
 	bool		PlayerIsCriminal( void );
+
+	// Half-Life: BB - local suspicion of the pre-criminal player
+	virtual CAI_Suspicion *GetSuspicion()	{ return &m_Suspicion; }
+	virtual void	OnSuspicionStateChanged( int iOldState, int iNewState );
 	void		ReleaseManhack( void );
 
 	// Speech-related methods
@@ -455,6 +460,7 @@ private:
 	CAI_FollowBehavior		m_FollowBehavior;
 
 	CAI_Sentence< CNPC_MetroPolice > m_Sentences;
+	CAI_Suspicion	m_Suspicion;
 
 	int				m_nRecentDamage;
 	float			m_flRecentDamageTime;

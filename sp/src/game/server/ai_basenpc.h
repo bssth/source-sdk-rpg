@@ -48,6 +48,7 @@ class CAI_Node;
 class CAI_Navigator;
 class CAI_Pathfinder;
 class CAI_Senses;
+class CAI_Suspicion;
 class CAI_Enemies;
 class CAI_Squad;
 class CAI_Expresser;
@@ -1621,6 +1622,10 @@ public:
 
 	virtual bool		UpdateEnemyMemory( CBaseEntity *pEnemy, const Vector &position, CBaseEntity *pInformer = NULL );
 	virtual float		GetReactionDelay( CBaseEntity *pEnemy );
+
+	// Half-Life: BB - local suspicion of the pre-criminal player (ai_suspicion.h). NULL = doesn't take part.
+	virtual CAI_Suspicion *GetSuspicion()	{ return NULL; }
+	virtual void		OnSuspicionStateChanged( int iOldState, int iNewState ) {}
 	
 	void				SetLastAttackTime( float time)	{ m_flLastAttackTime = time; }
 

@@ -7,6 +7,7 @@
 #include "cbase.h"
 #include "globalstate.h"
 #include "ai_hull.h"
+#include "ai_senses.h"
 #include "ai_navigator.h"
 #include "ai_motor.h"
 #include "ai_squadslot.h"
@@ -150,6 +151,7 @@ DEFINE_FIELD( m_flShotDelay, FIELD_FLOAT ),
 DEFINE_FIELD( m_flStopMoveShootTime, FIELD_TIME ),
 DEFINE_KEYFIELD( m_iNumGrenades, FIELD_INTEGER, "NumGrenades" ),
 DEFINE_EMBEDDED( m_Sentences ),
+DEFINE_EMBEDDED( m_Suspicion ),
 
 //							m_AssaultBehavior (auto saved by AI)
 //							m_StandoffBehavior (auto saved by AI)
@@ -186,6 +188,7 @@ END_DATADESC()
 CNPC_Combine::CNPC_Combine()
 {
 	m_vecTossVelocity = vec3_origin;
+	m_Suspicion.Init( this );
 }
 
 
@@ -431,6 +434,16 @@ void CNPC_Combine::PrescheduleThink()
 
 	// Speak any queued sentences
 	m_Sentences.UpdateSentenceQueue();
+
+	m_Suspicion.Update();
+
+	// Half-Life: BB - a suspicious soldier keeps an eye on the player
+	if ( m_Suspicion.GetState() == SUSPICION_SUSPICIOUS )
+	{
+		CBasePlayer *pPlayer = UTIL_PlayerByIndex( 1 );
+		if ( pPlayer && GetSenses()->DidSeeEntity( pPlayer ) )
+			AddLookTarget( pPlayer, 1.0f, 1.0f );
+	}
 
 	if ( IsOnFire() )
 	{
@@ -1876,16 +1889,50 @@ Disposition_t CNPC_Combine::IRelationType(CBaseEntity* pTarget)
 	if (pTarget == NULL)
 		return disp;
 
-	// If the player's not a criminal, then we don't necessary hate him
-	if (pTarget->Classify() == CLASS_PLAYER)
+	// If the player's not a criminal, then we don't necessarily hate him. Same rule as the metrocops:
+	// only override an actual "hate" (so ai_relationship still works), and only until this soldier
+	// has seen enough to turn hostile (see ai_suspicion.h).
+	if ( pTarget->Classify() == CLASS_PLAYER && disp == D_HT )
 	{
-		if (GlobalEntity_GetState("gordon_precriminal") != GLOBAL_ON)
+		if ( GlobalEntity_GetState( "gordon_precriminal" ) == GLOBAL_ON && !m_Suspicion.IsPlayerCriminal() )
 		{
 			return D_NU;
 		}
 	}
 
 	return disp;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+int CNPC_Combine::OnTakeDamage_Alive( const CTakeDamageInfo &info )
+{
+	m_Suspicion.OnDamaged( info );
+
+	return BaseClass::OnTakeDamage_Alive( info );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Voice and stance for the suspicion levels (ai_suspicion.h)
+//-----------------------------------------------------------------------------
+void CNPC_Combine::OnSuspicionStateChanged( int iOldState, int iNewState )
+{
+	if ( iNewState == SUSPICION_SUSPICIOUS && iOldState == SUSPICION_CALM )
+	{
+		m_Sentences.Speak( "COMBINE_GO_ALERT", SENTENCE_PRIORITY_MEDIUM, SENTENCE_CRITERIA_NORMAL );
+
+		CBasePlayer *pPlayer = UTIL_PlayerByIndex( 1 );
+		if ( pPlayer )
+			AddLookTarget( pPlayer, 1.0f, 3.0f );
+
+		if ( GetState() == NPC_STATE_IDLE )
+			SetIdealState( NPC_STATE_ALERT );
+	}
+	else if ( iNewState == SUSPICION_SUSPICIOUS && iOldState == SUSPICION_HOSTILE )
+	{
+		m_Sentences.Speak( "COMBINE_LOST_LONG", SENTENCE_PRIORITY_MEDIUM, SENTENCE_CRITERIA_NORMAL );
+	}
 }
 
 //-----------------------------------------------------------------------------

@@ -505,6 +505,7 @@
     <ClInclude Include="ai_speech.h" />
     <ClInclude Include="ai_speechfilter.h" />
     <ClInclude Include="ai_squad.h" />
+    <ClInclude Include="ai_suspicion.h" />
     <ClInclude Include="ai_squadslot.h" />
     <ClInclude Include="ai_tacticalservices.h" />
     <ClInclude Include="ai_task.h" />
@@ -894,6 +895,7 @@
     <ClCompile Include="ai_speech.cpp" />
     <ClCompile Include="ai_speechfilter.cpp" />
     <ClCompile Include="ai_squad.cpp" />
+    <ClCompile Include="ai_suspicion.cpp" />
     <ClCompile Include="ai_squadslot.cpp" />
     <ClCompile Include="ai_tacticalservices.cpp" />
     <ClCompile Include="ai_task.cpp" />

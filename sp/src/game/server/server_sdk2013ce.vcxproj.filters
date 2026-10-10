@@ -905,6 +905,9 @@
     <ClInclude Include="ai_squad.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="ai_suspicion.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
     <ClInclude Include="ai_squadslot.h">
       <Filter>Source Files</Filter>
     </ClInclude>
@@ -2090,6 +2093,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ai_squad.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ai_suspicion.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ai_squadslot.cpp">

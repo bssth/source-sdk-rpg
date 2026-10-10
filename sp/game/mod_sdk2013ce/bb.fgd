@@ -303,3 +303,36 @@
 	output OnNormal(void) : "Test: the difficulty is normal."
 	output OnHard(void) : "Test: the difficulty is hard."
 ]
+
+//-------------------------------------------------------------------------
+// Half-Life: BB - suspicion of the pre-criminal player (ai_suspicion.h)
+// Active while the "gordon_precriminal" global is on. Metrocops and Combine
+// soldiers grow suspicious while they see the player armed or in a
+// trigger_restricted_area, and turn hostile at 1.0 (or when hurt by him).
+//-------------------------------------------------------------------------
+
+@PointClass base(Targetname) iconsprite("editor/ai_relationship.vmt") = ai_suspicion_manager :
+	"Optional. Switches the suspicion system for this map and reports the overall alert level. " +
+	"Use at most one per map. Tuning lives in the ai_suspicion_* console variables."
+[
+	StartDisabled(boolean) : "Start Disabled" : 0 : "Disabled: soldiers and cops simply ignore the pre-criminal player, as before."
+
+	input Enable(void) : "Turn the suspicion system on."
+	input Disable(void) : "Turn it off. Hostile NPCs drop the player as an enemy."
+	input MakePlayerHostile(void) : "Every participating NPC turns hostile and learns where the player is."
+	input CalmAll(void) : "Every participating NPC forgets its suspicion."
+
+	output OnPlayerSuspicious(void) : "The first NPC grew suspicious while all were calm. Activator is the NPC."
+	output OnPlayerHostile(void) : "The first NPC turned hostile. Activator is the NPC."
+	output OnAllCalm(void) : "No NPC is suspicious or hostile anymore."
+]
+
+@SolidClass base(Trigger) = trigger_restricted_area :
+	"Area the player isn't allowed in. Metrocops and Combine soldiers who see him inside grow suspicious " +
+	"(or turn hostile at once with 'Hostile on sight')."
+[
+	SuspicionRate(float) : "Suspicion per second" : "0.5" : "Added per second while an NPC sees the player inside (full rate up close, less at range). Adds to the weapon rate."
+	Hostile(boolean) : "Hostile on sight" : 0 : "Being seen inside turns the NPC hostile immediately."
+
+	output OnPlayerSpotted(void) : "An NPC saw the player inside (at most every 3 seconds). Activator is the NPC."
+]

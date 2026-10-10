@@ -21,6 +21,7 @@
 #include "ai_behavior_actbusy.h"
 #include "ai_sentence.h"
 #include "ai_baseactor.h"
+#include "ai_suspicion.h"
 
 // Used when only what combine to react to what the spotlight sees
 #define SF_COMBINE_NO_LOOK	(1 << 16)
@@ -122,6 +123,11 @@ public:
 
 	bool			IsRunningApproachEnemySchedule();
 	Disposition_t	IRelationType(CBaseEntity* pTarget);
+	int				OnTakeDamage_Alive( const CTakeDamageInfo &info );
+
+	// Half-Life: BB - local suspicion of the pre-criminal player
+	virtual CAI_Suspicion *GetSuspicion()	{ return &m_Suspicion; }
+	virtual void	OnSuspicionStateChanged( int iOldState, int iNewState );
 
 	// -------------
 	// Sounds
@@ -276,6 +282,7 @@ private:
 	float			m_flStopMoveShootTime;
 
 	CAI_Sentence< CNPC_Combine > m_Sentences;
+	CAI_Suspicion	m_Suspicion;
 
 	int			m_iNumGrenades;
 	CAI_AssaultBehavior			m_AssaultBehavior;

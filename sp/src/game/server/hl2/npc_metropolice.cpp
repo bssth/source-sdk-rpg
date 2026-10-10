@@ -9,6 +9,7 @@
 #include "npcevent.h"
 #include "globalstate.h"
 #include "ai_squad.h"
+#include "ai_senses.h"
 #include "ai_tacticalservices.h"
 #include "npc_manhack.h"
 #include "npc_metropolice.h"
@@ -173,6 +174,7 @@ BEGIN_DATADESC( CNPC_MetroPolice )
 	DEFINE_FIELD( m_LastShootSlot, FIELD_INTEGER ),
 	DEFINE_EMBEDDED( m_TimeYieldShootSlot ),
 	DEFINE_EMBEDDED( m_Sentences ),
+	DEFINE_EMBEDDED( m_Suspicion ),
 	DEFINE_FIELD( m_bPlayerIsNear, FIELD_BOOLEAN ),
 
 	DEFINE_FIELD( m_vecBurstTargetPos, FIELD_POSITION_VECTOR ),
@@ -462,6 +464,7 @@ void CNPC_MetroPolice::NotifyDeadFriend( CBaseEntity* pFriend )
 //-----------------------------------------------------------------------------
 CNPC_MetroPolice::CNPC_MetroPolice()
 {
+	m_Suspicion.Init( this );
 }
 
 
@@ -489,6 +492,8 @@ void CNPC_MetroPolice::PrescheduleThink( void )
 	// Speak any queued sentences
 	m_Sentences.UpdateSentenceQueue();
 
+	m_Suspicion.Update();
+
 	// Look at near players, always
 	m_bPlayerIsNear = false;
 	if ( PlayerIsCriminal() == false )
@@ -515,6 +520,19 @@ void CNPC_MetroPolice::PrescheduleThink( void )
 			}
 
 			m_bKeepFacingPlayer = false;
+		}
+	}
+
+	// Half-Life: BB - a suspicious cop keeps facing the player and holds the baton up
+	// (after the block above, which drops both once the player is out of arm's reach)
+	if ( m_Suspicion.GetState() == SUSPICION_SUSPICIOUS )
+	{
+		CBasePlayer *pPlayer = UTIL_PlayerByIndex( 1 );
+		if ( pPlayer && GetSenses()->DidSeeEntity( pPlayer ) )
+		{
+			AddLookTarget( pPlayer, 1.0f, 1.0f );
+			m_bKeepFacingPlayer = true;
+			m_flBatonDebounceTime = MAX( m_flBatonDebounceTime, gpGlobals->curtime + 1.0f );
 		}
 	}
 
@@ -2727,10 +2745,45 @@ bool CNPC_MetroPolice::PlayerIsCriminal( void )
 	if ( m_PolicingBehavior.IsEnabled() && m_PolicingBehavior.TargetIsHostile() )
 		return true;
 
+	// Half-Life: BB - this cop has seen enough
+	if ( m_Suspicion.IsPlayerCriminal() )
+		return true;
+
 	if ( GlobalEntity_GetState( "gordon_precriminal" ) == GLOBAL_ON )
 		return false;
 
 	return true;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Voice and stance for the suspicion levels (ai_suspicion.h)
+//-----------------------------------------------------------------------------
+void CNPC_MetroPolice::OnSuspicionStateChanged( int iOldState, int iNewState )
+{
+	CBasePlayer *pPlayer = UTIL_PlayerByIndex( 1 );
+
+	if ( iNewState == SUSPICION_SUSPICIOUS && iOldState == SUSPICION_CALM )
+	{
+		// "Move along": face him and light up the baton as a warning
+		m_Sentences.Speak( "METROPOLICE_IDLE_HARASS_PLAYER", SENTENCE_PRIORITY_MEDIUM, SENTENCE_CRITERIA_NORMAL );
+		m_bKeepFacingPlayer = true;
+		if ( pPlayer )
+		{
+			AddLookTarget( pPlayer, 1.0f, 3.0f );
+			SetTarget( pPlayer );
+		}
+		SetBatonState( true );
+		m_flBatonDebounceTime = gpGlobals->curtime + random->RandomFloat( 3.0f, 5.0f );
+	}
+	else if ( iNewState == SUSPICION_SUSPICIOUS && iOldState == SUSPICION_HOSTILE )
+	{
+		// Lost him
+		m_Sentences.Speak( "METROPOLICE_LOST_LONG", SENTENCE_PRIORITY_MEDIUM, SENTENCE_CRITERIA_NORMAL );
+	}
+	else if ( iNewState == SUSPICION_CALM )
+	{
+		m_bKeepFacingPlayer = false;
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -4833,8 +4886,10 @@ int CNPC_MetroPolice::OnTakeDamage_Alive( const CTakeDamageInfo &inputInfo )
 		m_flRecentDamageTime = gpGlobals->curtime;
 	}
 
-	if (info.GetAttacker()->IsPlayer())
+	if ( info.GetAttacker() && info.GetAttacker()->IsPlayer() )
 	{
+		m_Suspicion.OnDamaged( info );
+
 		// If the player is attacking me, arrest him
 		AdministerJustice();
 	}
