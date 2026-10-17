@@ -945,6 +945,10 @@ bool CHud::IsHidden( int iHudFlags )
 	if ( !engine->IsInGame() )
 		return true;
 
+	// Background map behind the main menu
+	if ( engine->IsLevelMainMenuBackground() )
+		return true;
+
 	// No local player yet?
 	C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
 	if ( !pPlayer )
