@@ -48,6 +48,7 @@
 #include "tier0/icommandline.h"
 #include "npc_alyx_episodic.h"
 #include "bb_inventory.h"
+#include "props.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -79,6 +80,9 @@ ConVar	sk_healthvial("sk_healthvial", "0");
 ConVar autoaim_unlock_target( "autoaim_unlock_target", "0.8666" );
 ConVar sv_stickysprint("sv_stickysprint", "0", FCVAR_ARCHIVE | FCVAR_ARCHIVE_XBOX);
 ConVar weapon_frag_tutorial("weapon_frag_tutorial", "1", FCVAR_REPLICATED, "Enable/Disable the weapon tutorial for the frag grenade");
+ConVar bb_inventory_highlight_dist( "bb_inventory_highlight_dist", "100", FCVAR_ARCHIVE, "Props that +use would put into the inventory get a glow outline and a floating item name when they are within this distance of the player's eyes. 0 disables." );
+
+#define INVENTORY_HIGHLIGHT_INTERVAL	0.1f
 
 #define	FLASH_DRAIN_TIME	 1.1111	// 100 units / 90 secs
 #define	FLASH_CHARGE_TIME	 50.0f	// 100 units / 2 secs
@@ -340,6 +344,8 @@ CHL2_Player::CHL2_Player()
 
 	m_flArmorReductionTime = 0.0f;
 	m_iArmorReductionFrom = 0;
+
+	m_flNextInventoryHighlightTime = 0.0f;
 }
 
 //
@@ -771,6 +777,8 @@ void CHL2_Player::PostThink( void )
 	SetLocalAngles(angles);
 
 	m_pPlayerAnimState->Update();
+
+	UpdateInventoryHighlight();
 }
 
 void CHL2_Player::StartAdmireGlovesAnimation( void )
@@ -2972,6 +2980,80 @@ void CHL2_Player::PickupObject( CBaseEntity *pObject, bool bLimitMassAndSize )
 	}
 
 	PlayerPickupObject( this, pObject );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Item type +use would turn this object into, or NULL if it would be
+//          carried as a regular physics object. Mirrors PickupObject().
+//-----------------------------------------------------------------------------
+const CBBItemType *CHL2_Player::GetInventoryPickupItem( CBaseEntity *pObject )
+{
+	if ( GetGroundEntity() == pObject || pObject->HasNPCsOnIt() )
+		return NULL;
+
+	if ( GetInventory()->GetItemCount() >= MAX_INVENTORY )
+		return NULL;
+
+	if ( !CBasePlayer::CanPickupObject( pObject, 35, 128 ) )
+		return NULL;
+
+	string_t iszItem = CBBInventory::GetItemByModel( pObject->GetModelName() );
+	if ( iszItem == NULL_STRING )
+		return NULL;
+
+	return CBBInventory::GetItemData( STRING( iszItem ) );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Label props near the player that +use would put into the inventory.
+//          The label is networked; C_BreakableProp draws the glow outline and
+//          the floating item name from it.
+//-----------------------------------------------------------------------------
+void CHL2_Player::UpdateInventoryHighlight( void )
+{
+	if ( gpGlobals->curtime < m_flNextInventoryHighlightTime )
+		return;
+	m_flNextInventoryHighlightTime = gpGlobals->curtime + INVENTORY_HIGHLIGHT_INTERVAL;
+
+	CUtlVector< CHandle<CBreakableProp> > highlighted;
+
+	const float flRadius = bb_inventory_highlight_dist.GetFloat();
+	if ( flRadius > 0.0f && IsAlive() && !IsInAVehicle() )
+	{
+		const Vector vecEye = EyePosition();
+
+		CBaseEntity *pList[64];
+		int nCount = UTIL_EntitiesInSphere( pList, ARRAYSIZE( pList ), vecEye, flRadius, 0 );
+		for ( int i = 0; i < nCount; i++ )
+		{
+			CPhysicsProp *pProp = dynamic_cast<CPhysicsProp *>( pList[i] );
+			if ( !pProp || pProp == GetHeldObject() )
+				continue;
+
+			const CBBItemType *pItem = GetInventoryPickupItem( pProp );
+			if ( !pItem )
+				continue;
+
+			// Only what the player can actually see, so the outline doesn't give
+			// away items behind walls.
+			trace_t tr;
+			UTIL_TraceLine( vecEye, pProp->WorldSpaceCenter(), MASK_BLOCKLOS, this, COLLISION_GROUP_NONE, &tr );
+			if ( tr.fraction < 1.0f && tr.m_pEnt != pProp )
+				continue;
+
+			pProp->m_iszInventoryLabel = AllocPooledString( pItem->szPrintName );
+			highlighted.AddToTail( pProp );
+		}
+	}
+
+	for ( int i = 0; i < m_InventoryHighlighted.Count(); i++ )
+	{
+		CBreakableProp *pProp = m_InventoryHighlighted[i];
+		if ( pProp && !highlighted.HasElement( m_InventoryHighlighted[i] ) )
+			pProp->m_iszInventoryLabel = NULL_STRING;
+	}
+
+	m_InventoryHighlighted.Swap( highlighted );
 }
 
 //-----------------------------------------------------------------------------

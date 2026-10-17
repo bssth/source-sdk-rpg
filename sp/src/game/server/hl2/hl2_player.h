@@ -20,6 +20,7 @@
 
 class CAI_Squad;
 class CPropCombineBall;
+class CBreakableProp;
 
 extern int TrainSpeed(int iSpeed, int iMax);
 extern void CopyToBodyQue( CBaseAnimating *pCorpse );
@@ -278,6 +279,7 @@ public:
 	CBBInventory m_inventory;
 	CBBInventory* GetInventory() { return &m_inventory; }
 	bool UseItem(const char* name);
+	const CBBItemType *GetInventoryPickupItem( CBaseEntity *pObject );
 
 protected:
 	virtual void		PreThink( void );
@@ -292,6 +294,12 @@ private:
 	bool				CommanderExecuteOne( CAI_BaseNPC *pNpc, const commandgoal_t &goal, CAI_BaseNPC **Allies, int numAllies );
 
 	void				OnSquadMemberKilled( inputdata_t &data );
+
+	void				UpdateInventoryHighlight( void );
+
+	// Props whose m_iszInventoryLabel we set. Transient, not saved.
+	CUtlVector< CHandle<CBreakableProp> > m_InventoryHighlighted;
+	float				m_flNextInventoryHighlightTime;
 
 	Class_T				m_nControlClass;			// Class when player is controlling another entity
 	// This player's HL2 specific data that should only be replicated to 

@@ -1288,6 +1288,7 @@
     <ClCompile Include="weapon_selection.cpp" />
     <ClCompile Include="weapons_resource.cpp" />
     <ClCompile Include="WorldDimsProxy.cpp" />
+    <ClCompile Include="hud_inventorylabels.cpp" />
     <ClCompile Include="hud_objectinfo.cpp" />
     <ClCompile Include="hudhealthbar.cpp" />
     <ClCompile Include="hudsuitbar.cpp" />

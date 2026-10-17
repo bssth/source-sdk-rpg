@@ -26,10 +26,18 @@
 #include "materialsystem/itexture.h"
 #include "view_shared.h"
 #include "viewpostprocess.h"
+#include "clienteffectprecachesystem.h"
 
 #define FULL_FRAME_TEXTURE "_rt_FullFrameFB"
 
 #ifdef GLOWS_ENABLE
+
+// Hold references so the materials found below aren't bound with a zero
+// refcount ("bad reference count 0 when being bound" spam).
+CLIENTEFFECT_REGISTER_BEGIN( PrecacheGlowOutlineEffect )
+CLIENTEFFECT_MATERIAL( "dev/glow_color" )
+CLIENTEFFECT_MATERIAL( "dev/glow_composite" )
+CLIENTEFFECT_REGISTER_END()
 
 ConVar glow_outline_effect_enable( "glow_outline_effect_enable", "1", FCVAR_ARCHIVE, "Enable entity outline glow effects." );
 ConVar glow_outline_effect_width( "glow_outline_width", "10.0f", FCVAR_CHEAT, "Width of glow outline effect in screen space." );
@@ -333,7 +341,7 @@ void CGlowObjectManager::ApplyEntityGlowEffects( const CViewSetup *pSetup, int n
 	IMaterialVar *pBloomAmountVar = pMatBlurY->FindVar( "$bloomamount", NULL );
 	if ( pBloomAmountVar )
 	{
-		pBloomAmountVar->SetFloatValue( flBloomScale * 0.1f );
+		pBloomAmountVar->SetFloatValue( flBloomScale );
 	}
 	pRenderContext->DrawScreenSpaceRectangle( pMatBlurY, 0, 0, nQuarterW, nQuarterH,
 		0, 0, nQuarterW - 1, nQuarterH - 1,

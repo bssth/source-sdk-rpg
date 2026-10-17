@@ -728,6 +728,7 @@ static ConCommand prop_debug("prop_debug", CC_Prop_Debug, "Toggle prop debug mod
 IMPLEMENT_SERVERCLASS_ST(CBreakableProp, DT_BreakableProp)
 	SendPropBool( SENDINFO( m_bGlowEnabled ) ),
 	SendPropVector( SENDINFO( m_vecGlowColor ), -1, SPROP_NOSCALE ),
+	SendPropStringT( SENDINFO( m_iszInventoryLabel ) ),
 END_SEND_TABLE()
 
 BEGIN_DATADESC( CBreakableProp )
@@ -825,6 +826,7 @@ CBreakableProp::CBreakableProp()
 
 	m_bGlowEnabled = false;
 	m_vecGlowColor.Init( 1.0f, 1.0f, 1.0f );
+	m_iszInventoryLabel = NULL_STRING;
 }
 
 void CBreakableProp::InputEnableGlow( inputdata_t &inputdata )

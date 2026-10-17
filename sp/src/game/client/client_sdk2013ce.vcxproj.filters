@@ -2959,6 +2959,9 @@
     <ClCompile Include="WorldDimsProxy.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="hud_inventorylabels.cpp">
+      <Filter>Source Filesb</Filter>
+    </ClCompile>
     <ClCompile Include="hud_objectinfo.cpp">
       <Filter>Source Files\bb</Filter>
     </ClCompile>

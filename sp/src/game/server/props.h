@@ -110,6 +110,12 @@ public:
 	CNetworkVar( bool, m_bGlowEnabled );
 	CNetworkVector( m_vecGlowColor );
 
+	// Print name of the inventory item +use would turn this prop into, set by
+	// CHL2_Player::UpdateInventoryHighlight while the player is close; empty
+	// otherwise. The client draws a glow outline and a floating label from it.
+	// Transient, not saved.
+	CNetworkVar( string_t, m_iszInventoryLabel );
+
 public:
 	COutputEvent	m_OnBreak;
 	COutputFloat	m_OnHealthChanged;
