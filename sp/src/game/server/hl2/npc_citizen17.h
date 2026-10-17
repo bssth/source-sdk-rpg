@@ -165,8 +165,10 @@ public:
 	bool 			IsCommandable();
 	bool			IsAngryToPlayer();
 
-	// Half-Life: BB - a metrocop hurt us: fight back if we have a gun, otherwise run from him
-	void			ReactToAbuseByCop( CAI_BaseNPC *pCop );
+	// Half-Life: BB - a cop or soldier hurt us: fight back if we have a gun, otherwise run from him.
+	// Armed squadmates and armed citizens who saw it join in, unarmed witnesses get scared.
+	void			ReactToCombineAbuse( CAI_BaseNPC *pAttacker );
+	void			FearAttacker( CAI_BaseNPC *pAttacker );
 	bool			HasRealWeapon();
 	bool			IsPlayerAlly( CBasePlayer *pPlayer = NULL );
 	bool			CanJoinPlayerSquad();
@@ -299,8 +301,8 @@ private:
 	bool			m_bWasInPlayerSquad;
 	bool			m_isBadCitizen;
 	bool			m_isAngryToPlayer;
-	EHANDLE			m_hFearedCop;			// Half-Life: BB - unarmed and hurt by this cop: keep away from him
-	float			m_flCopFearEndTime;
+	EHANDLE			m_hFearedAttacker;		// Half-Life: BB - unarmed and saw/felt this Combine get rough: keep away from him
+	float			m_flFearEndTime;
 	float			m_flTimeLastCloseToPlayer;
 	string_t		m_iszDenyCommandConcept;
 

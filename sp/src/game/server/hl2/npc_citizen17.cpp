@@ -18,6 +18,7 @@
 
 #include "eventqueue.h"
 #include "ai_squad.h"
+#include "ai_senses.h"
 #include "ai_pathfinder.h"
 #include "ai_route.h"
 #include "ai_hint.h"
@@ -58,8 +59,9 @@ ConVar	npc_citizen_explosive_resist( "npc_citizen_explosive_resist", "0" );
 ConVar	npc_citizen_auto_player_squad( "npc_citizen_auto_player_squad", "1" );
 ConVar	npc_citizen_auto_player_squad_allow_use( "npc_citizen_auto_player_squad_allow_use", "0" );
 ConVar	npc_citizen_damage_triggering ( "npc_citizen_damage_triggering", "1" );
-ConVar	npc_citizen_fight_back_cops( "npc_citizen_fight_back_cops", "1", FCVAR_NONE, "Citizens hurt by a metrocop fight back if they have a gun (with their armed squadmates), or run from him if they don't." );
-ConVar	npc_citizen_cop_fear_time( "npc_citizen_cop_fear_time", "20", FCVAR_NONE, "How long an unarmed citizen keeps away from the cop who hurt him." );
+ConVar	npc_citizen_fight_back( "npc_citizen_fight_back", "1", FCVAR_NONE, "Citizens hurt by a metrocop or Combine soldier fight back if they have a gun (with armed squadmates and witnesses), or run from him if they don't." );
+ConVar	npc_citizen_fear_time( "npc_citizen_fear_time", "20", FCVAR_NONE, "How long an unarmed citizen keeps away from a cop or soldier who hurt him or someone he saw." );
+ConVar	npc_citizen_witness_radius( "npc_citizen_witness_radius", "1024", FCVAR_NONE, "Citizens within this distance who saw a cop or soldier hurt a citizen react too. 0 = only the victim and his squad." );
 
 ConVar	npc_citizen_dont_precache_all( "npc_citizen_dont_precache_all", "0" );
 
@@ -292,8 +294,8 @@ BEGIN_DATADESC( CNPC_Citizen )
 	DEFINE_FIELD( 		m_bWasInPlayerSquad,		FIELD_BOOLEAN ),
 	DEFINE_FIELD(		m_isBadCitizen,				FIELD_BOOLEAN ),
 	DEFINE_FIELD(		m_isAngryToPlayer,			FIELD_BOOLEAN ),
-	DEFINE_FIELD(		m_hFearedCop,				FIELD_EHANDLE ),
-	DEFINE_FIELD(		m_flCopFearEndTime,			FIELD_TIME ),
+	DEFINE_FIELD(		m_hFearedAttacker,			FIELD_EHANDLE ),
+	DEFINE_FIELD(		m_flFearEndTime,			FIELD_TIME ),
 	DEFINE_FIELD( 		m_flTimeLastCloseToPlayer,	FIELD_TIME ),
 	DEFINE_KEYFIELD(	m_Type, 					FIELD_INTEGER,	"citizentype" ),
 	DEFINE_KEYFIELD(	m_ExpressionType,			FIELD_INTEGER,	"expressiontype" ),
@@ -1008,19 +1010,19 @@ void CNPC_Citizen::PrescheduleThink()
 	UpdatePlayerSquad();
 	UpdateFollowCommandPoint();
 
-	// Half-Life: BB - the scare from the cop who hurt us wears off
-	if ( m_hFearedCop && gpGlobals->curtime > m_flCopFearEndTime )
+	// Half-Life: BB - the scare from the cop or soldier wears off
+	if ( m_hFearedAttacker && gpGlobals->curtime > m_flFearEndTime )
 	{
-		CBaseEntity *pCop = m_hFearedCop;
-		m_hFearedCop = NULL;
+		CBaseEntity *pAttacker = m_hFearedAttacker;
+		m_hFearedAttacker = NULL;
 
-		if ( IRelationType( pCop ) == D_FR )
+		if ( IRelationType( pAttacker ) == D_FR )
 		{
-			RemoveEntityRelationship( pCop );
-			if ( GetEnemy() == pCop )
+			RemoveEntityRelationship( pAttacker );
+			if ( GetEnemy() == pAttacker )
 				SetEnemy( NULL );
 			if ( GetEnemies() )
-				GetEnemies()->ClearMemory( pCop );
+				GetEnemies()->ClearMemory( pAttacker );
 		}
 	}
 
@@ -2204,15 +2206,16 @@ int CNPC_Citizen::OnTakeDamage_Alive(const CTakeDamageInfo& info)
 		}
 	}
 
-	// Half-Life: BB - a cop hurting us (baton, a stray bullet...). Citizens beaten inside a
-	// scripted scene keep to the script.
-	if ( info.GetDamage() > 0 && npc_citizen_fight_back_cops.GetBool() && !IsInAScript() && GetState() != NPC_STATE_SCRIPT )
+	// Half-Life: BB - a cop or soldier hurting us (baton, a stray bullet...). Citizens beaten
+	// inside a scripted scene keep to the script.
+	if ( info.GetDamage() > 0 && npc_citizen_fight_back.GetBool() && !IsInAScript() && GetState() != NPC_STATE_SCRIPT )
 	{
-		CBaseEntity *pAttacker = info.GetAttacker();
-		CAI_BaseNPC *pCop = pAttacker ? pAttacker->MyNPCPointer() : NULL;
-		if ( pCop && pCop->IsAlive() && pCop->Classify() == CLASS_METROPOLICE && IRelationType( pCop ) != D_HT )
+		CBaseEntity *pAttackerEnt = info.GetAttacker();
+		CAI_BaseNPC *pAttacker = pAttackerEnt ? pAttackerEnt->MyNPCPointer() : NULL;
+		if ( pAttacker && pAttacker->IsAlive() && ( pAttacker->Classify() == CLASS_METROPOLICE || pAttacker->Classify() == CLASS_COMBINE ) &&
+			 IRelationType( pAttacker ) != D_HT )
 		{
-			ReactToAbuseByCop( pCop );
+			ReactToCombineAbuse( pAttacker );
 		}
 	}
 
@@ -2235,59 +2238,112 @@ bool CNPC_Citizen::HasRealWeapon()
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: A metrocop hurt us. With a gun we fight back, and so do the armed
-//			members of our squad; the cop and his squad treat us as enemies in
-//			return. Without one we keep away from that cop for a while.
+// Purpose: pFighter turns on pAttacker; pAttacker and his squad treat pFighter
+//			as an enemy in return.
 //-----------------------------------------------------------------------------
-void CNPC_Citizen::ReactToAbuseByCop( CAI_BaseNPC *pCop )
+static void CitizenJoinFight( CAI_BaseNPC *pFighter, CAI_BaseNPC *pAttacker, CBaseEntity *pInformer )
 {
-	if ( !HasRealWeapon() )
-	{
-		if ( IRelationType( pCop ) != D_FR )
-			DevMsg( "Citizen %s is afraid of %s\n", GetDebugName(), pCop->GetDebugName() );
+	pFighter->AddEntityRelationship( pAttacker, D_HT, 1 );
+	pFighter->UpdateEnemyMemory( pAttacker, pAttacker->GetAbsOrigin(), pInformer );
 
-		AddEntityRelationship( pCop, D_FR, 1 );
-		m_hFearedCop = pCop;
-		m_flCopFearEndTime = gpGlobals->curtime + npc_citizen_cop_fear_time.GetFloat();
-		UpdateEnemyMemory( pCop, pCop->GetAbsOrigin(), this );
-		return;
+	pAttacker->AddEntityRelationship( pFighter, D_HT, 1 );
+	pAttacker->MakeSquadRevenge( pFighter );
+	pAttacker->UpdateEnemyMemory( pFighter, pFighter->GetAbsOrigin(), pAttacker );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Keep away from pAttacker for npc_citizen_fear_time
+//-----------------------------------------------------------------------------
+void CNPC_Citizen::FearAttacker( CAI_BaseNPC *pAttacker )
+{
+	if ( IRelationType( pAttacker ) != D_FR )
+		DevMsg( "Citizen %s is afraid of %s\n", GetDebugName(), pAttacker->GetDebugName() );
+
+	AddEntityRelationship( pAttacker, D_FR, 1 );
+	m_hFearedAttacker = pAttacker;
+	m_flFearEndTime = gpGlobals->curtime + npc_citizen_fear_time.GetFloat();
+	UpdateEnemyMemory( pAttacker, pAttacker->GetAbsOrigin(), this );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: A metrocop or Combine soldier hurt us.
+//			- We fight back if we have a gun, otherwise keep away from him.
+//			- Armed members of our squad join in, wherever they are.
+//			- Citizens nearby who saw it (us or him) join in if armed, or get
+//			  scared if not.
+//			Whoever fights is treated as an enemy by the attacker and his squad.
+//-----------------------------------------------------------------------------
+void CNPC_Citizen::ReactToCombineAbuse( CAI_BaseNPC *pAttacker )
+{
+	if ( HasRealWeapon() )
+	{
+		DevMsg( "Citizen %s fights back against %s\n", GetDebugName(), pAttacker->GetDebugName() );
+		CitizenJoinFight( this, pAttacker, this );
+		m_hFearedAttacker = NULL;
+		SetEnemy( pAttacker );
+		SetState( NPC_STATE_COMBAT );
+	}
+	else
+	{
+		FearAttacker( pAttacker );
 	}
 
-	DevMsg( "Citizen %s fights back against %s\n", GetDebugName(), pCop->GetDebugName() );
-
-	// Whoever joins the fight: we hate the cop, the cop's squad hates us
-	CUtlVector<CAI_BaseNPC *> fighters;
-	fighters.AddToTail( this );
-
+	// Armed squadmates
 	if ( GetSquad() )
 	{
 		AISquadIter_t iter;
 		for ( CAI_BaseNPC *pMember = GetSquad()->GetFirstMember( &iter ); pMember; pMember = GetSquad()->GetNextMember( &iter ) )
 		{
-			if ( pMember == this || !pMember->IsAlive() || pMember->IRelationType( pCop ) == D_HT )
+			if ( pMember == this || !pMember->IsAlive() || pMember->IsInAScript() || pMember->IRelationType( pAttacker ) == D_HT )
 				continue;
 
 			CNPC_Citizen *pCitizen = dynamic_cast<CNPC_Citizen *>( pMember );
 			const bool bArmed = pCitizen ? pCitizen->HasRealWeapon() : ( pMember->GetActiveWeapon() != NULL );
 			if ( bArmed )
-				fighters.AddToTail( pMember );
+				CitizenJoinFight( pMember, pAttacker, this );
 		}
 	}
 
-	for ( int i = 0; i < fighters.Count(); i++ )
+	// Witnesses
+	const float flRadius = npc_citizen_witness_radius.GetFloat();
+	if ( flRadius <= 0.0f )
+		return;
+
+	CAI_BaseNPC **ppAIs = g_AI_Manager.AccessAIs();
+	for ( int i = 0; i < g_AI_Manager.NumAIs(); i++ )
 	{
-		CAI_BaseNPC *pFighter = fighters[i];
-		pFighter->AddEntityRelationship( pCop, D_HT, 1 );
-		pFighter->UpdateEnemyMemory( pCop, pCop->GetAbsOrigin(), this );
+		CNPC_Citizen *pWitness = dynamic_cast<CNPC_Citizen *>( ppAIs[i] );
+		if ( !pWitness || pWitness == this || !pWitness->IsAlive() || pWitness->m_isBadCitizen )
+			continue;
 
-		pCop->AddEntityRelationship( pFighter, D_HT, 1 );
-		pCop->MakeSquadRevenge( pFighter );
-		pCop->UpdateEnemyMemory( pFighter, pFighter->GetAbsOrigin(), pCop );
+		if ( GetSquad() && pWitness->GetSquad() == GetSquad() )
+			continue; // handled above
+
+		if ( pWitness->IsInAScript() || pWitness->GetState() == NPC_STATE_SCRIPT || pWitness->IRelationType( pAttacker ) == D_HT )
+			continue;
+
+		if ( ( pWitness->GetAbsOrigin() - GetAbsOrigin() ).LengthSqr() > Square( flRadius ) )
+			continue;
+
+		// The senses' cache first; an idle NPC far from the player may not be looking around
+		// at all (efficiency), so check the line of sight directly too
+		CAI_Senses *pSenses = pWitness->GetSenses();
+		const bool bSaw = ( pSenses && ( pSenses->DidSeeEntity( this ) || pSenses->DidSeeEntity( pAttacker ) ) ) ||
+			( pWitness->FInViewCone( this ) && pWitness->FVisible( this ) ) ||
+			( pWitness->FInViewCone( pAttacker ) && pWitness->FVisible( pAttacker ) );
+		if ( !bSaw )
+			continue;
+
+		if ( pWitness->HasRealWeapon() )
+		{
+			DevMsg( "Citizen %s saw it and steps in against %s\n", pWitness->GetDebugName(), pAttacker->GetDebugName() );
+			CitizenJoinFight( pWitness, pAttacker, this );
+		}
+		else
+		{
+			pWitness->FearAttacker( pAttacker );
+		}
 	}
-
-	m_hFearedCop = NULL;
-	SetEnemy( pCop );
-	SetState( NPC_STATE_COMBAT );
 }
 
 bool CNPC_Citizen::IsAngryToPlayer()
