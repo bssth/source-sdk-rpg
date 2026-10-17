@@ -1,4 +1,4 @@
-@include "base.fgd"
+@include "halflife2.fgd"
 
 @NPCClass base(BaseHelicopter) studio("models/combine_dropship.mdl" ) = npc_combinedropship : "Combine Dropship"
 [
