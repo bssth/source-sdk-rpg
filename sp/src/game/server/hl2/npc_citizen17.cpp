@@ -58,6 +58,8 @@ ConVar	npc_citizen_explosive_resist( "npc_citizen_explosive_resist", "0" );
 ConVar	npc_citizen_auto_player_squad( "npc_citizen_auto_player_squad", "1" );
 ConVar	npc_citizen_auto_player_squad_allow_use( "npc_citizen_auto_player_squad_allow_use", "0" );
 ConVar	npc_citizen_damage_triggering ( "npc_citizen_damage_triggering", "1" );
+ConVar	npc_citizen_fight_back_cops( "npc_citizen_fight_back_cops", "1", FCVAR_NONE, "Citizens hurt by a metrocop fight back if they have a gun (with their armed squadmates), or run from him if they don't." );
+ConVar	npc_citizen_cop_fear_time( "npc_citizen_cop_fear_time", "20", FCVAR_NONE, "How long an unarmed citizen keeps away from the cop who hurt him." );
 
 ConVar	npc_citizen_dont_precache_all( "npc_citizen_dont_precache_all", "0" );
 
@@ -290,6 +292,8 @@ BEGIN_DATADESC( CNPC_Citizen )
 	DEFINE_FIELD( 		m_bWasInPlayerSquad,		FIELD_BOOLEAN ),
 	DEFINE_FIELD(		m_isBadCitizen,				FIELD_BOOLEAN ),
 	DEFINE_FIELD(		m_isAngryToPlayer,			FIELD_BOOLEAN ),
+	DEFINE_FIELD(		m_hFearedCop,				FIELD_EHANDLE ),
+	DEFINE_FIELD(		m_flCopFearEndTime,			FIELD_TIME ),
 	DEFINE_FIELD( 		m_flTimeLastCloseToPlayer,	FIELD_TIME ),
 	DEFINE_KEYFIELD(	m_Type, 					FIELD_INTEGER,	"citizentype" ),
 	DEFINE_KEYFIELD(	m_ExpressionType,			FIELD_INTEGER,	"expressiontype" ),
@@ -1003,6 +1007,22 @@ void CNPC_Citizen::PrescheduleThink()
 
 	UpdatePlayerSquad();
 	UpdateFollowCommandPoint();
+
+	// Half-Life: BB - the scare from the cop who hurt us wears off
+	if ( m_hFearedCop && gpGlobals->curtime > m_flCopFearEndTime )
+	{
+		CBaseEntity *pCop = m_hFearedCop;
+		m_hFearedCop = NULL;
+
+		if ( IRelationType( pCop ) == D_FR )
+		{
+			RemoveEntityRelationship( pCop );
+			if ( GetEnemy() == pCop )
+				SetEnemy( NULL );
+			if ( GetEnemies() )
+				GetEnemies()->ClearMemory( pCop );
+		}
+	}
 
 	if( GetEnemy() && g_ai_citizen_show_enemy.GetBool() )
 	{
@@ -2184,7 +2204,90 @@ int CNPC_Citizen::OnTakeDamage_Alive(const CTakeDamageInfo& info)
 		}
 	}
 
+	// Half-Life: BB - a cop hurting us (baton, a stray bullet...). Citizens beaten inside a
+	// scripted scene keep to the script.
+	if ( info.GetDamage() > 0 && npc_citizen_fight_back_cops.GetBool() && !IsInAScript() && GetState() != NPC_STATE_SCRIPT )
+	{
+		CBaseEntity *pAttacker = info.GetAttacker();
+		CAI_BaseNPC *pCop = pAttacker ? pAttacker->MyNPCPointer() : NULL;
+		if ( pCop && pCop->IsAlive() && pCop->Classify() == CLASS_METROPOLICE && IRelationType( pCop ) != D_HT )
+		{
+			ReactToAbuseByCop( pCop );
+		}
+	}
+
 	return BaseClass::OnTakeDamage_Alive( newInfo );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Anything to fight with? A suitcase or a package doesn't count.
+//-----------------------------------------------------------------------------
+bool CNPC_Citizen::HasRealWeapon()
+{
+	for ( int i = 0; i < WeaponCount(); i++ )
+	{
+		CBaseCombatWeapon *pWeapon = GetWeapon( i );
+		if ( pWeapon && !FClassnameIs( pWeapon, "weapon_citizenpackage" ) && !FClassnameIs( pWeapon, "weapon_citizensuitcase" ) )
+			return true;
+	}
+
+	return false;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: A metrocop hurt us. With a gun we fight back, and so do the armed
+//			members of our squad; the cop and his squad treat us as enemies in
+//			return. Without one we keep away from that cop for a while.
+//-----------------------------------------------------------------------------
+void CNPC_Citizen::ReactToAbuseByCop( CAI_BaseNPC *pCop )
+{
+	if ( !HasRealWeapon() )
+	{
+		if ( IRelationType( pCop ) != D_FR )
+			DevMsg( "Citizen %s is afraid of %s\n", GetDebugName(), pCop->GetDebugName() );
+
+		AddEntityRelationship( pCop, D_FR, 1 );
+		m_hFearedCop = pCop;
+		m_flCopFearEndTime = gpGlobals->curtime + npc_citizen_cop_fear_time.GetFloat();
+		UpdateEnemyMemory( pCop, pCop->GetAbsOrigin(), this );
+		return;
+	}
+
+	DevMsg( "Citizen %s fights back against %s\n", GetDebugName(), pCop->GetDebugName() );
+
+	// Whoever joins the fight: we hate the cop, the cop's squad hates us
+	CUtlVector<CAI_BaseNPC *> fighters;
+	fighters.AddToTail( this );
+
+	if ( GetSquad() )
+	{
+		AISquadIter_t iter;
+		for ( CAI_BaseNPC *pMember = GetSquad()->GetFirstMember( &iter ); pMember; pMember = GetSquad()->GetNextMember( &iter ) )
+		{
+			if ( pMember == this || !pMember->IsAlive() || pMember->IRelationType( pCop ) == D_HT )
+				continue;
+
+			CNPC_Citizen *pCitizen = dynamic_cast<CNPC_Citizen *>( pMember );
+			const bool bArmed = pCitizen ? pCitizen->HasRealWeapon() : ( pMember->GetActiveWeapon() != NULL );
+			if ( bArmed )
+				fighters.AddToTail( pMember );
+		}
+	}
+
+	for ( int i = 0; i < fighters.Count(); i++ )
+	{
+		CAI_BaseNPC *pFighter = fighters[i];
+		pFighter->AddEntityRelationship( pCop, D_HT, 1 );
+		pFighter->UpdateEnemyMemory( pCop, pCop->GetAbsOrigin(), this );
+
+		pCop->AddEntityRelationship( pFighter, D_HT, 1 );
+		pCop->MakeSquadRevenge( pFighter );
+		pCop->UpdateEnemyMemory( pFighter, pFighter->GetAbsOrigin(), pCop );
+	}
+
+	m_hFearedCop = NULL;
+	SetEnemy( pCop );
+	SetState( NPC_STATE_COMBAT );
 }
 
 bool CNPC_Citizen::IsAngryToPlayer()
