@@ -118,6 +118,7 @@
 #include "sourcevr/isourcevirtualreality.h"
 #include "client_virtualreality.h"
 #include "mumble.h"
+#include "engine_patches.h"
 
 // NVNT includes
 #include "hud_macros.h"
@@ -961,6 +962,8 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 	// Initialize the console variables.
 	ConVar_Register( FCVAR_CLIENTDLL );
 
+	EnginePatches_Init();
+
 	g_pcv_ThreadMode = g_pCVar->FindVar( "host_thread_mode" );
 
 	if (!Initializer::InitializeAllObjects())
@@ -1166,6 +1169,8 @@ void CHLClient::Shutdown( void )
 
 	C_BaseAnimating::ShutdownBoneSetupThreadPool();
 	ClientWorldFactoryShutdown();
+
+	EnginePatches_Shutdown();
 
 	g_pGameSaveRestoreBlockSet->RemoveBlockHandler( GetViewEffectsRestoreBlockHandler() );
 	g_pGameSaveRestoreBlockSet->RemoveBlockHandler( GetPhysSaveRestoreBlockHandler() );

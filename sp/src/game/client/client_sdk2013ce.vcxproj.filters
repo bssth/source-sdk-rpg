@@ -890,6 +890,9 @@
     <ClInclude Include="movehelper_client.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="engine_patches.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="mumble.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -2594,6 +2597,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\game\shared\multiplay_gamerules.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="engine_patches.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="mumble.cpp">
